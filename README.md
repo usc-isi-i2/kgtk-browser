@@ -3,7 +3,7 @@
 ## Requirements
 
 * you need to install the kgtk and flask Python packages
-* download wikidataos-v4.sqlite3.db.gz from the KGTK shared drive
+* download wikidataos-v4-browser.sqlite3.db.gz from the KGTK shared drive
   in the KGTK > datasets > wikidataos-v4 folder
 * uncompress the DB somewhere on your system which will require about 50GB
   of space; for best performance this should be on an SSD drive
