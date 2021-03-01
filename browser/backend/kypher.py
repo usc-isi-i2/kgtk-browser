@@ -25,6 +25,7 @@ class BrowserBackend(object):
     FORMAT_TSV = 'tsv'
     FORMAT_LIST = 'list'
     FORMAT_JSON = 'json'
+    LANGUAGE_ANY = 'any'
 
     def __init__(self, app=None, config=None):
         self.app = app
@@ -248,12 +249,39 @@ class BrowserBackend(object):
         result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
         return result
 
+    def filter_lqstrings(self, strings, lang, dflt=None):
+        """Destructively filter 'strings' to contain the first language-qualified string
+        satisfying 'lang' as its only element.  If 'strings' is not a list, listify it first.
+        An element matches if it is an LQ-string and its language tag starts with 'lang'
+        (which means 'zh' matches 'zh-ch' for example).  If no qualifying element could be
+        found first try to fall back on the configured DEFAULT_LANGUAGE, if that fails on
+        the first element of 'strings', if that fails 'dflt', otherwise return an empty list.
+        Return the filtered modified or newly constructed list.
+        """
+        if not isinstance(strings, list):
+            strings = list(strings)
+        suffix = "'@" + lang
+        filtered = list(filter(lambda x: isinstance(x, str) and x.startswith("'") and x.find(suffix) > 0, strings))
+        if not filtered:
+            lang = self.get_config('DEFAULT_LANGUAGE', 'en')
+            suffix = "'@" + lang
+            filtered = list(filter(lambda x: isinstance(x, str) and x.startswith("'") and x.find(suffix) > 0, strings))
+        if not filtered and strings:
+            filtered = [strings[0]]
+        if not filtered and dflt is not None:
+            filtered = [dflt]
+        strings.clear()
+        if filtered:
+            strings.append(filtered[0])
+        return strings
+
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_node_graph_data(self, node):
+    def get_node_graph_data(self, node, lang=None):
         """Run all queries neccessary to collect the data to build a 'kgtk_node' object
         and assemble the results into an approriate dict/JSON object.  This function
         focuses on edges and qualifier edges only, but not the label strings required
-        to describe them in human-readable form.
+        to describe them in human-readable form.  Return None if 'node' does not exist
+        in the graph.
         """
         edge_tuples = self.get_node_edges(node)
         label_tuples = self.get_node_labels(node)
@@ -293,6 +321,15 @@ class BrowserBackend(object):
             'description': [d for (d,) in desc_tuples],
             'edges': edges,
         }
+
+        if not edges and not node_data['label'] and not node_data['alias'] and not node_data['description']:
+            # 'node' doesn't exist or nothing is known about it:
+            return None
+
+        if isinstance(lang, str) and lang != self.LANGUAGE_ANY:
+            self.filter_lqstrings(node_data['label'], lang, dflt=node)
+            self.filter_lqstrings(node_data['alias'], lang)
+            self.filter_lqstrings(node_data['description'], lang)
         return node_data
 
 
@@ -419,7 +456,7 @@ class BrowserBackend(object):
         return result
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_node_object_labels(self, node):
+    def get_node_object_labels(self, node, lang=None):
         """Run all queries neccessary to collect the label string data for all edge
         labels and value objects collected by 'get_node_graph_data', and assemble the
         results into an approriate 'kgtk_object_labels' dict/JSON object.
@@ -454,6 +491,10 @@ class BrowserBackend(object):
         for obj, labels in new_labels.items():
             object_labels[obj] = labels
 
+        if isinstance(lang, str) and lang != self.LANGUAGE_ANY:
+            for obj, labels in object_labels.items():
+                self.filter_lqstrings(labels, lang, dflt=obj)
+
         labels_data = {
             '@type': 'kgtk_object_labels',
             '@id': 'kgtk_object_labels_%s' % node,
@@ -461,10 +502,16 @@ class BrowserBackend(object):
         }
         return labels_data
 
-    def get_all_node_data(self, node):
+    def get_all_node_data(self, node, lang=None):
         """Return all graph and label data for 'node' and return it as a
-        'kgtk_object_collection' dict/JSON object.
+        'kgtk_object_collection' dict/JSON object.  Return None if 'node'
+        does not exist in the graph.
         """
+        graph_data = self.get_node_graph_data(node, lang=lang)
+        if graph_data is None:
+            return None
+        object_labels = self.get_node_object_labels(node, lang=lang)
+        
         node_data = {
             "@type": "kgtk_object_collection",
             # @context and meta info are not used and just for illustration for now:
@@ -477,8 +524,8 @@ class BrowserBackend(object):
                 "version": "2021-02-24",
             },
             "objects": [ 
-                self.get_node_graph_data(node),
-                self.get_node_object_labels(node),
+                graph_data,
+                object_labels,
             ],
         }
         return node_data

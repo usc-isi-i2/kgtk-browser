@@ -25,7 +25,10 @@ app = flask.Flask(__name__)
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
+DEFAULT_LANGUAGE = 'en'
+
 app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
+app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
 
 app.kgtk_backend = kybe.BrowserBackend(app)
 
@@ -199,12 +202,13 @@ def get_node_edge_qualifier_node2_labels():
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_graph_data'), methods=['GET'])
 def get_node_graph_data():
     node = flask.request.args.get('node')
+    lang = flask.request.args.get('lang', app.config['DEFAULT_LANGUAGE'])
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
         backend = acquire_backend(app)
-        data = backend.get_node_graph_data(node)
-        return data
+        data = backend.get_node_graph_data(node, lang=lang)
+        return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
@@ -214,12 +218,13 @@ def get_node_graph_data():
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_object_labels'), methods=['GET'])
 def get_node_object_labels():
     node = flask.request.args.get('node')
+    lang = flask.request.args.get('lang', app.config['DEFAULT_LANGUAGE'])
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
         backend = acquire_backend(app)
-        data = backend.get_node_object_labels(node)
-        return data
+        data = backend.get_node_object_labels(node, lang=lang)
+        return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
@@ -233,12 +238,13 @@ def get_all_node_data():
     returns it all in a single kgtk_object_collection JSON structure.
     """
     node = flask.request.args.get('node')
+    lang = flask.request.args.get('lang', app.config['DEFAULT_LANGUAGE'])
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
         backend = acquire_backend(app)
-        data = backend.get_all_node_data(node)
-        return data
+        data = backend.get_all_node_data(node, lang=lang)
+        return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
