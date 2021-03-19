@@ -4,6 +4,7 @@ Kypher backend support for the KGTK browser.
 
 import os.path
 from http import HTTPStatus
+import threading
 
 import flask
 import browser.backend.kypher as kybe
@@ -31,18 +32,25 @@ app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_
 app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
 
 app.kgtk_backend = kybe.BrowserBackend(app)
+app.kgtk_backend.set_lock(threading.Lock())
 
 
 ### Multi-threading
-#
-# These are just stubs for now, we need to figure out how to implement proper locking
-# and how to cache thread-local instances of the sqlstore and its SQLite connection.
 
 def acquire_backend(app):
-    return app.kgtk_backend
+    """Return the 'app' backend and lock it.
+    """
+    backend = app.kgtk_backend
+    if backend.get_lock().locked():
+        print('Waiting for app lock...')
+    backend.get_lock().acquire()
+    return backend
 
 def release_backend(app):
-    pass
+    """Release the lock on the 'app' backend.
+    """
+    backend = app.kgtk_backend
+    backend.get_lock().release()
 
 
 ### URL handlers:
