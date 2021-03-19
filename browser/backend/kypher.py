@@ -31,6 +31,7 @@ class BrowserBackend(object):
         self.app = app
         self.config = config
         self.sql_store = None
+        self.lock = None
         # core data queries:
         self.edges_query = None
         self.labels_query = None
@@ -56,8 +57,23 @@ class BrowserBackend(object):
         """
         if self.sql_store is None:
             graph_cache = self.get_config('DB_GRAPH_CACHE')
+            # TO DO: abstract this better so we can pass in a connection object that is setup the way we want
             self.sql_store = sqlstore.SqliteStore(graph_cache, create=not os.path.exists(graph_cache))
+            self.sql_store.close()
+            import sqlite3
+            self.sql_store.conn = sqlite3.connect(graph_cache, check_same_thread=False)
+            self.sql_store.configure()
         return self.sql_store
+
+    def get_lock(self):
+        """Return a lock object if one was defined.
+        """
+        return self.lock
+
+    def set_lock(self, lock):
+        """Set the lock object to 'lock'.
+        """
+        self.lock = lock
 
     def execute_query(self, query, sql, params):
         """Execute the Kypher 'query' with translation 'sql' and the given 'params'
