@@ -57,7 +57,7 @@ prefer and defaults to `en` (English).  An `any` language tag can be
 used to return strings in all languages.  If a requested language does
 not exist for a label or description string, a fallback language will
 be used which can be configured via the `DEFAULT_LANGUAGE` property
-(which defaults to 'en').  If all else fails (e.g., no label exists at
+(which defaults to `en`).  If all else fails (e.g., no label exists at
 all), the node name itself will be used as a fallback.  Language tags
 are matched as prefixes, so `zh` matches `zh-cn` and other variants.
 
