@@ -4,7 +4,6 @@ Kypher backend support for the KGTK browser.
 
 import os.path
 from http import HTTPStatus
-import threading
 
 import flask
 import browser.backend.kypher as kybe
@@ -32,25 +31,20 @@ app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_
 app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
 
 app.kgtk_backend = kybe.BrowserBackend(app)
-app.kgtk_backend.set_lock(threading.Lock())
+
+def get_backend(app):
+    return app.kgtk_backend
 
 
 ### Multi-threading
 
-def acquire_backend(app):
-    """Return the 'app' backend and lock it.
-    """
-    backend = app.kgtk_backend
-    if backend.get_lock().locked():
-        print('Waiting for app lock...')
-    backend.get_lock().acquire()
-    return backend
+# Proper locking is now supported by the backend like this:
 
-def release_backend(app):
-    """Release the lock on the 'app' backend.
-    """
-    backend = app.kgtk_backend
-    backend.get_lock().release()
+"""
+with get_backend(app) as backend:
+    edges = backend.get_node_edges(node)
+    ...
+"""
 
 
 ### URL handlers:
@@ -74,14 +68,12 @@ def get_node_edges():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        edges = backend.get_node_edges(node)
-        return backend.query_result_to_list(edges)
+        with get_backend(app) as backend:
+            edges = backend.get_node_edges(node)
+            return backend.query_result_to_list(edges)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_labels'), methods=['GET'])
 def get_node_labels():
@@ -89,14 +81,12 @@ def get_node_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        labels = backend.get_node_labels(node)
-        return backend.query_result_to_list(labels)
+        with get_backend(app) as backend:
+            labels = backend.get_node_labels(node)
+            return backend.query_result_to_list(labels)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_aliases'), methods=['GET'])
 def get_node_aliases():
@@ -104,14 +94,12 @@ def get_node_aliases():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        aliases = backend.get_node_aliases(node)
-        return backend.query_result_to_list(aliases)
+        with get_backend(app) as backend:
+            aliases = backend.get_node_aliases(node)
+            return backend.query_result_to_list(aliases)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_descriptions'), methods=['GET'])
 def get_node_descriptions():
@@ -119,14 +107,12 @@ def get_node_descriptions():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        descriptions = backend.get_node_descriptions(node)
-        return backend.query_result_to_list(descriptions)
+        with get_backend(app) as backend:
+            descriptions = backend.get_node_descriptions(node)
+            return backend.query_result_to_list(descriptions)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_qualifiers'), methods=['GET'])
 def get_node_edge_qualifiers():
@@ -134,14 +120,12 @@ def get_node_edge_qualifiers():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        qualifiers = backend.get_node_edge_qualifiers(node)
-        return backend.query_result_to_list(qualifiers)
+        with get_backend(app) as backend:
+            qualifiers = backend.get_node_edge_qualifiers(node)
+            return backend.query_result_to_list(qualifiers)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_label_labels'), methods=['GET'])
@@ -150,14 +134,12 @@ def get_node_edge_label_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        labels = backend.get_node_edge_label_labels(node)
-        return backend.query_result_to_list(labels)
+        with get_backend(app) as backend:
+            labels = backend.get_node_edge_label_labels(node)
+            return backend.query_result_to_list(labels)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_node2_labels'), methods=['GET'])
 def get_node_edge_node2_labels():
@@ -165,14 +147,12 @@ def get_node_edge_node2_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        labels = backend.get_node_edge_node2_labels(node)
-        return backend.query_result_to_list(labels)
+        with get_backend(app) as backend:
+            labels = backend.get_node_edge_node2_labels(node)
+            return backend.query_result_to_list(labels)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_qualifier_label_labels'), methods=['GET'])
 def get_node_edge_qualifier_label_labels():
@@ -180,14 +160,12 @@ def get_node_edge_qualifier_label_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        labels = backend.get_node_edge_qualifier_label_labels(node)
-        return backend.query_result_to_list(labels)
+        with get_backend(app) as backend:
+            labels = backend.get_node_edge_qualifier_label_labels(node)
+            return backend.query_result_to_list(labels)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_qualifier_node2_labels'), methods=['GET'])
 def get_node_edge_qualifier_node2_labels():
@@ -195,14 +173,12 @@ def get_node_edge_qualifier_node2_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        labels = backend.get_node_edge_qualifier_node2_labels(node)
-        return backend.query_result_to_list(labels)
+        with get_backend(app) as backend:
+            labels = backend.get_node_edge_qualifier_node2_labels(node)
+            return backend.query_result_to_list(labels)
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 
 ### Top-level entry points:
@@ -214,14 +190,12 @@ def get_node_graph_data():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        data = backend.get_node_graph_data(node, lang=lang)
-        return data or {}
+        with get_backend(app) as backend:
+            data = backend.get_node_graph_data(node, lang=lang)
+            return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_object_labels'), methods=['GET'])
 def get_node_object_labels():
@@ -230,14 +204,12 @@ def get_node_object_labels():
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        data = backend.get_node_object_labels(node, lang=lang)
-        return data or {}
+        with get_backend(app) as backend:
+            data = backend.get_node_object_labels(node, lang=lang)
+            return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_node_data'), methods=['GET'])
 def get_all_node_data():
@@ -247,14 +219,14 @@ def get_all_node_data():
     """
     node = flask.request.args.get('node')
     lang = flask.request.args.get('lang', app.config['DEFAULT_LANGUAGE'])
+    images = flask.request.args.get('images', 'False').lower() == 'true'
+    fanouts = flask.request.args.get('fanouts', 'False').lower() == 'true'
     if node is None:
         flask.abort(HTTPStatus.BAD_REQUEST.value)
     try:
-        backend = acquire_backend(app)
-        data = backend.get_all_node_data(node, lang=lang)
-        return data or {}
+        with get_backend(app) as backend:
+            data = backend.get_all_node_data(node, lang=lang, images=images, fanouts=fanouts)
+            return data or {}
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-    finally:
-        release_backend(app)
