@@ -3,11 +3,11 @@
 ## Requirements
 
 * you need to install the kgtk and flask Python packages
-* download wikidataos-v4-browser.sqlite3.db.gz from the KGTK shared drive
-  in the KGTK > datasets > wikidataos-v4 folder; this database has been
+* download wikidata-20210215-dwd-browser.sqlite3.db.gz from the KGTK shared drive
+  in the KGTK > datasets > wikidata-20210215-dwd folder; this database has been
   preloaded and indexed and should work out-of-the-box without requiring
   any of the data files it was constructed from
-* uncompress the DB somewhere on your system which will require about 50GB
+* uncompress the DB somewhere on your system which will require about 60GB
   of space; for best performance this should be on an SSD drive
 * edit DB_GRAPH_CACHE in kgtk_browser_config.py to point to that location
 
@@ -63,10 +63,16 @@ are matched as prefixes, so `zh` matches `zh-cn` and other variants.
 
 Sorting values for best presentation still needs to be implemented.
 
-There probably needs to be some definition somewhere which properties
-define labels, descriptions, instance-of, etc.  For now we can assume
-the ones used by Wikidata, but we probably want to use this for
-non-Wikidata KGs as well.
+The configuration file allows simple definition of which input files
+and edge labels to use to define labels, descriptions, images, etc.
+This will need to be generalized for more flexibility, e.g., by
+allowing the specification of queries for certain aspects of the data.
+
+There are two optional request arguments `images` and `fanout` which
+optionally retrieve image links and fanout of any `node2`s in the
+basic (non-qualifier) edges retrieved.  This data can be used for
+presentation or to provide an indication of how much data a node is
+connected to.
 
 Construction and transmission of property data types, site links and other
 information still needs to be implemented.
@@ -78,10 +84,11 @@ The example below shows how to query the server.  In development mode Flask
 pretty-prints the JSON which makes things more verbose.  Also the default
 Unicode encoding is possibly not what we want, but it should be OK as a start.
 For some of the labels a Spanish version does not exist and an English label
-is substituted instead.
+is substituted instead.  We retrieve both images and fanouts here to document
+the corresponding objects.
 
 ```
-http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=es
+http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=es&images=true&fanouts=true
 
 {
   "@context": [
@@ -90,8 +97,8 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
   "@type": "kgtk_object_collection", 
   "meta": {
     "@type": "kgtk_meta_info", 
-    "database": "wikidataos-v4", 
-    "version": "2021-02-24"
+    "database": "wikidata-dwd", 
+    "version": "2021-03-24"
   }, 
   "objects": [
     {
@@ -124,7 +131,7 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
           "qualifiers": [
             {
               "@type": "kgtk_edge", 
-              "o": "^1988-00-00T00:00:00Z/9", 
+              "o": "^1988-01-01T00:00:00Z/9", 
               "p": "P580", 
               "s": "Q100104271-P108-Q4614-3d59a6b0-0"
             }
@@ -174,13 +181,13 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
           "qualifiers": [
             {
               "@type": "kgtk_edge", 
-              "o": "^1987-00-00T00:00:00Z/9", 
+              "o": "^1987-01-01T00:00:00Z/9", 
               "p": "P582", 
               "s": "Q100104271-P69-Q190080-f617727b-0"
             }, 
             {
               "@type": "kgtk_edge", 
-              "o": "^1980-00-00T00:00:00Z/9", 
+              "o": "^1980-01-01T00:00:00Z/9", 
               "p": "P580", 
               "s": "Q100104271-P69-Q190080-f617727b-0"
             }, 
@@ -214,6 +221,7 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
           "s": "Q100104271"
         }
       ], 
+      "image": [], 
       "label": [
         "'Pedro Szekely'@en"
       ]
@@ -295,8 +303,41 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
           "'masculino'@es"
         ], 
         "Q752297": [
-          "'Ph.D.'@es"
+          "'Doctor en Filosof\u00eda'@es"
         ]
+      }
+    }, 
+    {
+      "@id": "kgtk_object_images_Q100104271", 
+      "@type": "kgtk_object_images", 
+      "images": {
+        "Q1569421": [
+          "\"Universidad de los Andes (3326108271).jpg\""
+        ], 
+        "Q190080": [
+          "\"CMU campus Cathedral Learning background.jpg\""
+        ], 
+        "Q4614": [
+          "\"052607-016-BovardHall-USC.jpg\""
+        ], 
+        "Q5": [
+          "\"Anterior view of human female and male, with labels.svg\""
+        ]
+      }
+    }, 
+    {
+      "@id": "kgtk_object_fanouts_Q100104271", 
+      "@type": "kgtk_object_fanouts", 
+      "fanouts": {
+        "Q11660": 63, 
+        "Q1569421": 32, 
+        "Q15897419": 16, 
+        "Q1650915": 22, 
+        "Q190080": 70, 
+        "Q4614": 71, 
+        "Q5": 70, 
+        "Q6030821": 14, 
+        "Q6581097": 17
       }
     }
   ]
