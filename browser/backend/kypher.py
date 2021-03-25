@@ -7,6 +7,8 @@ import io
 import csv
 from http import HTTPStatus
 from functools import lru_cache
+import sqlite3
+import threading
 
 import kgtk.kypher.query as kyquery
 import kgtk.kypher.sqlstore as sqlstore
@@ -18,7 +20,7 @@ class BrowserBackend(object):
     KGTK browser backend using the Kypher graph cache and query infrastructure.
     """
 
-    LOG_LEVEL = 0
+    QUERY_LOG_LEVEL = 0    # only for debugging
     MAX_RESULTS = 100000
     LRU_CACHE_SIZE = 1000
 
@@ -27,20 +29,49 @@ class BrowserBackend(object):
     FORMAT_JSON = 'json'
     LANGUAGE_ANY = 'any'
 
+    DEFAULT_CONFIG = {
+        # defaults for configuration parameters that need to have values:
+        
+        'DB_INDEX_MODE'         : 'node1',
+        'DB_LOG_LEVEL'          :  0,
+
+        # input file names (or aliases) for various aspects of the KG:
+        'DB_EDGES_GRAPH'        : 'claims',
+        'DB_QUALIFIERS_GRAPH'   : 'qualifiers',
+        'DB_LABELS_GRAPH'       : 'labels',
+        'DB_ALIASES_GRAPH'      : 'aliases',
+        'DB_DESCRIPTIONS_GRAPH' : 'descriptions',
+        'DB_IMAGES_GRAPH'       : 'images',
+        'DB_FANOUTS_GRAPH'      : 'fanouts',
+
+        # edge labels for various specific info we are retrieving
+        # (TO DO: generalize this towards full-fledged queries):
+        'DB_LABELS_LABEL'       : 'label',
+        'DB_ALIASES_LABEL'      : 'alias',
+        'DB_DESCRIPTIONS_LABEL' : 'description',
+        'DB_IMAGES_LABEL'       : 'image',
+        'DB_FANOUTS_LABEL'      : 'fanout',
+
+        'DEFAULT_LANGUAGE'      : 'en',
+    }
+
     def __init__(self, app=None, config=None):
         self.app = app
         self.config = config
         self.sql_store = None
-        self.lock = None
+        self.lock = threading.Lock()
         # core data queries:
-        self.edges_query = None
         self.labels_query = None
         self.aliases_query = None
         self.descriptions_query = None
+        self.images_query = None
+        self.edges_query = None
         self.edge_qualifiers_query = None
-        # string descriptor queries:
+        # string descriptor, image and fanout queries:
         self.edge_label_labels_query = None
         self.edge_node2_labels_query = None
+        self.edge_node2_images_query = None
+        self.edge_node2_fanouts_query = None
         self.edge_qualifier_label_labels_query = None
         self.edge_qualifier_node2_labels_query = None
 
@@ -50,6 +81,7 @@ class BrowserBackend(object):
         """
         if self.config is None:
             self.config = self.app.config
+        dflt = dflt or self.DEFAULT_CONFIG.get(key)
         return self.config.get(key, dflt)
 
     def get_sql_store(self):
@@ -57,23 +89,27 @@ class BrowserBackend(object):
         """
         if self.sql_store is None:
             graph_cache = self.get_config('DB_GRAPH_CACHE')
-            # TO DO: abstract this better so we can pass in a connection object that is setup the way we want
-            self.sql_store = sqlstore.SqliteStore(graph_cache, create=not os.path.exists(graph_cache))
-            self.sql_store.close()
-            import sqlite3
-            self.sql_store.conn = sqlite3.connect(graph_cache, check_same_thread=False)
-            self.sql_store.configure()
+            log_level = self.get_config('DB_LOG_LEVEL')
+            conn = sqlite3.connect(graph_cache, check_same_thread=False)
+            self.sql_store = sqlstore.SqliteStore(dbfile=graph_cache, conn=conn, loglevel=log_level)
         return self.sql_store
 
     def get_lock(self):
-        """Return a lock object if one was defined.
+        """Return the lock object.
         """
         return self.lock
 
-    def set_lock(self, lock):
-        """Set the lock object to 'lock'.
+    def __enter__(self):
+        """Lock context manager for 'with ... as backend:' idiom.
         """
-        self.lock = lock
+        if self.get_lock().locked():
+            # for now for debugging:
+            print('Waiting for backend lock...')
+        self.get_lock().acquire()
+        return self
+
+    def __exit__(self, *_exc):
+        self.get_lock().release()
 
     def execute_query(self, query, sql, params):
         """Execute the Kypher 'query' with translation 'sql' and the given 'params'
@@ -126,9 +162,9 @@ class BrowserBackend(object):
         # SQL prepared statement, but then sqlite3 is very fast for simple queries like this:
         if self.edges_query is None:
             store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_EDGES_GRAPH', 'edges')],
+            query = kyquery.KgtkQuery([self.get_config('DB_EDGES_GRAPH')],
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
                                       match='`%s`: (n)-[r]->(n2)' % self.get_config('DB_EDGES_GRAPH'),
                                       where='n=$NODE',
@@ -155,11 +191,13 @@ class BrowserBackend(object):
         """
         if self.labels_query is None:
             store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_LABELS_GRAPH', 'labels')],
+            query = kyquery.KgtkQuery([self.get_config('DB_LABELS_GRAPH')],
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(l)' % self.get_config('DB_LABELS_GRAPH'),
+                                      match=('`%s`: (n)-[r:`%s`]->(l)'
+                                             % (self.get_config('DB_LABELS_GRAPH'),
+                                                self.get_config('DB_LABELS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct l as label',
                                       limit=str(self.MAX_RESULTS),
@@ -183,11 +221,13 @@ class BrowserBackend(object):
         """
         if self.aliases_query is None:
             store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_ALIASES_GRAPH', 'aliases')],
+            query = kyquery.KgtkQuery([self.get_config('DB_ALIASES_GRAPH')],
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(l)' % self.get_config('DB_ALIASES_GRAPH'),
+                                      match=('`%s`: (n)-[r:`%s`]->(l)'
+                                             % (self.get_config('DB_ALIASES_GRAPH'),
+                                                self.get_config('DB_ALIASES_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct l as alias',
                                       limit=str(self.MAX_RESULTS),
@@ -211,11 +251,13 @@ class BrowserBackend(object):
         """
         if self.descriptions_query is None:
             store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_DESCRIPTIONS_GRAPH', 'descriptions')],
+            query = kyquery.KgtkQuery([self.get_config('DB_DESCRIPTIONS_GRAPH')],
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(l)' % self.get_config('DB_DESCRIPTIONS_GRAPH'),
+                                      match=('`%s`: (n)-[r:`%s`]->(l)'
+                                             % (self.get_config('DB_DESCRIPTIONS_GRAPH'),
+                                                self.get_config('DB_DESCRIPTIONS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct l as description',
                                       limit=str(self.MAX_RESULTS),
@@ -234,16 +276,46 @@ class BrowserBackend(object):
         result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
         return result
     
+    def get_node_images_query(self):
+        """Create and cache the Kypher query used by 'get_node_images'.
+        """
+        if self.images_query is None:
+            store = self.get_sql_store()
+            query = kyquery.KgtkQuery([self.get_config('DB_IMAGES_GRAPH')],
+                                      store,
+                                      loglevel=self.QUERY_LOG_LEVEL,
+                                      index=self.get_config('DB_INDEX_MODE'),
+                                      match=('`%s`: (n)-[r:`%s`]->(i)'
+                                             % (self.get_config('DB_IMAGES_GRAPH'),
+                                                self.get_config('DB_IMAGES_LABEL'))),
+                                      where='n=$NODE',
+                                      ret='distinct i as image',
+                                      limit=str(self.MAX_RESULTS),
+                                      parameters={'NODE': '$NODE'},
+            )
+            sql, params, graphs, indexes = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            query = (query, sql, params)
+            self.images_query = query
+        return self.images_query
+
+    def get_node_images(self, node):
+        """Retrieve all images for 'node'.
+        """
+        query, sql, params = self.get_node_images_query()
+        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
+        return result
+    
     def get_node_edge_qualifiers_query(self):
         """Create and cache the Kypher query used by 'get_node_edge_qualifiers'.
         """
         if self.edge_qualifiers_query is None:
             store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH', 'edges'),
-                      self.get_config('DB_QUALIFIERS_GRAPH', 'qualifiers'))
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_QUALIFIERS_GRAPH'))
             query = kyquery.KgtkQuery(graphs,
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
                                       match='`%s`: (n)-[r]->(), `%s`: (r)-[q]->(v)' % graphs,
                                       where='n=$NODE',
@@ -279,7 +351,7 @@ class BrowserBackend(object):
         suffix = "'@" + lang
         filtered = list(filter(lambda x: isinstance(x, str) and x.startswith("'") and x.find(suffix) > 0, strings))
         if not filtered:
-            lang = self.get_config('DEFAULT_LANGUAGE', 'en')
+            lang = self.get_config('DEFAULT_LANGUAGE')
             suffix = "'@" + lang
             filtered = list(filter(lambda x: isinstance(x, str) and x.startswith("'") and x.find(suffix) > 0, strings))
         if not filtered and strings:
@@ -303,6 +375,7 @@ class BrowserBackend(object):
         label_tuples = self.get_node_labels(node)
         alias_tuples = self.get_node_aliases(node)
         desc_tuples = self.get_node_descriptions(node)
+        img_tuples = self.get_node_images(node)
         qual_tuples = self.get_node_edge_qualifiers(node)
         
         qualifiers = {}
@@ -335,6 +408,7 @@ class BrowserBackend(object):
             'label': [l for (l,) in label_tuples],
             'alias': [a for (a,) in alias_tuples],
             'description': [d for (d,) in desc_tuples],
+            'image': [i for (i,) in img_tuples],
             'edges': edges,
         }
 
@@ -354,13 +428,14 @@ class BrowserBackend(object):
         """
         if self.edge_label_labels_query is None:
             store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH', 'edges'),
-                      self.get_config('DB_LABELS_GRAPH', 'labels'))
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_LABELS_GRAPH'))
             query = kyquery.KgtkQuery(graphs,
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r {label: rl}]->(), `%s`: (rl)-[]->(rlabel)' % graphs,
+                                      match=('`%s`: (n)-[r {label: rl}]->(), `%s`: (rl)-[:`%s`]->(rlabel)'
+                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct rl as node1, rlabel as label',
                                       limit=str(self.MAX_RESULTS),
@@ -384,13 +459,14 @@ class BrowserBackend(object):
         """
         if self.edge_node2_labels_query is None:
             store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH', 'edges'),
-                      self.get_config('DB_LABELS_GRAPH', 'labels'))
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_LABELS_GRAPH'))
             query = kyquery.KgtkQuery(graphs,
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[]->(n2), `%s`: (n2)-[]->(n2label)' % graphs,
+                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2label)'
+                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct n2 as node1, n2label as label',
                                       limit=str(self.MAX_RESULTS),
@@ -409,19 +485,82 @@ class BrowserBackend(object):
         result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
         return result
 
+    def get_node_edge_node2_images_query(self):
+        """Create and cache the Kypher query used by 'get_node_edge_node2_images'.
+        """
+        if self.edge_node2_images_query is None:
+            store = self.get_sql_store()
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_IMAGES_GRAPH'))
+            query = kyquery.KgtkQuery(graphs,
+                                      store,
+                                      loglevel=self.QUERY_LOG_LEVEL,
+                                      index=self.get_config('DB_INDEX_MODE'),
+                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2image)'
+                                             % (*graphs, self.get_config('DB_IMAGES_LABEL'))),
+                                      where='n=$NODE',
+                                      ret='distinct n2 as node1, n2image as image',
+                                      limit=str(self.MAX_RESULTS),
+                                      parameters={'NODE': '$NODE'},
+            )
+            sql, params, graphs, indexes = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            query = (query, sql, params)
+            self.edge_node2_images_query = query
+        return self.edge_node2_images_query
+
+    def get_node_edge_node2_images(self, node):
+        """Retrieve all images associated with node2's of edges starting from 'node'.
+        """
+        query, sql, params = self.get_node_edge_node2_images_query()
+        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
+        return result
+
+    def get_node_edge_node2_fanouts_query(self):
+        """Create and cache the Kypher query used by 'get_node_edge_node2_fanouts'.
+        """
+        if self.edge_node2_fanouts_query is None:
+            store = self.get_sql_store()
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_FANOUTS_GRAPH'))
+            query = kyquery.KgtkQuery(graphs,
+                                      store,
+                                      loglevel=self.QUERY_LOG_LEVEL,
+                                      index=self.get_config('DB_INDEX_MODE'),
+                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2fanout)'
+                                             % (*graphs, self.get_config('DB_FANOUTS_LABEL'))),
+                                      where='n=$NODE',
+                                      ret='distinct n2 as node1, n2fanout as fanout',
+                                      limit=str(self.MAX_RESULTS),
+                                      parameters={'NODE': '$NODE'},
+            )
+            sql, params, graphs, indexes = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            query = (query, sql, params)
+            self.edge_node2_fanouts_query = query
+        return self.edge_node2_fanouts_query
+
+    def get_node_edge_node2_fanouts(self, node):
+        """Retrieve all fanout counts associated with node2's of edges starting from 'node'.
+        """
+        query, sql, params = self.get_node_edge_node2_fanouts_query()
+        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
+        return result
+    
     def get_node_edge_qualifier_label_labels_query(self):
         """Create and cache the Kypher query used by 'get_node_edge_qualifier_label_labels'.
         """
         if self.edge_qualifier_label_labels_query is None:
             store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH', 'edges'),
-                      self.get_config('DB_QUALIFIERS_GRAPH', 'qualifiers'),
-                      self.get_config('DB_LABELS_GRAPH', 'labels'))
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_QUALIFIERS_GRAPH'),
+                      self.get_config('DB_LABELS_GRAPH'))
             query = kyquery.KgtkQuery(graphs,
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(), `%s`: (r)-[q {label: ql}]->(), `%s`: (ql)-[]->(qlabel)' % graphs,
+                                      match=('`%s`: (n)-[r]->(), `%s`: (r)-[q {label: ql}]->(), `%s`: (ql)-[:`%s`]->(qlabel)'
+                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct ql as node1, qlabel as label',
                                       limit=str(self.MAX_RESULTS),
@@ -445,14 +584,15 @@ class BrowserBackend(object):
         """
         if self.edge_qualifier_node2_labels_query is None:
             store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH', 'edges'),
-                      self.get_config('DB_QUALIFIERS_GRAPH', 'qualifiers'),
-                      self.get_config('DB_LABELS_GRAPH', 'labels'))
+            graphs = (self.get_config('DB_EDGES_GRAPH'),
+                      self.get_config('DB_QUALIFIERS_GRAPH'),
+                      self.get_config('DB_LABELS_GRAPH'))
             query = kyquery.KgtkQuery(graphs,
                                       store,
-                                      loglevel=self.LOG_LEVEL,
+                                      loglevel=self.QUERY_LOG_LEVEL,
                                       index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(), `%s`: (r)-[]->(qn2), `%s`: (qn2)-[]->(qlabel)' % graphs,
+                                      match=('`%s`: (n)-[r]->(), `%s`: (r)-[]->(qn2), `%s`: (qn2)-[:`%s`]->(qlabel)'
+                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
                                       where='n=$NODE',
                                       ret='distinct qn2 as node1, qlabel as label',
                                       limit=str(self.MAX_RESULTS),
@@ -518,15 +658,58 @@ class BrowserBackend(object):
         }
         return labels_data
 
-    def get_all_node_data(self, node, lang=None):
+    def get_node_object_images(self, node):
+        """Run all queries neccessary to collect the images data for all
+        value objects collected by 'get_node_graph_data', and assemble the
+        results into an approriate 'kgtk_object_images' dict/JSON object.
+        """
+        edge_node2_image_tuples = self.get_node_edge_node2_images(node)
+        
+        object_images = {}
+        for obj, image in edge_node2_image_tuples:
+            object_images.setdefault(obj, []).append(image)
+
+        images_data = {
+            '@type': 'kgtk_object_images',
+            '@id': 'kgtk_object_images_%s' % node,
+            'images': object_images,
+        }
+        return images_data
+    
+    def get_node_object_fanouts(self, node):
+        """Run all queries neccessary to collect the fanout counts for all
+        value objects collected by 'get_node_graph_data', and assemble the
+        results into an approriate 'kgtk_object_fanouts' dict/JSON object.
+        """
+        edge_node2_fanout_tuples = self.get_node_edge_node2_fanouts(node)
+        
+        object_fanouts = {}
+        for obj, fanout in edge_node2_fanout_tuples:
+            # we assume these to be single-valued, so no aggregation necessary:
+            object_fanouts[obj] = int(fanout)
+
+        fanouts_data = {
+            '@type': 'kgtk_object_fanouts',
+            '@id': 'kgtk_object_fanouts_%s' % node,
+            'fanouts': object_fanouts,
+        }
+        return fanouts_data
+    
+    def get_all_node_data(self, node, lang=None, images=False, fanouts=False):
         """Return all graph and label data for 'node' and return it as a
         'kgtk_object_collection' dict/JSON object.  Return None if 'node'
-        does not exist in the graph.
+        does not exist in the graph.  If 'images' and/or 'fanouts' is True
+        fetch and add the respective node2 descriptor data.
         """
         graph_data = self.get_node_graph_data(node, lang=lang)
         if graph_data is None:
             return None
-        object_labels = self.get_node_object_labels(node, lang=lang)
+        objects = [graph_data]
+        objects.append(self.get_node_object_labels(node, lang=lang))
+        if images:
+            objects.append(self.get_node_object_images(node))
+        if fanouts:
+            objects.append(self.get_node_object_fanouts(node))
         
         node_data = {
             "@type": "kgtk_object_collection",
@@ -536,13 +719,10 @@ class BrowserBackend(object):
             ],
             "meta": {
                 "@type": "kgtk_meta_info",
-                "database": "wikidataos-v4",
-                "version": "2021-02-24",
+                "database": "wikidata-dwd",
+                "version": "2021-03-24",
             },
-            "objects": [ 
-                graph_data,
-                object_labels,
-            ],
+            "objects": objects,
         }
         return node_data
 
