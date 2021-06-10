@@ -173,8 +173,8 @@ class BrowserBackend(object):
                                       # this is just a pseudo parameter which will be instantiated later:
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edges_query = query
         return self.edges_query
@@ -203,8 +203,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.labels_query = query
         return self.labels_query
@@ -233,8 +233,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.aliases_query = query
         return self.aliases_query
@@ -263,8 +263,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.descriptions_query = query
         return self.descriptions_query
@@ -293,8 +293,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.images_query = query
         return self.images_query
@@ -324,8 +324,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_qualifiers_query = query
         return self.edge_qualifiers_query
@@ -441,8 +441,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_label_labels_query = query
         return self.edge_label_labels_query
@@ -472,8 +472,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_node2_labels_query = query
         return self.edge_node2_labels_query
@@ -503,8 +503,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_node2_images_query = query
         return self.edge_node2_images_query
@@ -534,8 +534,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_node2_fanouts_query = query
         return self.edge_node2_fanouts_query
@@ -566,8 +566,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_qualifier_label_labels_query = query
         return self.edge_qualifier_label_labels_query
@@ -598,8 +598,8 @@ class BrowserBackend(object):
                                       limit=str(self.MAX_RESULTS),
                                       parameters={'NODE': '$NODE'},
             )
-            sql, params, graphs, indexes = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql, graphs=graphs, auto_indexes=indexes)
+            sql, params = query.translate_to_sql()
+            query.ensure_relevant_indexes(sql)
             query = (query, sql, params)
             self.edge_qualifier_node2_labels_query = query
         return self.edge_qualifier_node2_labels_query
