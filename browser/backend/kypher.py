@@ -8,11 +8,17 @@ import csv
 from http import HTTPStatus
 from functools import lru_cache
 import sqlite3
-import threading
+
+import pandas as pd
 
 import kgtk.kypher.query as kyquery
 import kgtk.kypher.sqlstore as sqlstore
 from kgtk.exceptions import KGTKException
+
+
+# TO DO:
+# - reimplement the "language backoff" we had previously; currently we don't
+#   substitute labels, etc. from other languages if the desired language is empty
 
 
 class BrowserBackend(object):
@@ -20,323 +26,89 @@ class BrowserBackend(object):
     KGTK browser backend using the Kypher graph cache and query infrastructure.
     """
 
-    QUERY_LOG_LEVEL = 0    # only for debugging
-    MAX_RESULTS = 100000
     LRU_CACHE_SIZE = 1000
-
-    FORMAT_TSV = 'tsv'
-    FORMAT_LIST = 'list'
-    FORMAT_JSON = 'json'
     LANGUAGE_ANY = 'any'
 
-    DEFAULT_CONFIG = {
-        # defaults for configuration parameters that need to have values:
-        
-        'DB_INDEX_MODE'         : 'node1',
-        'DB_LOG_LEVEL'          :  0,
-
-        # input file names (or aliases) for various aspects of the KG:
-        'DB_EDGES_GRAPH'        : 'claims',
-        'DB_QUALIFIERS_GRAPH'   : 'qualifiers',
-        'DB_LABELS_GRAPH'       : 'labels',
-        'DB_ALIASES_GRAPH'      : 'aliases',
-        'DB_DESCRIPTIONS_GRAPH' : 'descriptions',
-        'DB_IMAGES_GRAPH'       : 'images',
-        'DB_FANOUTS_GRAPH'      : 'fanouts',
-
-        # edge labels for various specific info we are retrieving
-        # (TO DO: generalize this towards full-fledged queries):
-        'DB_LABELS_LABEL'       : 'label',
-        'DB_ALIASES_LABEL'      : 'alias',
-        'DB_DESCRIPTIONS_LABEL' : 'description',
-        'DB_IMAGES_LABEL'       : 'image',
-        'DB_FANOUTS_LABEL'      : 'fanout',
-
-        'DEFAULT_LANGUAGE'      : 'en',
-    }
-
-    def __init__(self, app=None, config=None):
+    def __init__(self, app, api=None):
         self.app = app
-        self.config = config
-        self.sql_store = None
-        self.lock = threading.Lock()
-        # core data queries:
-        self.labels_query = None
-        self.aliases_query = None
-        self.descriptions_query = None
-        self.images_query = None
-        self.edges_query = None
-        self.edge_qualifiers_query = None
-        # string descriptor, image and fanout queries:
-        self.edge_label_labels_query = None
-        self.edge_node2_labels_query = None
-        self.edge_node2_images_query = None
-        self.edge_node2_fanouts_query = None
-        self.edge_qualifier_label_labels_query = None
-        self.edge_qualifier_node2_labels_query = None
+        self.api = api or app.config['NODE_LABELS_QUERY'].api
+        # import app config on top of api object config:
+        for key, value in self.app.config.items():
+            self.api.set_config(key, value)
 
     def get_config(self, key, dflt=None):
-        """Access a configuration value for 'key' from the associated
-        Flask app configuration.
+        """Access a configuration value for 'key' from the current configuration.
         """
-        if self.config is None:
-            self.config = self.app.config
-        dflt = dflt or self.DEFAULT_CONFIG.get(key)
-        return self.config.get(key, dflt)
+        return self.api.get_config(key, dflt=dflt)
 
-    def get_sql_store(self):
-        """Create a new SQL store object from the configuration or return a cached value.
-        """
-        if self.sql_store is None:
-            graph_cache = self.get_config('DB_GRAPH_CACHE')
-            log_level = self.get_config('DB_LOG_LEVEL')
-            conn = sqlite3.connect(graph_cache, check_same_thread=False)
-            self.sql_store = sqlstore.SqliteStore(dbfile=graph_cache, conn=conn, loglevel=log_level)
-        return self.sql_store
+    def get_lang(self, lang=None):
+        return lang or self.get_config('DEFAULT_LANGUAGE', self.LANGUAGE_ANY)
 
     def get_lock(self):
         """Return the lock object.
         """
-        return self.lock
+        return self.api.get_lock()
 
     def __enter__(self):
         """Lock context manager for 'with ... as backend:' idiom.
         """
-        if self.get_lock().locked():
-            # for now for debugging:
-            print('Waiting for backend lock...')
-        self.get_lock().acquire()
+        self.api.__enter__()
         return self
 
     def __exit__(self, *_exc):
-        self.get_lock().release()
-
-    def execute_query(self, query, sql, params):
-        """Execute the Kypher 'query' with translation 'sql' and the given 'params'
-        and return the result (which is an iterator of tuples).
-        """
-        # TO DO: abstract this better in Kypher query API
-        result = query.store.execute(sql, params)
-        query.result_header = [query.unalias_column_name(c[0]) for c in result.description]
-        return result
-
-    def subst_params(self, params, substitutions):
-        """Return a copy of the list 'params' modified by any 'substitutions'.
-        """
-        return [substitutions.get(x, x) for x in params]
-
-    def query_result_to_tsv(self, result, header=None):
-        """Test driver: convert a query 'result' set into a TSV string.
-        """
-        output = io.StringIO()
-        tsvwriter = csv.writer(output, dialect=None, delimiter='\t',
-                               quoting=csv.QUOTE_NONE, quotechar=None,
-                               lineterminator='\n',
-                               escapechar=None)
-        output.write('<pre>')
-        if header is not None:
-            tsvwriter.writerow(header)
-        tsvwriter.writerows(result)
-        output.write('</pre>')
-        return output.getvalue()
-
-    def query_result_to_list(self, result, header=None):
-        """Test driver: convert a query 'result' set into a stringified Python list.
-        """
-        output = io.StringIO()
-        output.write('<pre>')
-        if header is not None:
-            output.write(header)
-            output.write('\n')
-        for tuple in result:
-            output.write(str(tuple))
-            output.write('\n')
-        output.write('</pre>')
-        return output.getvalue()
+        self.api.__exit__()
 
 
-    def get_node_edges_query(self):
-        """Create and cache the Kypher query used by 'get_node_edges'.
-        """
-        # TO DO: this currently only caches Kypher query processing, it doesn't use an
-        # SQL prepared statement, but then sqlite3 is very fast for simple queries like this:
-        if self.edges_query is None:
-            store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_EDGES_GRAPH')],
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(n2)' % self.get_config('DB_EDGES_GRAPH'),
-                                      where='n=$NODE',
-                                      ret='r as id, n as node1, r.label as label, n2 as node2',
-                                      limit=str(self.MAX_RESULTS),
-                                      # this is just a pseudo parameter which will be instantiated later:
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edges_query = query
-        return self.edges_query
-
-    def get_node_edges(self, node):
-        """Retrieve all edges that have 'node' as their node1.
-        """
-        query, sql, params = self.get_node_edges_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
-
-    def get_node_labels_query(self):
-        """Create and cache the Kypher query used by 'get_node_labels'.
-        """
-        if self.labels_query is None:
-            store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_LABELS_GRAPH')],
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r:`%s`]->(l)'
-                                             % (self.get_config('DB_LABELS_GRAPH'),
-                                                self.get_config('DB_LABELS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct l as label',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.labels_query = query
-        return self.labels_query
-
-    def get_node_labels(self, node):
+    ### Query wrappers:
+    
+    def get_node_labels(self, node, lang=None, fmt=None):
         """Retrieve all labels for 'node'.
         """
-        query, sql, params = self.get_node_labels_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return self.get_config('NODE_LABELS_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
-    def get_node_aliases_query(self):
-        """Create and cache the Kypher query used by 'get_node_aliases'.
-        """
-        if self.aliases_query is None:
-            store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_ALIASES_GRAPH')],
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r:`%s`]->(l)'
-                                             % (self.get_config('DB_ALIASES_GRAPH'),
-                                                self.get_config('DB_ALIASES_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct l as alias',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.aliases_query = query
-        return self.aliases_query
-
-    def get_node_aliases(self, node):
+    def get_node_aliases(self, node, lang=None, fmt=None):
         """Retrieve all aliases for 'node'.
         """
-        query, sql, params = self.get_node_aliases_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return self.get_config('NODE_ALIASES_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
-    def get_node_descriptions_query(self):
-        """Create and cache the Kypher query used by 'get_node_descriptions'.
-        """
-        if self.descriptions_query is None:
-            store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_DESCRIPTIONS_GRAPH')],
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r:`%s`]->(l)'
-                                             % (self.get_config('DB_DESCRIPTIONS_GRAPH'),
-                                                self.get_config('DB_DESCRIPTIONS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct l as description',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.descriptions_query = query
-        return self.descriptions_query
-
-    def get_node_descriptions(self, node):
+    def get_node_descriptions(self, node, lang=None, fmt=None):
         """Retrieve all descriptions for 'node'.
         """
-        query, sql, params = self.get_node_descriptions_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return self.get_config('NODE_DESCRIPTIONS_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
     
-    def get_node_images_query(self):
-        """Create and cache the Kypher query used by 'get_node_images'.
-        """
-        if self.images_query is None:
-            store = self.get_sql_store()
-            query = kyquery.KgtkQuery([self.get_config('DB_IMAGES_GRAPH')],
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r:`%s`]->(i)'
-                                             % (self.get_config('DB_IMAGES_GRAPH'),
-                                                self.get_config('DB_IMAGES_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct i as image',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.images_query = query
-        return self.images_query
-
-    def get_node_images(self, node):
+    def get_node_images(self, node, fmt=None):
         """Retrieve all images for 'node'.
         """
-        query, sql, params = self.get_node_images_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return self.get_config('NODE_IMAGES_QUERY').execute(NODE=node, fmt=fmt)
     
-    def get_node_edge_qualifiers_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_qualifiers'.
+    def get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all edges that have 'node' as their node1.
         """
-        if self.edge_qualifiers_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_QUALIFIERS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match='`%s`: (n)-[r]->(), `%s`: (r)-[q]->(v)' % graphs,
-                                      where='n=$NODE',
-                                      ret='q, r as node1, q.label, v as node2',
-                                      order='r, v desc',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_qualifiers_query = query
-        return self.edge_qualifiers_query
+        return self.get_config('NODE_EDGES_QUERY').execute(
+            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
-    def get_node_edge_qualifiers(self, node):
+    def get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all edges that have 'node' as their node2.
+        """
+        return self.get_config('NODE_INVERSE_EDGES_QUERY').execute(
+            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+
+    def get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node1.
         """
-        query, sql, params = self.get_node_edge_qualifiers_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return self.get_config('NODE_EDGE_QUALIFIERS_QUERY').execute(
+            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
+    def get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all qualifiers for edges that have 'node' as their node2.
+        """
+        return self.get_config('NODE_INVERSE_EDGE_QUALIFIERS_QUERY').execute(
+            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+
+
+    ### Utilities:
+
+    # this is currently not needed, but we keep it just in case we reimplement language backoff:
     def filter_lqstrings(self, strings, lang, dflt=None):
         """Destructively filter 'strings' to contain the first language-qualified string
         satisfying 'lang' as its only element.  If 'strings' is not a list, listify it first.
@@ -363,354 +135,307 @@ class BrowserBackend(object):
             strings.append(filtered[0])
         return strings
 
-    @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_node_graph_data(self, node, lang=None):
-        """Run all queries neccessary to collect the data to build a 'kgtk_node' object
-        and assemble the results into an approriate dict/JSON object.  This function
-        focuses on edges and qualifier edges only, but not the label strings required
-        to describe them in human-readable form.  Return None if 'node' does not exist
-        in the graph.
+    def query_result_to_string(self, result):
+        """Convert a query 'result' into a string so it can be displayed.
         """
-        edge_tuples = self.get_node_edges(node)
-        label_tuples = self.get_node_labels(node)
-        alias_tuples = self.get_node_aliases(node)
-        desc_tuples = self.get_node_descriptions(node)
-        img_tuples = self.get_node_images(node)
-        qual_tuples = self.get_node_edge_qualifiers(node)
+        output = io.StringIO()
+        output.write('<pre>\n')
+        if type(result).__name__ == 'DataFrame':
+            output.write(result.to_string())
+        else:
+            import pprint
+            pp = pprint.PrettyPrinter(indent=4, stream=output)
+            pp.pprint(result)
+        output.write('</pre>\n')
+        return output.getvalue()
+
+
+    ### Collecting node data:
+    
+    ID_COLUMN    = 'id'
+    NODE1_COLUMN = 'node1'
+    LABEL_COLUMN = 'label'
+    NODE2_COLUMN = 'node2'
+    KGTK_EDGE_COLUMNS = [ID_COLUMN, NODE1_COLUMN, LABEL_COLUMN, NODE2_COLUMN]
+    
+    NODE_LABEL_COLUMN       = 'node_label'
+    NODE_ALIAS_COLUMN       = 'node_alias'
+    NODE_DESCRIPTION_COLUMN = 'node_description'
+    NODE_IMAGE_COLUMN       = 'node_image'
+    NODE_FANOUT_COLUMN      = 'node_fanout'   
+    
+    def collect_edges(self, edges_df):
+        """Given a full edges dataframe 'edges_df' including target node info columns, 
+        project out the core edge columns and remove any duplicates.
+        """
+        if edges_df is not None:
+            df = edges_df.loc[:,self.KGTK_EDGE_COLUMNS]
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            return df
+        return None
+
+    def collect_edge_label_labels(self, edges_df, lang=None, inverse=False):
+        """Given an edges dataframe 'edges_df' collect all label strings for any referenced
+        edge labels according to 'lang' and return a binary label_node/label_string frame.
+        'inverse' indicates that 'edges_df' is an inverse edge frame which is ignored.
+        """
+        # TO DO: make this more efficient, but caching will smooth this out quickly
+        if edges_df is not None:
+            if edges_df.empty:
+                return pd.DataFrame([], columns=(self.NODE1_COLUMN, self.LABEL_COLUMN))
+            df = edges_df.loc[:,[self.LABEL_COLUMN]]
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            labels = [self.get_node_labels(row[self.LABEL_COLUMN], lang=lang, fmt='df') for index, row in df.iterrows()]
+            labels_df = pd.concat(labels, ignore_index=True, copy=False)
+            return labels_df
+        return None
+    
+    def collect_edge_node_labels(self, edges_df, inverse=False):
+        """Given a full edges dataframe 'edges_df', project out the target node and
+        node label columns and remove any duplicates.  'inverse' indicates that 
+        'edges_df' is an inverse edge frame.
+        """
+        if edges_df is not None:
+            target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
+            df = edges_df.loc[:,[target_column, self.NODE_LABEL_COLUMN]]
+            df.dropna(inplace=True)
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            return df
+        return None
+    
+    def collect_edge_node_images(self, edges_df, inverse=False):
+        """Given a full edges dataframe 'edges_df', project out the target node and
+        node image columns and remove any duplicates.  'inverse' indicates that 
+        'edges_df' is an inverse edge frame.
+        """
+        if edges_df is not None:
+            target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
+            df = edges_df.loc[:,[target_column, self.NODE_IMAGE_COLUMN]]
+            df.dropna(inplace=True)
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            return df
+        return None
+    
+    def collect_edge_node_fanouts(self, edges_df, inverse=False):
+        """Given a full edges dataframe 'edges_df', project out the target node and
+        node fanout columns and remove any duplicates.  'inverse' indicates that
+        'edges_df' is an inverse edge frame.
+        """
+        if edges_df is not None:
+            target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
+            df = edges_df.loc[:,[target_column, self.NODE_FANOUT_COLUMN]]
+            # TO DO: think about folding default fanout substitution into here:
+            df.dropna(inplace=True)
+            df = df.astype({self.NODE_FANOUT_COLUMN: int})
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            return df
+        return None
+
+    def union_frames(self, *dfs):
+        """Take the union of all data frames 'dfs' which are assumed to have the same arity
+        and column type, but not necessarily the same name, and remove any duplicates.
+        The result uses the column names of the first of 'dfs'.
+        """
+        columns = None
+        norm_dfs = []
+        for df in dfs:
+            if df is None:
+                continue
+            if columns is None and norm_dfs:
+                columns = norm_dfs[0].columns
+            if columns is not None and not df.columns.equals(columns):
+                df = df.rename(columns=dict(zip(df.columns, columns)), inplace=False)
+            norm_dfs.append(df)
+        if not norm_dfs:
+            return None
+        if len(norm_dfs) == 1:
+            return norm_dfs[0]
+        else:
+            df = pd.concat(norm_dfs, ignore_index=True, copy=False)
+            df.drop_duplicates(ignore_index=True, inplace=True)
+            return df
+
+    #@lru_cache(maxsize=LRU_CACHE_SIZE)
+    def get_node_data_frames(self, node, lang=None, images=False, fanouts=False, inverse=False):
+        """Run all neccessary queries to collect the data to build a 'kgtk_node' object for 'node'.
+        Collects all relevant data for 'node' into a set of data frames that is returned as a dict.
+        Converting those into the appropriate JSON object(s) is done in separate steps.
+        Return None if 'node' does not exist in the graph.
+
+        'lang' controls the language of labels, aliases, etc. (one of 'any', 'en', 'es', etc.)
+        If 'images' is True, also include images for 'node' and 'node2's of edges and qualifiers.
+        If 'fanouts' is True, also include fanouts for 'node2's of edges and qualifiers.
+        If 'inverse' also include edges that have 'node' as their 'node2' (and their qualifiers).
+        For inverse edges, labels, images and fanouts are collected for the respective 'node1'.
+        Inverse edges may have very high fanout (e.g. in Wikidata), so be careful with that.
+        """
+
+        node_labels = self.get_node_labels(node, lang=lang, fmt='df')
+        node_aliases = self.get_node_aliases(node, lang=lang, fmt='df')
+        node_descs = self.get_node_descriptions(node, lang=lang, fmt='df')
+        # the 'images' switch only controls 'node2' images, not images for 'node':
+        node_images = self.get_node_images(node, fmt='df')
         
-        qualifiers = {}
-        for qid, eid, label, value in qual_tuples:
-            qedge = {
-                '@type': 'kgtk_edge',
-                's': eid,
-                'p': label,
-                'o': value,
-            }
-            qualifiers.setdefault(eid, []).append(qedge)
+        edges = self.get_node_edges(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
+        quals = self.get_node_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
 
-        edges = []
-        for eid, node1, label, node2 in edge_tuples:
-            edge = {
-                '@type': 'kgtk_edge',
-                '@id': eid,
-                's': node1,
-                'p': label,
-                'o': node2,
-            }
-            quals = qualifiers.get(eid)
-            if quals is not None:
-                edge['qualifiers'] = quals
-            edges.append(edge)
-
-        node_data = {
-            '@type': 'kgtk_node',
-            '@id': node,
-            'label': [l for (l,) in label_tuples],
-            'alias': [a for (a,) in alias_tuples],
-            'description': [d for (d,) in desc_tuples],
-            'image': [i for (i,) in img_tuples],
-            'edges': edges,
-        }
-
-        if not edges and not node_data['label'] and not node_data['alias'] and not node_data['description']:
+        inv_edges, inv_quals = None, None
+        if inverse:
+            inv_edges = self.get_node_inverse_edges(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
+            inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
+            
+        if (node_labels.empty and node_aliases.empty and node_descs.empty and
+            edges.empty and (inv_edges is None or inv_edges.empty)):
             # 'node' doesn't exist or nothing is known about it:
             return None
 
-        if isinstance(lang, str) and lang != self.LANGUAGE_ANY:
-            self.filter_lqstrings(node_data['label'], lang, dflt=node)
-            self.filter_lqstrings(node_data['alias'], lang)
-            self.filter_lqstrings(node_data['description'], lang)
+        all_edges = self.union_frames(self.collect_edges(edges), self.collect_edges(inv_edges))
+        all_quals = self.union_frames(self.collect_edges(quals), self.collect_edges(inv_quals))
+
+        all_labels = self.union_frames(
+            node_labels,
+            self.collect_edge_label_labels(edges, lang=lang),
+            self.collect_edge_label_labels(inv_edges, lang=lang, inverse=True),
+            self.collect_edge_label_labels(quals, lang=lang),
+            self.collect_edge_label_labels(inv_quals, lang=lang),
+            self.collect_edge_node_labels(edges),
+            self.collect_edge_node_labels(inv_edges, inverse=True),
+            self.collect_edge_node_labels(quals),
+            self.collect_edge_node_labels(inv_quals))
+
+        all_images = None
+        if images:
+            all_images = self.union_frames(
+                node_images,
+                self.collect_edge_node_images(edges),
+                self.collect_edge_node_images(inv_edges, inverse=True),
+                self.collect_edge_node_images(quals),
+                self.collect_edge_node_images(inv_quals))
+
+        all_fanouts = None
+        if fanouts:
+            all_fanouts = self.union_frames(
+                self.collect_edge_node_fanouts(edges),
+                self.collect_edge_node_fanouts(inv_edges, inverse=True),
+                self.collect_edge_node_fanouts(quals),
+                self.collect_edge_node_fanouts(inv_quals))
+        
+        node_data = {
+            'node': node,
+            'labels': node_labels,
+            'aliases': node_aliases,
+            'descriptions': node_descs,
+            'images': node_images,
+            'edges': all_edges,
+            'qualifiers': all_quals,
+            'all_labels': all_labels,
+            'all_images': all_images,
+            'all_fanouts': all_fanouts,
+        }
         return node_data
 
 
-    def get_node_edge_label_labels_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_label_labels'.
-        """
-        if self.edge_label_labels_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_LABELS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r {label: rl}]->(), `%s`: (rl)-[:`%s`]->(rlabel)'
-                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct rl as node1, rlabel as label',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_label_labels_query = query
-        return self.edge_label_labels_query
+    ### Converting to JSON objects:
 
-    def get_node_edge_label_labels(self, node):
-        """Retrieve all label strings associated with labels of edges starting from 'node'.
-        """
-        query, sql, params = self.get_node_edge_label_labels_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
-
-    def get_node_edge_node2_labels_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_node2_labels'.
-        """
-        if self.edge_node2_labels_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_LABELS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2label)'
-                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct n2 as node1, n2label as label',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_node2_labels_query = query
-        return self.edge_node2_labels_query
-
-    def get_node_edge_node2_labels(self, node):
-        """Retrieve all label strings associated with node2's of edges starting from 'node'.
-        """
-        query, sql, params = self.get_node_edge_node2_labels_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
-
-    def get_node_edge_node2_images_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_node2_images'.
-        """
-        if self.edge_node2_images_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_IMAGES_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2image)'
-                                             % (*graphs, self.get_config('DB_IMAGES_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct n2 as node1, n2image as image',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_node2_images_query = query
-        return self.edge_node2_images_query
-
-    def get_node_edge_node2_images(self, node):
-        """Retrieve all images associated with node2's of edges starting from 'node'.
-        """
-        query, sql, params = self.get_node_edge_node2_images_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
-
-    def get_node_edge_node2_fanouts_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_node2_fanouts'.
-        """
-        if self.edge_node2_fanouts_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_FANOUTS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[]->(n2), `%s`: (n2)-[:`%s`]->(n2fanout)'
-                                             % (*graphs, self.get_config('DB_FANOUTS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct n2 as node1, n2fanout as fanout',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_node2_fanouts_query = query
-        return self.edge_node2_fanouts_query
-
-    def get_node_edge_node2_fanouts(self, node):
-        """Retrieve all fanout counts associated with node2's of edges starting from 'node'.
-        """
-        query, sql, params = self.get_node_edge_node2_fanouts_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+    JSON_ID_COLUMN    = '@id'
+    JSON_NODE1_COLUMN = 's'
+    JSON_LABEL_COLUMN = 'p'
+    JSON_NODE2_COLUMN = 'o'
+    JSON_EDGE_COLUMNS = [JSON_ID_COLUMN, JSON_NODE1_COLUMN, JSON_LABEL_COLUMN, JSON_NODE2_COLUMN]
+    KGTK_TO_JSON_EDGE_COLUMN_MAP = {k: v for k, v in zip(KGTK_EDGE_COLUMNS, JSON_EDGE_COLUMNS)}
     
-    def get_node_edge_qualifier_label_labels_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_qualifier_label_labels'.
+    def edges_df_to_json(self, edges_df):
+        """Convert an edges data frame 'edges_df' into a corresponding JSON list of dicts.
+        Assumes 'edges_df' has been projected onto its four core columns.  Renames triple
+        columns to 's/p/o' to save some space.
         """
-        if self.edge_qualifier_label_labels_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_QUALIFIERS_GRAPH'),
-                      self.get_config('DB_LABELS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r]->(), `%s`: (r)-[q {label: ql}]->(), `%s`: (ql)-[:`%s`]->(qlabel)'
-                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct ql as node1, qlabel as label',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_qualifier_label_labels_query = query
-        return self.edge_qualifier_label_labels_query
+        df = edges_df.rename(columns=self.KGTK_TO_JSON_EDGE_COLUMN_MAP, inplace=False)
+        # add JSON-LD @type field:
+        df['@type'] = 'kgtk_edge'
+        return df.to_dict(orient='records')
 
-    def get_node_edge_qualifier_label_labels(self, node):
-        """Retrieve all label strings associated with labels of qualifier edges associated with 'node'.
+    def value_df_to_json(self, values_df):
+        """Convert a single-valued 'values_df' data frame into a corresponding JSON list of dicts.
+        Assumes 'values_df' is a binary key/value frame where each key has exactly 1 value.
         """
-        query, sql, params = self.get_node_edge_qualifier_label_labels_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        return dict(values_df.itertuples(index=False, name=None))
 
-    def get_node_edge_qualifier_node2_labels_query(self):
-        """Create and cache the Kypher query used by 'get_node_edge_qualifier_node2_labels'.
+    def values_df_to_json(self, values_df):
+        """Convert a multi-valued 'values_df' data frame into a corresponding JSON list of dicts.
+        Assumes 'values_df' is a binary key/value frame where each key can have multiple values.
         """
-        if self.edge_qualifier_node2_labels_query is None:
-            store = self.get_sql_store()
-            graphs = (self.get_config('DB_EDGES_GRAPH'),
-                      self.get_config('DB_QUALIFIERS_GRAPH'),
-                      self.get_config('DB_LABELS_GRAPH'))
-            query = kyquery.KgtkQuery(graphs,
-                                      store,
-                                      loglevel=self.QUERY_LOG_LEVEL,
-                                      index=self.get_config('DB_INDEX_MODE'),
-                                      match=('`%s`: (n)-[r]->(), `%s`: (r)-[]->(qn2), `%s`: (qn2)-[:`%s`]->(qlabel)'
-                                             % (*graphs, self.get_config('DB_LABELS_LABEL'))),
-                                      where='n=$NODE',
-                                      ret='distinct qn2 as node1, qlabel as label',
-                                      limit=str(self.MAX_RESULTS),
-                                      parameters={'NODE': '$NODE'},
-            )
-            sql, params = query.translate_to_sql()
-            query.ensure_relevant_indexes(sql)
-            query = (query, sql, params)
-            self.edge_qualifier_node2_labels_query = query
-        return self.edge_qualifier_node2_labels_query
+        keycol = values_df.columns[0]
+        valcol = values_df.columns[1]
+        return values_df.groupby(by=keycol)[valcol].apply(list).to_dict()
 
-    def get_node_edge_qualifier_node2_labels(self, node):
-        """Retrieve all label strings associated with node2's of qualifier edges associated with 'node'.
+    def node_data_core_to_json(self, node_data):
+        """Convert core node components of 'node_data' into a JSONLD 'kgtk_node' object.
         """
-        query, sql, params = self.get_node_edge_qualifier_node2_labels_query()
-        result = self.execute_query(query, sql, self.subst_params(params, {'$NODE': node}))
-        return result
+        node = node_data['node']
+        core_data = {
+            '@type': 'kgtk_node',
+            '@id':   node,
+            'label': list(node_data['labels'][self.NODE_LABEL_COLUMN]),
+            'alias': list(node_data['aliases'][self.NODE_ALIAS_COLUMN]),
+            'description':
+                     list(node_data['descriptions'][self.NODE_DESCRIPTION_COLUMN]),
+            'image': list(node_data['images'][self.NODE_IMAGE_COLUMN]),
+            'edges': self.edges_df_to_json(node_data['edges'])
+        }
+        # adding qualifiers to edge dicts is a bit messy, maybe there is a more panda-ish way:
+        qualifiers = node_data['qualifiers']
+        if not qualifiers.empty:
+            edge_index = {edge[self.JSON_ID_COLUMN]: edge for edge in core_data['edges']}
+            for edge_id, quals in qualifiers.groupby(self.NODE1_COLUMN):
+                edge_index[edge_id]['qualifiers'] = self.edges_df_to_json(quals)
+        return core_data
 
-    @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_node_object_labels(self, node, lang=None):
-        """Run all queries neccessary to collect the label string data for all edge
-        labels and value objects collected by 'get_node_graph_data', and assemble the
-        results into an approriate 'kgtk_object_labels' dict/JSON object.
+    def node_data_labels_to_json(self, node_data):
+        """Convert label components of 'node_data' into a JSONLD 'kgtk_object_labels' dict.
         """
-        edge_label_label_tuples = self.get_node_edge_label_labels(node)
-        edge_node2_label_tuples = self.get_node_edge_node2_labels(node)
-        qual_label_label_tuples = self.get_node_edge_qualifier_label_labels(node)
-        qual_node2_label_tuples = self.get_node_edge_qualifier_node2_labels(node)
-        
-        object_labels = {}
-        for obj, label in edge_label_label_tuples:
-            object_labels.setdefault(obj, []).append(label)
-
-        new_labels = {}
-        for obj, label in edge_node2_label_tuples:
-            if obj not in object_labels:
-                new_labels.setdefault(obj, []).append(label)
-        for obj, labels in new_labels.items():
-            object_labels[obj] = labels
-
-        new_labels = {}
-        for obj, label in qual_label_label_tuples:
-            if obj not in object_labels:
-                new_labels.setdefault(obj, []).append(label)
-        for obj, labels in new_labels.items():
-            object_labels[obj] = labels
-
-        new_labels = {}
-        for obj, label in qual_node2_label_tuples:
-            if obj not in object_labels:
-                new_labels.setdefault(obj, []).append(label)
-        for obj, labels in new_labels.items():
-            object_labels[obj] = labels
-
-        if isinstance(lang, str) and lang != self.LANGUAGE_ANY:
-            for obj, labels in object_labels.items():
-                self.filter_lqstrings(labels, lang, dflt=obj)
-
+        node = node_data['node']
         labels_data = {
             '@type': 'kgtk_object_labels',
             '@id': 'kgtk_object_labels_%s' % node,
-            'labels': object_labels,
+            'labels': self.values_df_to_json(node_data['all_labels']),
         }
         return labels_data
 
-    def get_node_object_images(self, node):
-        """Run all queries neccessary to collect the images data for all
-        value objects collected by 'get_node_graph_data', and assemble the
-        results into an approriate 'kgtk_object_images' dict/JSON object.
+    def node_data_images_to_json(self, node_data):
+        """Convert image components of 'node_data' into a JSONLD 'kgtk_object_images' dict.
         """
-        edge_node2_image_tuples = self.get_node_edge_node2_images(node)
-        
-        object_images = {}
-        for obj, image in edge_node2_image_tuples:
-            object_images.setdefault(obj, []).append(image)
-
+        node = node_data['node']
+        images = node_data['all_images']
         images_data = {
             '@type': 'kgtk_object_images',
             '@id': 'kgtk_object_images_%s' % node,
-            'images': object_images,
+            'images': images is not None and self.values_df_to_json(images) or [],
         }
         return images_data
-    
-    def get_node_object_fanouts(self, node):
-        """Run all queries neccessary to collect the fanout counts for all
-        value objects collected by 'get_node_graph_data', and assemble the
-        results into an approriate 'kgtk_object_fanouts' dict/JSON object.
-        """
-        edge_node2_fanout_tuples = self.get_node_edge_node2_fanouts(node)
-        
-        object_fanouts = {}
-        for obj, fanout in edge_node2_fanout_tuples:
-            # we assume these to be single-valued, so no aggregation necessary:
-            object_fanouts[obj] = int(fanout)
 
+    def node_data_fanouts_to_json(self, node_data):
+        """Convert image components of 'node_data' into a JSONLD 'kgtk_object_fanouts' dict.
+        """
+        node = node_data['node']
+        fanouts = node_data['all_fanouts']
         fanouts_data = {
             '@type': 'kgtk_object_fanouts',
             '@id': 'kgtk_object_fanouts_%s' % node,
-            'fanouts': object_fanouts,
+            'fanouts': fanouts is not None and self.value_df_to_json(fanouts) or [],
         }
         return fanouts_data
-    
-    def get_all_node_data(self, node, lang=None, images=False, fanouts=False):
-        """Return all graph and label data for 'node' and return it as a
-        'kgtk_object_collection' dict/JSON object.  Return None if 'node'
-        does not exist in the graph.  If 'images' and/or 'fanouts' is True
-        fetch and add the respective node2 descriptor data.
+
+    def node_data_to_json(self, node_data):
+        """Convert all of 'node_data' into a JSONLD 'kgtk_object_collection' object
+        including (dummy) context and meta information.
         """
-        graph_data = self.get_node_graph_data(node, lang=lang)
-        if graph_data is None:
-            return None
-        objects = [graph_data]
-        objects.append(self.get_node_object_labels(node, lang=lang))
-        if images:
-            objects.append(self.get_node_object_images(node))
-        if fanouts:
-            objects.append(self.get_node_object_fanouts(node))
-        
+        objects = []
+        objects.append(self.node_data_core_to_json(node_data))
+        objects.append(self.node_data_labels_to_json(node_data))
+        if node_data['all_images'] is not None:
+            objects.append(self.node_data_images_to_json(node_data))
+        if node_data['all_fanouts'] is not None:
+            objects.append(self.node_data_fanouts_to_json(node_data))
         node_data = {
             "@type": "kgtk_object_collection",
             # @context and meta info are not used and just for illustration for now:
@@ -719,12 +444,29 @@ class BrowserBackend(object):
             ],
             "meta": {
                 "@type": "kgtk_meta_info",
-                "database": "wikidata-dwd",
-                "version": "2021-03-24",
+                "database": os.path.basename(self.api.sql_store.dbfile),
+                "version": "2021-08-01",
             },
             "objects": objects,
         }
         return node_data
+
+
+    ### Top level:
+    
+    def get_all_node_data(self, node, lang=None, images=False, fanouts=False, inverse=False):
+        """Return all graph and label data for 'node' and return it as a
+        'kgtk_object_collection' dict/JSON object.  Return None if 'node'
+        does not exist in the graph.  If 'images' and/or 'fanouts' is True
+        fetch and add the respective node2 descriptor data.  If 'inverse'
+        is True, also include edges (and their associated info) that have
+        'node' as their node2.
+        """
+        node_data = self.get_node_data_frames(node, lang=lang, images=images, fanouts=fanouts, inverse=inverse)
+        if node_data is None:
+            return None
+        else:
+            return self.node_data_to_json(node_data)
 
 
 """
