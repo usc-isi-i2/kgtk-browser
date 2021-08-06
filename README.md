@@ -90,7 +90,7 @@ retrieve both images and fanouts here to document the corresponding
 objects.
 
 ```
-http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=es&images=true&fanouts=true&inverse=false
+http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=en&images=true&fanouts=true&inverse=false
 
 {
   "@context": [
