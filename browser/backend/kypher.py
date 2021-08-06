@@ -8,8 +8,9 @@ import csv
 from http import HTTPStatus
 from functools import lru_cache
 import sqlite3
-
-import pandas as pd
+from operator import itemgetter
+from collections import OrderedDict
+import itertools
 
 import kgtk.kypher.query as kyquery
 import kgtk.kypher.sqlstore as sqlstore
@@ -19,6 +20,183 @@ from kgtk.exceptions import KGTKException
 # TO DO:
 # - reimplement the "language backoff" we had previously; currently we don't
 #   substitute labels, etc. from other languages if the desired language is empty
+
+
+class FastDataFrame(object):
+    """
+    Fast and simple dataframe implementation that mirrors the functionality we
+    previously implemented via pandas.  This is less general but about 10x faster.
+    """
+    
+    def __init__(self, columns, rows):
+        """Create a dataframe with header 'columns' and data 'rows'.
+        'columns' may be integers or strings and can be a single atom.
+        'rows' can be any list or iterable of tuples whose arity is uniform
+        and matches 'columns'.
+        """
+        self.columns = self.get_columns(columns)  # columns are always kept as a tuple
+        self.rows = rows                          # rows can be a list, set or iterable
+
+    def __iter__(self):
+        return self.rows.__iter__()
+
+    def __len__(self):
+        return len(self.get_rows())
+
+    def __getitem__(self, index):
+        """Support indexed access to rows which requires conversion to a list format.
+        """
+        rows = self.rows
+        if not isinstance(rows, (list, tuple)):
+            rows = list(rows)
+            self.rows = rows
+        return rows[index]
+
+    def empty(self):
+        return len(self) == 0
+
+    def copy(self):
+        # if it is an iterable, we need to listify first, otherwise copying will exhaust the iter:
+        rows = self.get_rows()
+        return FastDataFrame(self.columns, rows.copy())
+
+    def get_columns(self, columns=None):
+        """Map 'columns' or the current columns onto a normalized tuple.
+        'columns' may be integers or strings and can be a single atom.
+        """
+        columns = self.columns if columns is None else columns
+        columns = (columns,) if isinstance(columns, (int, str)) else columns
+        return tuple(columns)
+
+    def get_rows(self):
+        """Materialize the current set of rows as a list if necessary
+        and return the result.
+        """
+        if not isinstance(self.rows, (list, set, tuple)):
+            self.rows = list(self.rows)
+        return self.rows
+        
+    def _get_column_indices(self, columns):
+        """Convert 'columns' into a set of integer indices into 'self.columns'.
+        'columns' may be integers or strings and can be a single atom.
+        """
+        icols = []
+        for col in self.get_columns(columns):
+            if isinstance(col, int):
+                icols.append(col)
+            else:
+                icols.append(self.columns.index(col))
+        return tuple(icols)
+
+    def rename(self, colmap, inplace=False):
+        """Rename some or all columns according to the map in 'colmap'.
+        """
+        newcols = tuple(colmap.get(c, c) for c in self.columns)
+        df = inplace and self or FastDataFrame(newcols, self.rows)
+        df.columns = newcols
+        return df
+
+    def project(self, columns):
+        """Project rows of 'self' according to 'columns' which might be integer or string indices.
+        This always creates a new dataframe as a result.  If a single column is given as an atom,
+        rows will be atomic, if given as a list rows will be single-element tuples.
+        """
+        atomic_singletons = isinstance(columns, (int, str))
+        icols = self._get_column_indices(columns)
+        if len(icols) > 1 or atomic_singletons:
+            return FastDataFrame(itemgetter(*icols)(self.columns), map(lambda r: itemgetter(*icols)(r), self.rows))
+        else:
+            # ensure single-item tuple, itemgetter converts to atom in this case:
+            col = icols[0]
+            return FastDataFrame(itemgetter(*icols)(self.columns), map(lambda r: (r[col],), self.rows))
+
+    def drop_duplicates(self, inplace=False):
+        """Remove all duplicate rows.  Preserve order of first appearance.
+        """
+        rows = list(OrderedDict.fromkeys(self.rows))
+        if inplace:
+            self.rows = rows
+            return self
+        else:
+            return FastDataFrame(self.columns, rows)
+
+    def drop_nulls(self, inplace=False):
+        """Remove all rows that have at least one None value.
+        """
+        df = inplace and self or FastDataFrame(self.columns, None)
+        df.rows = filter(lambda r: None not in r, self.rows)
+        return df
+
+    def coerce_type(self, column, type, inplace=False):
+        # TO DO: for now we do this after JSON conversion
+        pass
+
+    def concat(self, *dfs, inplace=False):
+        """Concatenate 'self' with all data frames 'dfs' which are assumed to have the
+        same arity, column types and order, but not necessarily the same column names.
+        The result uses the column names of 'self'.
+        """
+        columns = self.columns
+        norm_dfs = [self]
+        for df in dfs:
+            if df is None:
+                continue
+            if len(columns) != len(df.columns):
+                raise KGTKException('unioned frames need to have the same number of columns')
+            norm_dfs.append(df)
+        if len(norm_dfs) == 1:
+            return inplace and self or self.copy()
+        else:
+            df = inplace and self or FastDataFrame(columns, None)
+            df.rows = itertools.chain(*norm_dfs)
+            return df
+        
+    def union(self, *dfs, inplace=False):
+        """Concatenate 'self' with all data frames 'dfs' and remove any duplicates.
+        """
+        df = self.concat(*dfs, inplace=inplace)
+        df = df.drop_duplicates(inplace=inplace)
+        return df
+
+    def to_list(self):
+        """Return rows as a list of tuples.
+        """
+        self.rows = list(self.rows)
+        return self.rows
+
+    def to_string(self):
+        """Return a printable string representation of this frame.
+        """
+        out = io.StringIO()
+        csvwriter = csv.writer(out, dialect=None, delimiter='\t',
+                               quoting=csv.QUOTE_NONE, quotechar=None,
+                               lineterminator='\n', escapechar=None)
+        csvwriter.writerow(self.columns)
+        csvwriter.writerows(self.rows)
+        return out.getvalue()
+
+    def to_records_dict(self):
+        """Return a list of rows each represented as a dict of column/value pairs.
+        """
+        columns = self.columns
+        return [{k: v for k, v in zip(columns, r)} for r in self.rows]
+
+    def to_value_dict(self):
+        """Convert a single-valued values data frame into a corresponding JSON dict.
+        Assumes 'self' is a binary key/value frame where each key has exactly 1 value.
+        Keys are assumed to be in column 0 and values in column 1.
+        """
+        return {k: v for k, v in self.rows}
+
+    def to_values_dict(self):
+        """Convert a multi-valued 'values_df' data frame into a corresponding JSON dict.
+        Assumes 'values_df' is a binary key/value frame where each key can have multiple values.
+        Keys are assumed to be in column 0 and values in column 1.
+        """
+        result = {}
+        for k, v in self.rows:
+            result.setdefault(k, []).append(v)
+        return result
 
 
 class BrowserBackend(object):
@@ -61,49 +239,64 @@ class BrowserBackend(object):
 
     ### Query wrappers:
     
+    FORMAT_FAST_DF = 'fdf'
+
+    def execute_query(self, query, fmt=None, **kwds):
+        """Query execution wrapper that handles the special fast dataframe format.
+        """
+        qfmt = fmt == self.FORMAT_FAST_DF and 'list' or fmt
+        result = query.execute(fmt=qfmt, **kwds)
+        if fmt == self.FORMAT_FAST_DF:
+            result = FastDataFrame(query.get_result_header(), result)
+        return result
+    
     def get_node_labels(self, node, lang=None, fmt=None):
         """Retrieve all labels for 'node'.
         """
-        return self.get_config('NODE_LABELS_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.get_config('NODE_LABELS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_node_aliases(self, node, lang=None, fmt=None):
         """Retrieve all aliases for 'node'.
         """
-        return self.get_config('NODE_ALIASES_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.get_config('NODE_ALIASES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_node_descriptions(self, node, lang=None, fmt=None):
         """Retrieve all descriptions for 'node'.
         """
-        return self.get_config('NODE_DESCRIPTIONS_QUERY').execute(NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.get_config('NODE_DESCRIPTIONS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
     
     def get_node_images(self, node, fmt=None):
         """Retrieve all images for 'node'.
         """
-        return self.get_config('NODE_IMAGES_QUERY').execute(NODE=node, fmt=fmt)
+        query = self.get_config('NODE_IMAGES_QUERY')
+        return self.execute_query(query, NODE=node, fmt=fmt)
     
     def get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node1.
         """
-        return self.get_config('NODE_EDGES_QUERY').execute(
-            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.get_config('NODE_EDGES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node2.
         """
-        return self.get_config('NODE_INVERSE_EDGES_QUERY').execute(
-            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.get_config('NODE_INVERSE_EDGES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node1.
         """
-        return self.get_config('NODE_EDGE_QUALIFIERS_QUERY').execute(
-            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.get_config('NODE_EDGE_QUALIFIERS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node2.
         """
-        return self.get_config('NODE_INVERSE_EDGE_QUALIFIERS_QUERY').execute(
-            NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.get_config('NODE_INVERSE_EDGE_QUALIFIERS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
 
 
     ### Utilities:
@@ -140,7 +333,7 @@ class BrowserBackend(object):
         """
         output = io.StringIO()
         output.write('<pre>\n')
-        if type(result).__name__ == 'DataFrame':
+        if hasattr(result, 'to_string'):
             output.write(result.to_string())
         else:
             import pprint
@@ -169,8 +362,8 @@ class BrowserBackend(object):
         project out the core edge columns and remove any duplicates.
         """
         if edges_df is not None:
-            df = edges_df.loc[:,self.KGTK_EDGE_COLUMNS]
-            df.drop_duplicates(ignore_index=True, inplace=True)
+            df = edges_df.project(self.KGTK_EDGE_COLUMNS)
+            df.drop_duplicates(inplace=True)
             return df
         return None
 
@@ -181,13 +374,13 @@ class BrowserBackend(object):
         """
         # TO DO: make this more efficient, but caching will smooth this out quickly
         if edges_df is not None:
-            if edges_df.empty:
-                return pd.DataFrame([], columns=(self.NODE1_COLUMN, self.LABEL_COLUMN))
-            df = edges_df.loc[:,[self.LABEL_COLUMN]]
-            df.drop_duplicates(ignore_index=True, inplace=True)
-            labels = [self.get_node_labels(row[self.LABEL_COLUMN], lang=lang, fmt='df') for index, row in df.iterrows()]
-            labels_df = pd.concat(labels, ignore_index=True, copy=False)
-            return labels_df
+            df = edges_df.project(self.LABEL_COLUMN)
+            df.drop_duplicates(inplace=True)
+            columns = (self.NODE1_COLUMN, self.LABEL_COLUMN)
+            if len(df) == 0:
+                return FastDataFrame(columns, [])
+            labels = [self.get_node_labels(label, lang=lang, fmt='list') for label in df]
+            return FastDataFrame(columns, itertools.chain(*labels))
         return None
     
     def collect_edge_node_labels(self, edges_df, inverse=False):
@@ -197,9 +390,9 @@ class BrowserBackend(object):
         """
         if edges_df is not None:
             target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
-            df = edges_df.loc[:,[target_column, self.NODE_LABEL_COLUMN]]
-            df.dropna(inplace=True)
-            df.drop_duplicates(ignore_index=True, inplace=True)
+            df = edges_df.project([target_column, self.NODE_LABEL_COLUMN])
+            df.drop_nulls(inplace=True)
+            df.drop_duplicates(inplace=True)
             return df
         return None
     
@@ -210,9 +403,9 @@ class BrowserBackend(object):
         """
         if edges_df is not None:
             target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
-            df = edges_df.loc[:,[target_column, self.NODE_IMAGE_COLUMN]]
-            df.dropna(inplace=True)
-            df.drop_duplicates(ignore_index=True, inplace=True)
+            df = edges_df.project([target_column, self.NODE_IMAGE_COLUMN])
+            df.drop_nulls(inplace=True)
+            df.drop_duplicates(inplace=True)
             return df
         return None
     
@@ -223,39 +416,15 @@ class BrowserBackend(object):
         """
         if edges_df is not None:
             target_column = inverse and self.NODE1_COLUMN or self.NODE2_COLUMN
-            df = edges_df.loc[:,[target_column, self.NODE_FANOUT_COLUMN]]
+            df = edges_df.project([target_column, self.NODE_FANOUT_COLUMN])
             # TO DO: think about folding default fanout substitution into here:
-            df.dropna(inplace=True)
-            df = df.astype({self.NODE_FANOUT_COLUMN: int})
-            df.drop_duplicates(ignore_index=True, inplace=True)
+            df.drop_nulls(inplace=True)
+            df.drop_duplicates(inplace=True)
+            # deferred to JSON conversion for now:
+            #df.coerce_type(self.NODE_FANOUT_COLUMN, int, inplace=True)
             return df
         return None
 
-    def union_frames(self, *dfs):
-        """Take the union of all data frames 'dfs' which are assumed to have the same arity
-        and column type, but not necessarily the same name, and remove any duplicates.
-        The result uses the column names of the first of 'dfs'.
-        """
-        columns = None
-        norm_dfs = []
-        for df in dfs:
-            if df is None:
-                continue
-            if columns is None and norm_dfs:
-                columns = norm_dfs[0].columns
-            if columns is not None and not df.columns.equals(columns):
-                df = df.rename(columns=dict(zip(df.columns, columns)), inplace=False)
-            norm_dfs.append(df)
-        if not norm_dfs:
-            return None
-        if len(norm_dfs) == 1:
-            return norm_dfs[0]
-        else:
-            df = pd.concat(norm_dfs, ignore_index=True, copy=False)
-            df.drop_duplicates(ignore_index=True, inplace=True)
-            return df
-
-    #@lru_cache(maxsize=LRU_CACHE_SIZE)
     def get_node_data_frames(self, node, lang=None, images=False, fanouts=False, inverse=False):
         """Run all neccessary queries to collect the data to build a 'kgtk_node' object for 'node'.
         Collects all relevant data for 'node' into a set of data frames that is returned as a dict.
@@ -269,31 +438,30 @@ class BrowserBackend(object):
         For inverse edges, labels, images and fanouts are collected for the respective 'node1'.
         Inverse edges may have very high fanout (e.g. in Wikidata), so be careful with that.
         """
-
-        node_labels = self.get_node_labels(node, lang=lang, fmt='df')
-        node_aliases = self.get_node_aliases(node, lang=lang, fmt='df')
-        node_descs = self.get_node_descriptions(node, lang=lang, fmt='df')
+        result_fmt = self.FORMAT_FAST_DF
+        node_labels = self.get_node_labels(node, lang=lang, fmt=result_fmt)
+        node_aliases = self.get_node_aliases(node, lang=lang, fmt=result_fmt)
+        node_descs = self.get_node_descriptions(node, lang=lang, fmt=result_fmt)
         # the 'images' switch only controls 'node2' images, not images for 'node':
-        node_images = self.get_node_images(node, fmt='df')
+        node_images = self.get_node_images(node, fmt=result_fmt)
         
-        edges = self.get_node_edges(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
-        quals = self.get_node_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
+        edges = self.get_node_edges(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
+        quals = self.get_node_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
 
         inv_edges, inv_quals = None, None
         if inverse:
-            inv_edges = self.get_node_inverse_edges(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
-            inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt='df')
+            inv_edges = self.get_node_inverse_edges(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
+            inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
             
-        if (node_labels.empty and node_aliases.empty and node_descs.empty and
-            edges.empty and (inv_edges is None or inv_edges.empty)):
+        if (node_labels.empty() and node_aliases.empty() and node_descs.empty() and
+            edges.empty() and (inv_edges is None or inv_edges.empty())):
             # 'node' doesn't exist or nothing is known about it:
             return None
 
-        all_edges = self.union_frames(self.collect_edges(edges), self.collect_edges(inv_edges))
-        all_quals = self.union_frames(self.collect_edges(quals), self.collect_edges(inv_quals))
+        all_edges = self.collect_edges(edges).union(self.collect_edges(inv_edges))
+        all_quals = self.collect_edges(quals).union(self.collect_edges(inv_quals))
 
-        all_labels = self.union_frames(
-            node_labels,
+        all_labels = node_labels.union(
             self.collect_edge_label_labels(edges, lang=lang),
             self.collect_edge_label_labels(inv_edges, lang=lang, inverse=True),
             self.collect_edge_label_labels(quals, lang=lang),
@@ -305,8 +473,7 @@ class BrowserBackend(object):
 
         all_images = None
         if images:
-            all_images = self.union_frames(
-                node_images,
+            all_images = node_images.union(
                 self.collect_edge_node_images(edges),
                 self.collect_edge_node_images(inv_edges, inverse=True),
                 self.collect_edge_node_images(quals),
@@ -314,8 +481,7 @@ class BrowserBackend(object):
 
         all_fanouts = None
         if fanouts:
-            all_fanouts = self.union_frames(
-                self.collect_edge_node_fanouts(edges),
+            all_fanouts = self.collect_edge_node_fanouts(edges).union(
                 self.collect_edge_node_fanouts(inv_edges, inverse=True),
                 self.collect_edge_node_fanouts(quals),
                 self.collect_edge_node_fanouts(inv_quals))
@@ -349,24 +515,26 @@ class BrowserBackend(object):
         Assumes 'edges_df' has been projected onto its four core columns.  Renames triple
         columns to 's/p/o' to save some space.
         """
-        df = edges_df.rename(columns=self.KGTK_TO_JSON_EDGE_COLUMN_MAP, inplace=False)
+        orig_columns = edges_df.columns
+        edges_df.rename(self.KGTK_TO_JSON_EDGE_COLUMN_MAP, inplace=True)
         # add JSON-LD @type field:
-        df['@type'] = 'kgtk_edge'
-        return df.to_dict(orient='records')
+        json_edges = edges_df.to_records_dict()
+        for edge in json_edges:
+            edge['@type'] = 'kgtk_edge'
+        edges_df.columns = orig_columns
+        return json_edges
 
     def value_df_to_json(self, values_df):
-        """Convert a single-valued 'values_df' data frame into a corresponding JSON list of dicts.
+        """Convert a single-valued 'values_df' data frame into a corresponding JSON dict.
         Assumes 'values_df' is a binary key/value frame where each key has exactly 1 value.
         """
-        return dict(values_df.itertuples(index=False, name=None))
+        return values_df.to_value_dict()
 
     def values_df_to_json(self, values_df):
-        """Convert a multi-valued 'values_df' data frame into a corresponding JSON list of dicts.
+        """Convert a multi-valued 'values_df' data frame into a corresponding JSON dict.
         Assumes 'values_df' is a binary key/value frame where each key can have multiple values.
         """
-        keycol = values_df.columns[0]
-        valcol = values_df.columns[1]
-        return values_df.groupby(by=keycol)[valcol].apply(list).to_dict()
+        return values_df.to_values_dict()
 
     def node_data_core_to_json(self, node_data):
         """Convert core node components of 'node_data' into a JSONLD 'kgtk_node' object.
@@ -375,19 +543,20 @@ class BrowserBackend(object):
         core_data = {
             '@type': 'kgtk_node',
             '@id':   node,
-            'label': list(node_data['labels'][self.NODE_LABEL_COLUMN]),
-            'alias': list(node_data['aliases'][self.NODE_ALIAS_COLUMN]),
+            'label': node_data['labels'].project(self.NODE_LABEL_COLUMN).to_list(),
+            'alias': node_data['aliases'].project(self.NODE_ALIAS_COLUMN).to_list(),
             'description':
-                     list(node_data['descriptions'][self.NODE_DESCRIPTION_COLUMN]),
-            'image': list(node_data['images'][self.NODE_IMAGE_COLUMN]),
+                     node_data['descriptions'].project(self.NODE_DESCRIPTION_COLUMN).to_list(),
+            'image': node_data['images'].project(self.NODE_IMAGE_COLUMN).to_list(),
             'edges': self.edges_df_to_json(node_data['edges'])
         }
-        # adding qualifiers to edge dicts is a bit messy, maybe there is a more panda-ish way:
-        qualifiers = node_data['qualifiers']
-        if not qualifiers.empty:
+        # adding qualifiers to edge dicts is a bit messy, maybe abstract this better:
+        qualifiers = self.edges_df_to_json(node_data['qualifiers'])
+        if qualifiers:
             edge_index = {edge[self.JSON_ID_COLUMN]: edge for edge in core_data['edges']}
-            for edge_id, quals in qualifiers.groupby(self.NODE1_COLUMN):
-                edge_index[edge_id]['qualifiers'] = self.edges_df_to_json(quals)
+            for qual in qualifiers:
+                edge_id = qual[self.JSON_NODE1_COLUMN]
+                edge_index[edge_id].setdefault('qualifiers', []).append(qual)
         return core_data
 
     def node_data_labels_to_json(self, node_data):
@@ -409,7 +578,7 @@ class BrowserBackend(object):
         images_data = {
             '@type': 'kgtk_object_images',
             '@id': 'kgtk_object_images_%s' % node,
-            'images': images is not None and self.values_df_to_json(images) or [],
+            'images': images is not None and self.values_df_to_json(images) or {},
         }
         return images_data
 
@@ -421,8 +590,12 @@ class BrowserBackend(object):
         fanouts_data = {
             '@type': 'kgtk_object_fanouts',
             '@id': 'kgtk_object_fanouts_%s' % node,
-            'fanouts': fanouts is not None and self.value_df_to_json(fanouts) or [],
+            'fanouts': fanouts is not None and self.value_df_to_json(fanouts) or {},
         }
+        # coerce fanout values to ints:
+        fanouts = fanouts_data['fanouts']
+        for n, f in fanouts.items():
+            fanouts[n] = int(f)
         return fanouts_data
 
     def node_data_to_json(self, node_data):
@@ -453,7 +626,11 @@ class BrowserBackend(object):
 
 
     ### Top level:
+
+    # We do LRU-cache this one also, since conversion from cached query results
+    # to data frames and JSON takes about 20% of overall query time.
     
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
     def get_all_node_data(self, node, lang=None, images=False, fanouts=False, inverse=False):
         """Return all graph and label data for 'node' and return it as a
         'kgtk_object_collection' dict/JSON object.  Return None if 'node'
