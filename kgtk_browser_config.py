@@ -7,7 +7,7 @@ import kgtk.kypher.api as kapi
 
 GRAPH_CACHE           = './wikidata.sqlite3.db'
 LOG_LEVEL             = 1
-INDEX_MODE            = 'none'
+INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
 MAX_CACHE_SIZE        = 1000
 #DEFAULT_FANOUT        = 10       # not yet implemented
@@ -58,7 +58,7 @@ _api = kapi.KypherApi(graphcache=GRAPH_CACHE, loglevel=LOG_LEVEL, index=INDEX_MO
                       maxresults=MAX_RESULTS, maxcache=MAX_CACHE_SIZE)
 
 _api.add_input(KG_EDGES_GRAPH, name='edges', handle=True)
-_api.add_input(KG_QUALIFIERS_GRAPH, name='quals', handle=True)
+_api.add_input(KG_QUALIFIERS_GRAPH, name='qualifiers', handle=True)
 _api.add_input(KG_LABELS_GRAPH, name='labels', handle=True)
 _api.add_input(KG_ALIASES_GRAPH, name='aliases', handle=True)
 _api.add_input(KG_DESCRIPTIONS_GRAPH, name='descriptions', handle=True)
