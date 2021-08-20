@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/common/image/appicon.ico" type="image/x-icon">
+<title>KGTK Browser</title><script type="module" src="kb.js"></script>
+<style>
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,400italic,500,500italic,700,700italic,900,900italic,300italic,300,100italic,100);
+
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v55/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  position:relative;
+}
+
+body {
+  font-family: Roboto,Helvetica,sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  position:relative;
+}
+</style><style>
+      md-column-layout {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        height: 100%;
+        min-height: 100%;
+      }
+    </style><style>
+      md-row-layout {
+        display: flex;
+        flex-direction: row;
+        margin: 0;
+        width: 100%;
+        min-width: 100%;
+      }
+    </style><style>
+      md-content {
+        flex: 1;
+        padding: 8px;
+        display: block;
+        overflow: auto;
+        color: rgb(0,0,0);
+        background-color: #eeeeee;
+
+        position: relative;
+
+        flex-basis: 0%;
+        flex-grow: 1;
+        flex-shrink: 1;
+      }
+    </style><style>
+      md-spacer {
+        display: block;
+        flex: 1;
+      }
+    </style><style>
+      md-modal {
+        display: block;
+        position: fixed;
+        z-index: 100;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style><style>
+      md-toolbar {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        background-color: #00A0D6;
+        color: rgb(255,255,255);
+        height: 56px;
+        max-height: 56px;
+        font-size: 20px;
+        padding: 0px 16px;
+        margin: 0;
+        box-shadow: 0 1px 8px 0 rgba(0,0,0,.2),
+                    0 3px 4px 0 rgba(0,0,0,.14),
+                    0 3px 3px -2px rgba(0,0,0,.12);
+        z-index: 2;
+      }
+    </style><style>
+      md-tabs {
+        height: 100%;
+        margin: 5px;
+        display: table;
+        flex-direction: row;
+        align-items: center;
+        border-spacing: 3px;
+      }
+
+      md-tabs .selected {
+        border-bottom: 2px solid;
+      }
+    </style><style>
+      md-tab {
+        height: 100%;
+        text-transform: uppercase;
+        padding: 5px;
+        text-align: center;
+        display: table-cell;
+        vertical-align: middle;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      md-tab:hover {
+        background-color: rgba(0,0,0,0.07);
+      }
+    </style><style>
+      md-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    </style><style>
+      md-card-toolbar {
+        display: flex;
+        flex-direction: row;
+        align-items: top;
+        background-color: #FFFFFF;
+        color: #000000;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+    </style><style>
+      md-logo svg {
+        width: 100%;
+      }
+      md-logo path {
+        fill: #00A0D6; }
+      }
+    </style><style>
+      md-toolbar-logo {
+        margin: 5px 10px 0px 0px;
+        outline: none;
+      }
+      md-toolbar-logo svg {
+        width: 50px;
+      }
+      md-toolbar-logo path {
+        fill: #FFFFFF; }
+      }
+    </style><style>
+      md-icon-button button {
+        display: flex;
+        border-radius: 50%;
+        border: 0;
+        height: 40px;
+        width: 40px;
+        justify-content: center;
+        align-items: center;
+        background: transparent;
+        user-select: none;
+        cursor: pointer;
+      }
+
+      md-icon-button button:hover:enabled {
+        background-color: rgba(0,0,0,0.07);
+      }
+
+      md-icon-button button:disabled {
+        color: rgba(0,0,0,0.38);
+        cursor: default;
+      }
+
+      md-toolbar md-icon-button button {
+        color: rgb(255,255,255);
+      }
+
+      md-icon-button button:focus {
+        outline: none;
+      }
+
+      md-icon-button button i {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+      }
+    </style><style>
+      md-icon {
+        align-items: center;
+        display: flex;
+      }
+
+      md-icon i {
+        font-family: 'Material Icons';
+        font-weight: normal;
+        font-style: normal;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+      }
+    </style><style>
+      md-radio-button {
+        display: flex;
+        height: 30px;
+        width: 30px;
+        border-radius: 50%;
+      }
+
+      md-radio-button:hover {
+        background-color: rgba(0,0,0,0.07);
+      }
+
+      md-radio-button input {
+        height: 15px;
+        width: 15px;
+        margin: 8px;
+        background: transparent;
+        user-select: none;
+        cursor: pointer;
+      }
+    </style><style>
+      md-input {
+        display: block;
+        position: relative;
+        width: 100%;
+
+        color: black;
+        font-family: Roboto,Helvetica,sans-serif;
+        font-size: 14px;
+      }
+
+      md-input input {
+        outline: none;
+        border: none;
+        line-height: 40px;
+        height: 40px;
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style><style>
+      md-search {
+        display: block;
+        position: relative;
+        width: 100%;
+
+        color: black;
+        font-family: Roboto,Helvetica,sans-serif;
+        font-size: 15px;
+      }
+
+      md-search input {
+        outline: none;
+        border: none;
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 15px;
+      }
+    </style><style>
+      md-search-list {
+        display: none;
+        position: absolute;
+        background: #ffffff;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        z-index: 99;
+        width: 100%;
+        max-height: 400px;
+        overflow: auto;
+        cursor: pointer;
+      }
+    </style><style>
+      md-search-item {
+        display: block;
+        border-top: 1px solid #d4d4d4;
+        paddding-bottom: 1px;
+      }
+    </style><style>
+      md-data-table {
+        border: 0;
+        white-space: nowrap;
+        font-size: 14px;
+        text-align: left;
+      }
+
+      md-data-table thead {
+        padding-bottom: 3px;
+      }
+
+      md-data-table th {
+        vertical-align: bottom;
+        padding: 8px 12px;
+        box-sizing: border-box;
+        border-bottom: 1px solid rgba(0,0,0,.12);
+        text-overflow: ellipsis;
+        color: rgba(0,0,0,.54);
+      }
+
+      md-data-table td {
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(0,0,0,.12);
+        padding: 8px 12px;
+        box-sizing: border-box;
+        text-overflow: ellipsis;
+        overflow: hidden;
+      }
+
+      md-data-table td:first-of-type, md-data-table th:first-of-type {
+        padding-left: 24px;
+      }
+    </style><style>
+      kb-link {
+        color: #0b0080;
+      }
+
+      kb-link:hover {
+        cursor: pointer;
+      }
+    </style><style>
+      kb-search-box {
+        display: block;
+        width: 100%;
+        max-width: 800px;
+        padding-left: 10px;
+        padding-right: 3px;
+      }
+
+      kb-search-box form {
+        display: flex;
+        width: 100%;
+      }
+
+      kb-search-box .item-title {
+        font-weight: bold;
+        display: block;
+        padding: 2px 10px 2px 10px;
+      }
+
+      kb-search-box .item-description {
+        display: block;
+        padding: 0px 10px 0px 10px;
+      }
+    </style><style>
+      kb-property-table {
+        display: table;
+        font-size: 16px;
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      kb-property-table .prop-row {
+        display: table-row;
+        border-top: 1px solid lightgrey;
+      }
+
+      kb-property-table .prop-row:first-child {
+        display: table-row;
+        border-top: none;
+      }
+
+      kb-property-table .prop-name {
+        display: table-cell;
+        font-weight: 500;
+        width: 20%;
+        padding: 8px;
+        vertical-align: top;
+        overflow-wrap: break-word;
+      }
+
+      kb-property-table .prop-values {
+        display: table-cell;
+        vertical-align: top;
+        padding-bottom: 8px;
+      }
+
+      kb-property-table .prop-value {
+        padding: 8px 8px 0px 8px;
+        overflow-wrap: break-word;
+      }
+
+      kb-property-table .prop-lang {
+        color: #808080;
+        font-size: 13px;
+      }
+
+      kb-property-table .prop-value a {
+        color: #0b0080;
+        text-decoration: none;
+        cursor: pointer;
+        outline: none;
+      }
+
+      kb-property-table .qual-tab {
+        display: table;
+        border-collapse: collapse;
+      }
+
+      kb-property-table .qual-row {
+        display: table-row;
+      }
+
+      kb-property-table .qprop-name {
+        display: table-cell;
+        font-size: 13px;
+        vertical-align: top;
+        padding: 1px 3px 1px 30px;
+        width: 150px;
+      }
+
+      kb-property-table .qprop-values {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      kb-property-table .qprop-value {
+        font-size: 13px;
+        vertical-align: top;
+        padding: 1px 1px 1px 1px;
+      }
+
+      kb-property-table .qprop-value a {
+        color: #0b0080;
+        text-decoration: none;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .mobile kb-property-table {
+        display: flex;
+        flex-direction: column;
+        font-size: 16px;
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      .mobile kb-property-table .prop-row {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid lightgrey;
+      }
+
+      .mobile kb-property-table .prop-row:first-child {
+        display: flex;
+        flex-direction: column;
+        border-top: none;
+      }
+
+      .mobile kb-property-table .prop-name {
+        display: block;
+        font-weight: 300;
+        font-size: 14px;
+        width: auto;
+        padding: 1px;
+        vertical-align: top;
+      }
+
+      .mobile kb-property-table .prop-value:first-child {
+        padding: 2px 8px 0px 8px;
+      }
+    </style><style>
+      kb-item-list {
+        display: flex;
+        flex-direction: column;
+        font-size: 16px;
+      }
+
+      kb-item-list .row {
+        border-top: 1px solid lightgrey;
+        padding: 8px;
+      }
+
+      kb-item-list .row:first-child {
+        border-top: none;
+        padding: 8px;
+      }
+    </style><style>
+      kb-item-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    
+      kb-item-card #title {
+        display: block;
+        font-size: 28px;
+      }
+
+      kb-item-card #ref a {
+        display: block;
+        font-size: 13px;
+        color: #808080;
+        text-decoration: none;
+        width: fit-content;
+        outline: none;
+      }
+
+      kb-item-card #description {
+        font-size: 16px;
+      }
+
+      kb-item-card #datatype {
+        font-size: 16px;
+      }
+    </style><style>
+      @import url('https://fonts.googleapis.com/css?family=Lato|Lora:400,400i,700,700i');
+
+      
+      kb-document-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    
+
+      kb-document-card #url {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      kb-document-card #url a {
+        font-size: 13px;
+        color: #808080;
+        text-decoration: none;
+        outline: none;
+      }
+      kb-document-card #text {
+        font: 16px lora, georgia, serif;
+        line-height: 1.4;
+      }
+      kb-document-card #text a[ref] {
+        color: #0b0080;
+        text-decoration: none;
+        cursor: pointer;
+        outline: none;
+      }
+      kb-document-card #text a[ref]:hover{
+        text-decoration: underline;
+      }
+    </style><style>
+      kb-property-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    </style><style>
+      kb-category-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    </style><style>
+      kb-picture-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    
+      kb-picture-card {
+        text-align: center;
+        cursor: pointer;
+      }
+
+      kb-picture-card .caption {
+        display: block;
+        font-size: 13px;
+        color: #808080;
+        padding: 5px;
+      }
+
+      kb-picture-card img {
+        max-width: 100%;
+        max-height: 480px;
+        vertical-align: middle
+      }
+    </style><style>
+      kb-xref-card {
+        display: block;
+        background-color: rgb(255, 255, 255);
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 2px 4px 0px,
+                    rgba(0, 0, 0, 0.23) 0px 2px 4px 0px;
+        padding: 10px;
+        margin: 5px;
+      }
+    
+      kb-xref-card .prop-name {
+        font-size: 13px;
+        font-weight: normal;
+        width: 40%;
+        padding: 8px;
+        vertical-align: top;
+      }
+
+      kb-xref-card .prop-values {
+        font-size: 13px;
+        max-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      kb-xref-card .qprop-name {
+        font-size: 11px;
+        vertical-align: top;
+        padding: 1px 3px 1px 20px;
+        width: 100px;
+      }
+
+      kb-xref-card .qprop-value {
+        font-size: 11px;
+        padding: 1px 1px 1px 1px;
+      }
+
+      .mobile kb-xref-card .prop-name {
+        width: auto;
+        padding: 1px;
+      }
+
+      .mobile kb-xref-card .prop-values {
+        font-size: inherit;
+        max-width: none;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .mobile kb-xref-card .prop-value:first-child {
+        padding: 2px 8px 0px 8px;
+      }
+    </style><style>
+      kb-lightbox {
+        display: block;
+        position: fixed;
+        z-index: 100;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+      }
+    
+      kb-lightbox {
+        background-color: black;
+      }
+
+      kb-lightbox .content {
+        position: relative;
+        margin: auto;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      kb-lightbox .photo {
+        margin: auto;
+      }
+
+      kb-lightbox .image {
+        display: block;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
+        margin: auto;
+        cursor: pointer;
+      }
+
+      kb-lightbox .counter {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        color: rgb(255, 255, 255);
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
+      kb-lightbox .close i {
+        position: absolute;
+        top: 0;
+        right: 0;
+
+        color: white;
+        padding: 16px;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      kb-lightbox .source {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+
+        color: rgb(255, 255, 255);
+        font-size: 12px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      kb-lightbox a {
+        color: white;
+        text-decoration: none;
+        cursor: pointer;
+        outline: none;
+      }
+
+      kb-lightbox .nsfw {
+        border-radius: 3px;
+        border: 1px solid;
+        font-size: 12px;
+        padding: 2px 4px;
+        margin: 2px;
+        color: #d10023;
+      }
+
+      kb-lightbox .size {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+
+        color: rgb(255, 255, 255);
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
+      kb-lightbox .close:hover, kb-lightbox .close:focus {
+        color: #999;
+        text-decoration: none;
+        cursor: pointer;
+      }
+
+      kb-lightbox .prev, kb-lightbox .next {
+        cursor: pointer;
+        width: auto;
+        padding: 16px;
+        color: white;
+        font-weight: bold;
+        font-size: 20px;
+        transition: 0.6s ease;
+        background-color: rgba(0, 0, 0, 0.2);
+      }
+
+      kb-lightbox .next {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+      }
+
+      kb-lightbox .prev {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        border-top-right-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+
+      kb-lightbox .prev:hover, kb-lightbox .next:hover {
+        background-color: rgba(0, 0, 0, 0.8);
+      }
+
+      kb-lightbox .caption {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+      }
+    </style><style>
+      kb-copyright {
+        display: inline-block;
+        vertical-align: middle;
+        font-size: 14px;
+        cursor: default;
+      }
+    </style></head>
+<body style="">
+<kb-app id="app">
+  <md-column-layout class="desktop">
+    <md-toolbar>
+      <md-toolbar-logo>
+      <a href="https://kgtk.isi.edu/">
+	KGTK Logo Here
+      </a></md-toolbar-logo>
+      <div>KGTK</div>
+      <kb-search-box id="search">
+      <form>
+        <md-search placeholder="Search KGTK graph..." min-length="2" autofocus="">
+        <input type="search" placeholder="Search KGTK graph..." spellcheck="false" autofocus="">
+        <md-search-list style="display: none;"></md-search-list>
+    </md-search>
+      </form>
+    </kb-search-box>
+      <md-icon-button id="websearch" icon="search"><button><i>search</i></button></md-icon-button>
+    </md-toolbar>
+
+    <md-content>
+      <md-row-layout>
+        <md-column-layout style="flex: 1 1 66%;">
+
+          <!-- Item card -->
+          <kb-item-card id="item" style="display: none;">
+            <md-card-toolbar>
+              <div>
+                <md-text id="title" style="display: none;"></md-text>
+                <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
+              </div>
+              <md-spacer></md-spacer>
+              <md-icon-button id="code" icon="code"><button><i>code</i></button></md-icon-button>
+              <md-icon-button id="copy" icon="content_copy"><button><i>content_copy</i></button></md-icon-button>
+            </md-card-toolbar>
+            <div><md-text id="description" style="display: none;"></md-text></div>
+            <div><md-text id="datatype" style="display: none;"></md-text></div>
+          </kb-item-card>
+
+          <!-- Document card -->
+          <kb-document-card id="document" style="display: none;">
+            <md-link id="url" notab="1" newtab="1" external="1"></md-link>
+            <div id="text"></div>
+          </kb-document-card>
+
+          <!-- Item properties card -->
+          <kb-property-card id="properties" style="display: none;">
+            <kb-property-table id="property-table"></kb-property-table>
+          </kb-property-card>
+
+        </md-column-layout>
+
+        <md-column-layout style="flex: 1 1 33%;">
+
+          <!-- Item picture card -->
+          <kb-picture-card id="picture" style="display: none;">
+            <md-image class="photo" style="display: none;"></md-image>
+            <md-text class="caption" style="display: none;"></md-text>
+          </kb-picture-card>
+
+          <!-- Item references card -->
+          <kb-xref-card id="xrefs" style="display: none;">
+            <md-card-toolbar>
+              <div>References</div>
+            </md-card-toolbar>
+            <kb-property-table id="xref-table"></kb-property-table>
+          </kb-xref-card>
+
+          <!-- Item categories card -->
+          <kb-category-card id="categories" style="display: none;">
+            <md-card-toolbar>
+              <div>Categories</div>
+            </md-card-toolbar>
+
+            <kb-item-list id="category-list"></kb-item-list>
+          </kb-category-card>
+        </md-column-layout>
+
+      </md-row-layout>
+    </md-content>
+  </md-column-layout>
+</kb-app></body></html>

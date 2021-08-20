@@ -21,7 +21,9 @@ import browser.backend.kypher as kybe
 
 ### Flask application
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__,
+                  static_url_path='',
+                  static_folder='web/static')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
