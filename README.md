@@ -679,9 +679,10 @@ http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q100104271&lan
 }
 ```
 
-## Startup Messages
+## Startup Messages with Auto Indexing
 
-Here's a sample of the messages that were output during an initial server startup.
+Here's a sample of the messages that were output during an initial server startup
+with auto indexing.
 
 ```
  * Serving Flask app 'kgtk_browser_app.py' (lazy loading)
@@ -953,4 +954,96 @@ Here's a sample of the messages that were output during an initial server startu
 ---------------------------------------------
 127.0.0.1 - - [20/Aug/2021 13:18:48] "GET / HTTP/1.1" 404 -
 127.0.0.1 - - [20/Aug/2021 13:18:48] "GET /favicon.ico HTTP/1.1" 404 -
+```
+
+### Sample Query Messages with Auto Indexing
+
+Here is a sample of the server's messages executing a sample query.  The server was started with auto indexing enabled.
+
+```
+[2021-08-20 13:29:41 query]: SQL Translation:
+---------------------------------------------
+  SELECT DISTINCT graph_2_c1."node1" "_aLias.node1", graph_2_c1."node2" "_aLias.node_label"
+     FROM graph_2 AS graph_2_c1
+     WHERE graph_2_c1."label" = ?
+        AND ((graph_2_c1."node1" = ?) AND ((? = ?) OR (kgtk_lqstring_lang(graph_2_c1."node2") = ?)))
+     LIMIT ?
+  PARAS: ['label', ('NODE',), ('LANG',), 'any', ('LANG',), 10000]
+---------------------------------------------
+[2021-08-20 13:29:41 query]: SQL Translation:
+---------------------------------------------
+  SELECT DISTINCT graph_3_c1."node1" "_aLias.node1", graph_3_c1."node2" "_aLias.node_alias"
+     FROM graph_3 AS graph_3_c1
+     WHERE graph_3_c1."label" = ?
+        AND ((graph_3_c1."node1" = ?) AND ((? = ?) OR (kgtk_lqstring_lang(graph_3_c1."node2") = ?)))
+     LIMIT ?
+  PARAS: ['alias', ('NODE',), ('LANG',), 'any', ('LANG',), 10000]
+---------------------------------------------
+[2021-08-20 13:29:41 query]: SQL Translation:
+---------------------------------------------
+  SELECT DISTINCT graph_4_c1."node1" "_aLias.node1", graph_4_c1."node2" "_aLias.node_description"
+     FROM graph_4 AS graph_4_c1
+     WHERE graph_4_c1."label" = ?
+        AND ((graph_4_c1."node1" = ?) AND ((? = ?) OR (kgtk_lqstring_lang(graph_4_c1."node2") = ?)))
+     LIMIT ?
+  PARAS: ['description', ('NODE',), ('LANG',), 'any', ('LANG',), 10000]
+---------------------------------------------
+[2021-08-20 13:29:41 query]: SQL Translation:
+---------------------------------------------
+  SELECT DISTINCT graph_1_c1."node1" "_aLias.node1", graph_1_c1."node2" "_aLias.node_image"
+     FROM graph_1 AS graph_1_c1
+     WHERE graph_1_c1."label" = ?
+        AND (graph_1_c1."node1" = ?)
+     LIMIT ?
+  PARAS: ['P18', ('NODE',), 10000]
+---------------------------------------------
+[2021-08-20 13:29:41 query]: SQL Translation:
+---------------------------------------------
+  SELECT graph_1_c1."id" "_aLias.id", graph_1_c1."node1" "_aLias.node1", graph_1_c1."label" "_aLias.label", graph_1_c1."node2" "_aLias.node2", graph_2_c2."node2" "_aLias.node_label", graph_1_c3."node2" "_aLias.node_image", graph_6_c4."node2" "_aLias.node_fanout"
+     FROM graph_1 AS graph_1_c1
+     LEFT JOIN graph_2 AS graph_2_c2
+     ON graph_1_c1."node2" = graph_2_c2."node1"
+        AND graph_2_c2."label" = ?
+        AND ((? = ?) OR (kgtk_lqstring_lang(graph_2_c2."node2") = ?))
+     LEFT JOIN graph_1 AS graph_1_c3
+     ON graph_1_c1."node2" = graph_1_c3."node1"
+        AND graph_1_c3."label" = ?
+        AND ?
+     LEFT JOIN graph_6 AS graph_6_c4
+     ON graph_1_c1."node2" = graph_6_c4."node1"
+        AND graph_6_c4."label" = ?
+        AND ?
+     WHERE (graph_1_c1."node1" = ?)
+     LIMIT ?
+  PARAS: ['label', ('LANG',), 'any', ('LANG',), 'P18', ('FETCH_IMAGES',), 'count_distinct_properties', ('FETCH_FANOUTS',), ('NODE',), 10000]
+---------------------------------------------
+[2021-08-20 13:29:42 query]: SQL Translation:
+---------------------------------------------
+  SELECT graph_5_c2."id", graph_1_c1."id" "_aLias.node1", graph_5_c2."label" "_aLias.label", graph_5_c2."node2" "_aLias.node2", graph_2_c3."node2" "_aLias.node_label", graph_1_c4."node2" "_aLias.node_image", graph_6_c5."node2" "_aLias.node_fanout"
+     FROM graph_1 AS graph_1_c1
+     INNER JOIN graph_5 AS graph_5_c2
+     ON graph_1_c1."id" = graph_5_c2."node1"
+        AND (graph_1_c1."node1" = ?)
+     LEFT JOIN graph_2 AS graph_2_c3
+     ON graph_5_c2."node2" = graph_2_c3."node1"
+        AND graph_2_c3."label" = ?
+        AND ((? = ?) OR (kgtk_lqstring_lang(graph_2_c3."node2") = ?))
+     LEFT JOIN graph_1 AS graph_1_c4
+     ON graph_5_c2."node2" = graph_1_c4."node1"
+        AND graph_1_c4."label" = ?
+        AND ?
+     LEFT JOIN graph_6 AS graph_6_c5
+     ON graph_5_c2."node2" = graph_6_c5."node1"
+        AND graph_6_c5."label" = ?
+        AND ?
+     ORDER BY graph_1_c1."id" ASC, graph_5_c2."node2" DESC
+     LIMIT ?
+  PARAS: [('NODE',), 'label', ('LANG',), 'any', ('LANG',), 'P18', ('FETCH_IMAGES',), 'count_distinct_properties', ('FETCH_FANOUTS',), 10000]
+---------------------------------------------
+127.0.0.1 - - [20/Aug/2021 13:29:43] "GET /kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=en&images=true&fanouts=true&inverse=false HTTP/1.1" 200 -
+```
+
+Repeating the same query resulted in one additional message:
+```
+127.0.0.1 - - [20/Aug/2021 13:31:33] "GET /kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=en&images=true&fanouts=true&inverse=false HTTP/1.1" 200 -
 ```
