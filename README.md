@@ -3,13 +3,15 @@
 ## Requirements
 
 * you need to install the kgtk and flask Python packages
-* download wikidata-20210215-dwd-browser.sqlite3.db.gz from the KGTK shared drive
+* download wikidata-20210215-dwd-browser.sqlite3.db.gz  (about 16GB) from the KGTK shared drive
   in the KGTK > datasets > wikidata-20210215-dwd folder; this database has been
   preloaded and indexed and should work out-of-the-box without requiring
   any of the data files it was constructed from
+  `rclone copy kgtk:datasets/wikidata-20210215-dwd/wikidata-20210215-dwd-browser.sqlite3.db.gz .`
 * uncompress the DB somewhere on your system which will require about 60GB
   of space; for best performance this should be on an SSD drive
-* edit DB_GRAPH_CACHE in kgtk_browser_config.py to point to that location
+* edit DB_GRAPH_CACHE in kgtk_browser_config.py to point to that location,
+  or copy (or move) the uncompressed file to `./wikidata.sqlite3.db`.
 
 
 ## Running the web app
@@ -24,9 +26,30 @@ The following steps will start a server on your local host at the default port (
 > flask run
 ```
 
+When using the a csh-based shell, use the following:
+```
+setenv FLASK_APP kgtk_browser_app.py
+setenv FLASK_ENV development
+setenv KGTK_BROWSER_CONFIG $PWD/kgtk_browser_config.py
+flask run
+```
+
 NOTE: using development mode turns on JSON pretty-printing which about
 doubles the size of response objects.  For faster server response,
 set `FLASK_ENV` to `production`.
+
+## Auto Indexing
+
+By default, `INDEX_MODE` in `/kgtk_browser_config.py` is
+set to `auto`. This will pre-build various indexes during the first
+server startup, delaying the server by about 25 minutes (more or less,
+depending upon your system's performance).
+
+The pre-built indexes should speed up the server's response to
+queries.
+
+Alternatively, `INDEX_MODE` may be set to `none`.  The initial server
+startup will be faster, but the server's response to queries may be slower.
 
 
 ## Design and status
