@@ -48,10 +48,50 @@ with get_backend(app) as backend:
     ...
 """
 
-
+# Interim browser support:
 @app.route('/kb', methods=['GET'])
 def send_kb():
     return flask.send_from_directory('web/static', 'kb.html')
+
+@app.route('/kb/query', methods=['GET'])
+def send_kb_query():
+    q = get_browser_query()
+    print("query: " + q)
+    response_data = {
+        "matches": [
+            {
+                "ref": q,
+                "text": "Sample text: " + q,
+                "description": "Sample description: " + q
+            }
+        ]        
+    }
+    
+    return flask.jsonify(response_data), 200
+
+@app.route('/kb/item', methods=['GET'])
+def send_kb_item():
+    item = get_browser_id()
+    print("item: " + item)
+    response_data = {
+        "ref": item,
+        "text": "Sample text: " + item,
+        "description": "Sample description: " + item,
+        "properties": [ ],
+        "xrefs": [ ],
+        "categories": [ ],
+        "gallery": [ ],
+        "url": "https://sample.url",
+        "document": "Sample document: " + item
+    }
+    
+    return flask.jsonify(response_data), 200
+
+def get_browser_query()->str:
+    return flask.request.args.get('q')
+
+def get_browser_id()->str:
+    return flask.request.args.get('id')
 
 
 ### Test URL handlers:
