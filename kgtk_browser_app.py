@@ -49,6 +49,11 @@ with get_backend(app) as backend:
 """
 
 
+@app.route('/kb', methods=['GET'])
+def send_kb():
+    return flask.send_from_directory('web/static', 'kb.html')
+
+
 ### Test URL handlers:
 
 # These all call the corresponding backend query method with the same name.
