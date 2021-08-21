@@ -333,3 +333,12 @@ class BrowserBackend(object):
             return None
         else:
             return self.formatter.format_node_data(node_data)
+
+    ### Support for the browser:
+
+    def get_browser_nodes_starting_with(self, node, lang=None, fmt=None):
+        """Retrieve nodes and labels for all nodes starting with 'node'.
+        """
+        query = self.get_config('BROWSER_NODES_STARTING_WITH_QUERY')
+        return self.execute_query(query, NODE=node + '.*', LANG=self.get_lang(lang), fmt=fmt)
+

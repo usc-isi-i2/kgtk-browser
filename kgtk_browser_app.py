@@ -6,7 +6,9 @@ import os.path
 from http import HTTPStatus
 
 import flask
+import json
 import browser.backend.kypher as kybe
+from kgtk.kgtkformat import KgtkFormat
 
 
 # How to run:
@@ -55,23 +57,37 @@ def send_kb():
 
 @app.route('/kb/query', methods=['GET'])
 def send_kb_query():
-    q = get_browser_query()
+    q = flask.request.args.get('q')
     print("query: " + q)
-    response_data = {
-        "matches": [
-            {
-                "ref": q,
-                "text": "Sample text: " + q,
-                "description": "Sample description: " + q
+
+    try:
+        with get_backend(app) as backend:
+            matches = [ ]
+
+            results = backend.get_browser_nodes_starting_with(q, lang="en")
+            # print(json.dumps(results))
+            for result in results:
+                item = result[0]
+                label = KgtkFormat.unstringify(result[1])
+                matches.append(
+                    {
+                        "ref": item,
+                        "text": item,
+                        "description": label
+                    }
+                )
+            response_data = {
+                "matches": matches
             }
-        ]        
-    }
-    
-    return flask.jsonify(response_data), 200
+            
+            return flask.jsonify(response_data), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 @app.route('/kb/item', methods=['GET'])
 def send_kb_item():
-    item = get_browser_id()
+    item = flask.request.args.get('id')
     print("item: " + item)
     response_data = {
         "ref": item,
@@ -86,13 +102,6 @@ def send_kb_item():
     }
     
     return flask.jsonify(response_data), 200
-
-def get_browser_query()->str:
-    return flask.request.args.get('q')
-
-def get_browser_id()->str:
-    return flask.request.args.get('id')
-
 
 ### Test URL handlers:
 

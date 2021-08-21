@@ -215,3 +215,19 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
            'qn2label as node_label, qn2image as node_image, qn2fanout as node_fanout',
     order= 'r, qn2 desc',
 )
+
+BROWSER_NODES_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_nodes_starting_with()'.
+    Given parameters 'NODE' (which should end with '.*') and 'LANG' retrieve labels for 'NODE' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result.
+    """,
+    name='browser_nodes_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='n=~$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
