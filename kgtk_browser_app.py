@@ -6,7 +6,6 @@ import os.path
 from http import HTTPStatus
 
 import flask
-import json
 import browser.backend.kypher as kybe
 from kgtk.kgtkformat import KgtkFormat
 
@@ -65,7 +64,6 @@ def send_kb_query():
             matches = [ ]
 
             results = backend.get_browser_nodes_starting_with(q, lang="en")
-            # print(json.dumps(results))
             for result in results:
                 item = result[0]
                 label = KgtkFormat.unstringify(result[1])
