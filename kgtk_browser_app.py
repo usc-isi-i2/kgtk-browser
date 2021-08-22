@@ -24,7 +24,8 @@ from kgtk.kgtkformat import KgtkFormat
 
 app = flask.Flask(__name__,
                   static_url_path='',
-                  static_folder='web/static')
+                  static_folder='web/static',
+                  template_folder='web/templates')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
@@ -49,15 +50,15 @@ with get_backend(app) as backend:
     ...
 """
 
-# Interim browser support:
+# Ringgaard browser support:
 @app.route('/kb', methods=['GET'])
-def send_kb():
+def get_kb():
     return flask.send_from_directory('web/static', 'kb.html')
 
 @app.route('/kb/query', methods=['GET'])
-def send_kb_query():
+def get_kb_query():
     q = flask.request.args.get('q')
-    print("query: " + q)
+    print("get_kb_query: " + q)
 
     try:
         with get_backend(app) as backend:
@@ -83,10 +84,7 @@ def send_kb_query():
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
-@app.route('/kb/item', methods=['GET'])
-def send_kb_item():
-    item = flask.request.args.get('id')
-    print("item: " + item)
+def send_kb_item(item: str):
     response_data = {
         "ref": item,
         "text": "Sample text: " + item,
@@ -100,6 +98,37 @@ def send_kb_item():
     }
     
     return flask.jsonify(response_data), 200
+
+@app.route('/kb/item', methods=['GET'])
+def get_kb_item():
+    item = flask.request.args.get('id')
+    print("get_kb_item: " + item)
+    return send_kb_item(item)
+
+
+@app.route('/kb/<string:item>', methods=['GET'])
+def get_kb_named_item(item):
+    print("get_kb_named_item: " + item)
+    if item.startswith("Q") or item.startswith("P"):
+        try:
+            return flask.render_template("kb.html", ITEMID=item)
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+    elif item == "kb.js":
+        try:
+            return flask.send_from_directory('web/static', "kb.js")
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+    else:
+        print("Unrecognized item: %s" % repr(item))
+        flask.abort(400, "Unrecognized item %s" % repr(item))
+            
+    
+
 
 ### Test URL handlers:
 
