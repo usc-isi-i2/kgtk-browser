@@ -227,7 +227,7 @@ BROWSER_NODES_STARTING_WITH_QUERY = _api.get_query(
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
-    where='n=~$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'distinct n as node1, l as node_label',
 )
 

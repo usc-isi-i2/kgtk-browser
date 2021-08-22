@@ -334,11 +334,15 @@ class BrowserBackend(object):
         else:
             return self.formatter.format_node_data(node_data)
 
-    ### Support for the browser:
-
+    ### Support for the Ringgaard browser:
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
     def get_browser_nodes_starting_with(self, node, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes starting with 'node'.
         """
+
+        # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
+        safenode: str = node.translate({ord(i): None for i in '*[?'})
+        
         query = self.get_config('BROWSER_NODES_STARTING_WITH_QUERY')
-        return self.execute_query(query, NODE=node + '.*', LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query, NODE=safenode + '*', LANG=self.get_lang(lang), fmt=fmt)
 
