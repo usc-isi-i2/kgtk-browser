@@ -320,7 +320,7 @@ class BrowserBackend(object):
     # to data frames and JSON takes about 20% of overall query time.
     
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_all_node_data(self, node, lang=None, images=False, fanouts=False, inverse=False):
+    def get_all_node_data(self, node, lang=None, images=False, fanouts=False, inverse=False, formatter=None):
         """Return all graph and label data for 'node' and return it as a
         dict/JSON object produced by 'self.formatter'.  Return None if 'node'
         does not exist in the graph.  If 'images' and/or 'fanouts' is True
@@ -332,7 +332,9 @@ class BrowserBackend(object):
         if node_data is None:
             return None
         else:
-            return self.formatter.format_node_data(node_data)
+            if formatter is None:
+                formatter == self.formatter
+            return formatter.format_node_data(node_data)
 
     ### Support for the Ringgaard browser:
     @lru_cache(maxsize=LRU_CACHE_SIZE)
