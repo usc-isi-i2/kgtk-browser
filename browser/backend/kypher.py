@@ -345,6 +345,12 @@ class BrowserBackend(object):
         # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
         safenode: str = node.translate({ord(i): None for i in '*[?'})
         
-        query = self.get_config('BROWSER_NODES_STARTING_WITH_QUERY')
+        query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
         return self.execute_query(query, NODE=safenode + '*', LANG=self.get_lang(lang), fmt=fmt)
+
+    def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all edges that have 'node' as their node1.
+        """
+        query = self.get_config('RB_NODE_EDGES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 

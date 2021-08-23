@@ -216,9 +216,9 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     order= 'r, qn2 desc',
 )
 
-BROWSER_NODES_STARTING_WITH_QUERY = _api.get_query(
+RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     doc="""
-    Create the Kypher query used by 'BrowserBackend.get_nodes_starting_with()'.
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()'.
     Given parameters 'NODE' (which should end with '.*') and 'LANG' retrieve labels for 'NODE' in
     the specified language (using 'any' for 'LANG' retrieves all labels).
     Return distinct 'node1', 'node_label' pairs as the result.
@@ -229,5 +229,36 @@ BROWSER_NODES_STARTING_WITH_QUERY = _api.get_query(
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'distinct n as node1, l as node_label',
+)
+
+RB_NODE_EDGES_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1.
+    Additionally retrieve descriptive information for all relationship labels.
+    Additionally retrieve descriptive information for all node2's such as their
+    label, and optionally any images and fanouts.  Parameter 'LANG' controls
+    the language for retrieved labels.
+    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
+    and label's 'label_label'.
+
+    """,
+    name='rb_node_edges_query',
+    inputs=('edges', 'labels', 'labels', 'descriptions'),
+    match= '$edges: (n1)-[r {label: rl}]->(n2)',
+    where= 'n1=$NODE',
+    opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
+    opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
+    owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
+    opt3=   '$descriptions: (n2)-[r:`%s`]->(d)' % KG_DESCRIPTIONS_LABEL,
+    owhere3='$LANG="any" or kgtk_lqstring_lang(d)=$LANG',
+    ret=   'r as id, ' +
+           'r.label as relationship, ' +
+           'n2 as node2, ' +
+           'llabel as relationship_label, ' +
+           'n2label as node2_label, ' +
+           'd as node2_description',
+    order= 'r.label, n2, r, llabel, n2label, d'
 )
 
