@@ -87,19 +87,21 @@ def rb_get_kb_query():
 
 def rb_send_kb_item(item: str):
 
+    lang: str = 'en'
+
     try:
         with get_backend(app) as backend:
             response: typing.MutableMapping[str, any] = dict()
             response["ref"] = item
 
-            item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item)
+            item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item, lang=lang)
             response["text"] = KgtkFormat.unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
 
-            item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item)
+            item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
             response["description"] = KgtkFormat.unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
 
             response["properties"] = [ ]
-            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item)
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
             current_relationship: typing.Optional[str] = None
             current_property_map: typing.MutableMapping[str, any] = dict()
             current_values: typing.List[typing.MutableMapping[str, any]] = list()
@@ -137,9 +139,11 @@ def rb_send_kb_item(item: str):
                     rb_type = "/w/geo"
                 else:
                     rb_type = "/w/unknown" # Includes EMPTY, LIST, EXTENSION, BOOLEAN
+                    print("*** unknown datatype") # ***
                 
                 
                 if current_relationship is None or relationship != current_relationship:
+                    current_relationship = relationship
                     current_property_map = dict()
                     response["properties"].append(current_property_map)
                     current_property_map["ref"] = relationship
@@ -152,14 +156,15 @@ def rb_send_kb_item(item: str):
                 if current_node2 is not None and current_node2 == node2:
                     # Skip duplicates (say, multiple labels or descriptions).
                     # This will have to change when we support qualifiers.
+                    print("*** skipping duplicate %s" % repr(node2)) # ***
                     continue
                 current_node2 = node2
 
                 current_value: typing.MutableMapping[str, any] = dict()
                 current_values.append(current_value)
 
-                if rb_type == "w/item":
-                    current_value["ref"] = KgtkFormat.unstringify(node2)
+                if rb_type == "/w/item":
+                    current_value["ref"] = node2
                     current_value["text"] = KgtkFormat.unstringify(node2_label) if node2_label is not None and len(node2_label) > 0 else ""
                     current_value["description"] = KgtkFormat.unstringify(node2_description) if node2_description is not None and len(node2_description) > 0 else ""
 
@@ -186,6 +191,8 @@ def rb_send_kb_item(item: str):
                 elif rb_type == "/w/geo":
                     current_value["text"] = node2[1:] # Consider reformatting
                     # "url": "http://maps.google.com/maps?q=51.566513061523438,-0.14549720287322998"
+                else:
+                    print("*** unknown rb_type %s" % repr(rb_type)) # ***
 
             response["xrefs"] = [ ]
 
@@ -196,7 +203,7 @@ def rb_send_kb_item(item: str):
             response["url"] = "https://sample.url"
 
             response["document"] = "Sample document: " + item
-    
+
             return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
