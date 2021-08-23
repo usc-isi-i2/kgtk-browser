@@ -116,9 +116,9 @@ def get_kb_named_item(item):
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
-    elif item == "kb.js":
+    elif item in [ "kb.js", "kb.html" ]:
         try:
-            return flask.send_from_directory('web/static', "kb.js")
+            return flask.send_from_directory('web/static', item)
         except Exception as e:
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
