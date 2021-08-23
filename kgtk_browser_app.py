@@ -89,6 +89,8 @@ def rb_send_kb_item(item: str):
 
     lang: str = 'en'
 
+    units_node_cache: typing.MutableMap[str, typing.Optional[str]] = dict()
+
     try:
         with get_backend(app) as backend:
             response: typing.MutableMapping[str, any] = dict()
@@ -183,7 +185,43 @@ def rb_send_kb_item(item: str):
                     # Consider reformatting:
                     # 1) expand units
                     # 2) look up the label for a Qnode
-                    current_value["text"] = node2
+                    if datatype == KgtkFormat.DataType.NUMBER:
+                        current_value["text"] = node2
+                    else:
+                        if value.parse_fields():
+                            newnum: str = value.fields.numberstr
+                            if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
+                                newnum += "["
+                                if value.fields.low_tolerancestr is not None:
+                                    newnum += value.fields.low_tolerancestr
+                                newnum += ","
+                                if value.fields.high_tolerancestr is not None:
+                                    newnum += value.fields.high_tolerancestr
+                                newnum += "]"
+                            if value.fields.si_units is not None:
+                                newnum += value.fields.si_units
+                            if value.fields.units_node is not None:
+                                # Here's where it gets fancy:
+                                units_node: str = value.fields.units_node
+                                if units_node not in units_node_cache:
+                                    units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
+                                    if len(units_node_labels) > 0:
+                                        units_node_label: str = units_node_labels[0][1]
+                                        units_node_cache[units_node] = KgtkFormat.unstringify(units_node_label)
+                                    else:
+                                        units_node_cache[units_node] = None # Remember the failure.
+                                         
+                                if units_node_cache[units_node] is not None:
+                                    newnum += " " + units_node_cache[units_node] + " (" + units_node + ")"
+                                else:
+                                    newnum += " " + units_node # We could not find a label for this node when we looked last time.
+
+                            current_value["text"] = newnum
+                        else:
+                            # Validation failed.
+                            #
+                            # TODO: Add a validation failure indicator?
+                            current_value["text"] = node2
 
                 elif rb_type == "/w/time":
                     current_value["text"] = node2[1:] # Consider reformatting.
