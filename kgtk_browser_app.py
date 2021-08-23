@@ -64,7 +64,7 @@ def get_kb_query():
         with get_backend(app) as backend:
             matches = [ ]
 
-            results = backend.get_browser_nodes_starting_with(q, lang="en")
+            results = backend.rb_get_nodes_starting_with(q, lang="en")
             for result in results:
                 item = result[0]
                 label = KgtkFormat.unstringify(result[1])

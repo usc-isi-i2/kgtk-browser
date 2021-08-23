@@ -338,7 +338,7 @@ class BrowserBackend(object):
 
     ### Support for the Ringgaard browser:
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def get_browser_nodes_starting_with(self, node, lang=None, fmt=None):
+    def rb_get_nodes_starting_with(self, node, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes starting with 'node'.
         """
 
