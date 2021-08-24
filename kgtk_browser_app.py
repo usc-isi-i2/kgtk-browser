@@ -88,6 +88,17 @@ def rb_get_kb_query():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
+def link_to_url(text_value, current_value, lang: str = "en"):
+    # Look for text strings that are URLs:
+    if text_value.startswith(("https://", "http://")):
+        # print("url spotted: %s" % repr(text_value)) # ***
+        current_value["url"] = text_value
+
+    elif text_value.endswith((".jpg", ".svg")):
+        image_url: str = "https://commons.wikimedia.org/wiki/File:"  + text_value
+        # print("image spotted: %s" % repr(image_url)) # ***
+        current_value["url"] = image_url
+
 def build_current_value(backend,
                         node2: str,
                         value: KgtkValue,
@@ -99,21 +110,26 @@ def build_current_value(backend,
                         )->typing.Mapping[str, str]:
     current_value: typing.MutableMapping[str, any] = dict()
     datatype: KgtkFormat.DataType = value.classify()
+
+    text_value: str
+    
     if rb_type == "/w/item":
         current_value["ref"] = node2
         current_value["text"] = KgtkFormat.unstringify(node2_label) if node2_label is not None and len(node2_label) > 0 else ""
         current_value["description"] = KgtkFormat.unstringify(node2_description) if node2_description is not None and len(node2_description) > 0 else ""
 
     elif rb_type == "/w/text":
-        text_value: str
         language: str
         language_suffix: str
         text_value, language, language_suffix = KgtkFormat.destringify(node2)
         current_value["text"] = text_value
         current_value["lang"] = language + language_suffix
+        link_to_url(text_value, current_value, lang=language)
 
     elif rb_type == "/w/string":
-        current_value["text"] = KgtkFormat.unstringify(node2)
+        text_value = KgtkFormat.unstringify(node2)
+        current_value["text"] = text_value
+        link_to_url(text_value, current_value)
 
     elif rb_type == "/w/quantity":
         if datatype == KgtkFormat.DataType.NUMBER:
@@ -228,6 +244,11 @@ def rb_send_kb_item(item: str):
                 if edge_id not in item_qual_map:
                     item_qual_map[edge_id] = [ ]
                 item_qual_map[edge_id].append(item_qual_edge)
+
+            item_images: typing.List[typing.List[str]] = backend.get_node_images(item)
+            item_image: typing.List[str]
+            for item_image in item_images:
+                print("node_image: %s" % repr(item_image[1]))
                 
             current_edge_id: typing.Optional[str] = None
             current_relationship: typing.Optional[str] = None
