@@ -5,6 +5,7 @@ Kypher backend support for the KGTK browser.
 import os.path
 from http import HTTPStatus
 import sys
+import traceback
 import typing
 
 import flask
@@ -90,6 +91,9 @@ def rb_get_kb_query():
 
 
 def link_to_url(text_value, current_value, lang: str = "en"):
+    if text_value is None:
+        return
+
     # Look for text strings that are URLs:
     if text_value.startswith(("https://", "http://")):
         # print("url spotted: %s" % repr(text_value)) # ***
@@ -187,10 +191,12 @@ def find_rb_type(node2: str, value: KgtkValue)->str:
     rb_type: str
 
     if datatype == KgtkFormat.DataType.SYMBOL:
-        if node2.startswith(("P", "Q")):
+        if node2 is not None and node2.startswith(("P", "Q")):
             rb_type = "/w/item"
         else:
             rb_type = "unknown"
+            print("*** unknown datatype: no node2") # ***def rb_send_kb_item(item: str):
+            
     elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
         rb_type = "/w/text"
     elif datatype == KgtkFormat.DataType.STRING:
@@ -384,8 +390,8 @@ def rb_send_kb_categories(backend,
         response_categories.append(
             {
                 "ref": node1,
-                "text": KgtkFormat.unstringify(node1_label),
-                "description": KgtkFormat.unstringify(node1_description)
+                "text": KgtkFormat.unstringify(node1_label) if node1_label is not None and len(node1_label) > 0 else node1,
+                "description": KgtkFormat.unstringify(node1_description) if node1_description is not None and len(node1_description) > 0 else node1
             }
         )
 
@@ -432,6 +438,7 @@ def rb_send_kb_item(item: str):
             return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
+        traceback.print_exc()
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 @app.route('/kb/item', methods=['GET'])
@@ -444,7 +451,14 @@ def rb_get_kb_item():
 @app.route('/kb/<string:item>', methods=['GET'])
 def rb_get_kb_named_item(item):
     print("get_kb_named_item: " + item)
-    if item.startswith("Q") or item.startswith("P"):
+    if item is None or len(item) == 0:
+        try:
+            return flask.send_from_directory('web/static', "kb.html")
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+        
+    elif item.startswith(("Q", "P")):
         try:
             return flask.render_template("kb.html", ITEMID=item)
         except Exception as e:
