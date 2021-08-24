@@ -368,6 +368,8 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
     the language for retrieved labels.
     Return the category `node1`, 'node1_label', and'node1_description'.
 
+    WARNING! This query may be incorrect, and should be considered a placeholder.
+
     """,
     name='rb_node_categories_query',
     inputs=('edges', 'labels', 'descriptions'),
