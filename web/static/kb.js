@@ -1294,9 +1294,6 @@ const desktop_template = `
                 <md-text id="title"></md-text>
                 <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
               </div>
-              <md-spacer></md-spacer>
-              <md-icon-button id="code" icon="code"></md-icon-button>
-              <md-icon-button id="copy" icon="content_copy"></md-icon-button>
             </md-card-toolbar>
             <div><md-text id="description"></md-text></div>
             <div><md-text id="datatype"></md-text></div>
