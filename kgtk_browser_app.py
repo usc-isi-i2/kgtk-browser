@@ -109,6 +109,17 @@ def link_to_url(text_value, current_value, lang: str = "en", prop: typing.Option
         return True
     return False
 
+image_formatter_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
+
+def get_image_formatter(backend, relationship: str)->typing.Optional[str]:
+    if relationship not in image_formatter_cache:
+        result: typing.List[typing.List[str]] = backend.rb_get_image_formatter(relationship)
+        if len(result) == 0:
+            image_formatter_cache[relationship] = None
+        else:
+            image_formatter_cache[relationship] = KgtkFormat.unstringify(result[0][0])
+    return image_formatter_cache[relationship]
+
 def build_current_value(backend,
                         target_node: str,
                         value: KgtkValue,
@@ -117,13 +128,25 @@ def build_current_value(backend,
                         target_node_description: typing.Optional[str],
                         units_node_cache: typing.MutableMapping[str, typing.Optional[str]],
                         lang: str,
+                        relationship: str = "",
+                        wikidatatype: str = ""
                         )->typing.Mapping[str, str]:
     current_value: typing.MutableMapping[str, any] = dict()
     datatype: KgtkFormat.DataType = value.classify()
 
     text_value: str
     
-    if rb_type == "/w/item":
+    if wikidatatype == "external-id":
+        text_value = KgtkFormat.unstringify(target_node)
+        current_value["text"] = text_value
+        formatter: typing.Optional[str] = get_image_formatter(backend, relationship)
+        if formatter is not None:
+            # print("formatter: %s" % formatter, file=sys.stderr, flush=True) # ***
+            current_value["url"] = formatter.replace("$1", text_value)
+        else:
+            link_to_url(text_value, current_value)
+
+    elif rb_type == "/w/item":
         current_value["ref"] = target_node
         current_value["text"] = KgtkFormat.unstringify(target_node_label) if target_node_label is not None and len(target_node_label) > 0 else target_node
         current_value["description"] = KgtkFormat.unstringify(target_node_description) if target_node_description is not None and len(target_node_description) > 0 else target_node
@@ -282,7 +305,7 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
                 # print("new image: %s" % repr(new_image), file=sys.stderr, flush=True)
                 gallery.append(new_image)
 
-    print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
+    # print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
 
     return gallery    
 
@@ -385,7 +408,9 @@ def rb_send_kb_items_and_qualifiers(backend,
                                                                              target_label,
                                                                              target_description,
                                                                              units_node_cache,
-                                                                             lang)
+                                                                             lang,
+                                                                             relationship,
+                                                                             wikidatatype)
         current_values.append(current_value)
 
         if edge_id in item_qual_map:

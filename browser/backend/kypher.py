@@ -377,8 +377,14 @@ class BrowserBackend(object):
 
 
     def rb_get_node_categories(self, node, lang=None, images=False, fanouts=False, fmt=None):
-        """Retrieve all categores that have 'node' as their node2.
+        """Retrieve all categories that have 'node' as their node2.
         """
         query = self.get_config('RB_NODE_CATEGORIES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+
+    def rb_get_image_formatter(self, node, lang=None, fmt=None):
+        """Retrieve the first matching image formatter.
+        """
+        query = self.get_config('RB_IMAGE_FORMATTER_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 

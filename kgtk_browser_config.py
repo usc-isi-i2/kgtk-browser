@@ -363,7 +363,7 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
 
 RB_NODE_CATEGORIES_QUERY = _api.get_query(
     doc="""
-    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+    Create the Kypher query used by 'BrowserBackend.rb_get_node_categories()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
     under relationship P301.
     Additionally retrieve descriptive information for all relationship labels.
@@ -387,5 +387,21 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
            'n1label as node1_label, ' +
            'n1desc as node1_description',
     order= 'n1, n1label, n1desc'
+)
+
+
+RB_IMAGE_FORMATTER_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_image_formatter()'.
+    Given parameter 'NODE' retrieve the first edge's node2 value that has 'NODE' as the node1
+    under relationship P1630.
+    Return node2.
+    """,
+    name='rb_image_formatter_query',
+    inputs=(KG_EDGES_GRAPH),
+    match= '$edges: (n1)-[:P1630]->(n2)',
+    where= 'n1=$NODE',
+    ret=   'n2 as node2 ',
+    limit= 1
 )
 
