@@ -138,10 +138,15 @@ def build_current_value(backend,
 
     elif rb_type == "/w/quantity":
         if datatype == KgtkFormat.DataType.NUMBER:
-            current_value["text"] = target_node
+            numberstr: str = target_node
+            if numberstr.startswith("+"): # Reamove any leading "+"
+                numberstr = numberstr[1:]
+            current_value["text"] = numberstr
         else:
             if value.parse_fields():
                 newnum: str = value.fields.numberstr
+                if newnum.startswith("+"): # Remove any leading "+"
+                    newnum = newnum[1:]
                 if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
                     newnum += "["
                     if value.fields.low_tolerancestr is not None:
@@ -164,9 +169,10 @@ def build_current_value(backend,
                             units_node_cache[units_node] = None # Remember the failure.
                                        
                     if units_node_cache[units_node] is not None:
-                        newnum += " " + units_node_cache[units_node] + " (" + units_node + ")"
+                        newnum += " " + units_node_cache[units_node]
                     else:
                         newnum += " " + units_node # We could not find a label for this node when we looked last time.
+                    current_value["ref"] = units_node
 
                 current_value["text"] = newnum
             else:
@@ -416,9 +422,9 @@ def rb_send_kb_item(item: str):
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
             # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
-            if verbose or True:
-                print("Fetching category edges", file=sys.stderr, flush=True) # ***
-            item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
+            # if verbose:
+            #     print("Fetching category edges", file=sys.stderr, flush=True) # ***
+            # item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
             if verbose or True:
                 print("Done fetching edges", file=sys.stderr, flush=True) # ***
 
@@ -437,9 +443,9 @@ def rb_send_kb_item(item: str):
             response["xrefs"] = response_xrefs
             rb_send_kb_items_and_qualifiers(backend, item, response_properties, response_xrefs, item_edges, item_qualifier_edges, lang=lang, verbose=verbose)
 
-            response_categories: typing.List[typing.MutableMapping[str, any]] = [ ]
-            response["categories"] = response_categories
-            rb_send_kb_categories(backend, item, response_categories, item_category_edges, lang=lang, verbose=verbose)
+            # response_categories: typing.List[typing.MutableMapping[str, any]] = [ ]
+            # response["categories"] = response_categories
+            # rb_send_kb_categories(backend, item, response_categories, item_category_edges, lang=lang, verbose=verbose)
 
             # We cound assume a link to Wikipedia, but that won't be valid when
             # using KGTK for other data sources.
