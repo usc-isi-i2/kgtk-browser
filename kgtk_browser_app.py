@@ -215,11 +215,13 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     response_properties: typing.MutableMapping[str, any],
                                     item_edges: typing.List[typing.List[str]],
                                     item_qualifier_edges: typing.List[typing.List[str]],
+                                    inverse: bool = False,
                                     lang: str = 'en',
                                     verbose: bool = False):
 
     edge_id: str
     qual_edge_id: str
+    node1: str
     relationship: str
     node2: str
     relationship_label: typing.Optional[str]
@@ -244,7 +246,7 @@ def rb_send_kb_items_and_qualifiers(backend,
     for item_edge in item_edges:
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
-        edge_id, relationship, node2, relationship_label, node2_label, node2_description = item_edge
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description = item_edge
 
         if current_edge_id is not None and current_edge_id == edge_id:
             if verbose:
@@ -253,8 +255,8 @@ def rb_send_kb_items_and_qualifiers(backend,
             continue
         current_edge_id = edge_id
 
-        value: KgtkValue = KgtkValue(node2)
-        rb_type: str = find_rb_type(node2, value)
+        value: KgtkValue = KgtkValue(target_node)
+        rb_type: str = find_rb_type(target_node, value)
                 
         if current_relationship is None or relationship != current_relationship:
             current_relationship = relationship
@@ -266,7 +268,14 @@ def rb_send_kb_items_and_qualifiers(backend,
             current_values = list()
             current_property_map["values"] = current_values
 
-        current_value: typing.MutableMapping[str, any] = build_current_value(backend, node2, value, rb_type, node2_label, node2_description, units_node_cache, lang)
+        current_value: typing.MutableMapping[str, any] = build_current_value(backend,
+                                                                             target_node,
+                                                                             value,
+                                                                             rb_type,
+                                                                             target_label,
+                                                                             target_description,
+                                                                             units_node_cache,
+                                                                             lang)
         current_values.append(current_value)
 
         if edge_id in item_qual_map:
@@ -286,7 +295,7 @@ def rb_send_kb_items_and_qualifiers(backend,
             for item_qual_edge in item_qual_map[edge_id]:
                 if verbose:
                     print(repr(item_qual_edge), file=sys.stderr, flush=True)
-                _, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
+                _, node1, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
                         
                 if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
                     if verbose:
@@ -326,6 +335,8 @@ def rb_send_kb_item(item: str):
         with get_backend(app) as backend:
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
+            item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
+            item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
 
             response: typing.MutableMapping[str, any] = dict()
             response["ref"] = item
@@ -336,11 +347,13 @@ def rb_send_kb_item(item: str):
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
             response["description"] = KgtkFormat.unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
 
-            response_properties = [ ]
+            response_properties: typing.List[typing.MutableMapping[str, any]] = [ ]
             response["properties"] = response_properties
             rb_send_kb_items_and_qualifiers(backend, item, response_properties, item_edges, item_qualifier_edges, lang=lang, verbose=verbose)
 
-            response["xrefs"] = [ ]
+            response_xrefs: typing.List[typing.MutableMapping[str, any]] = [ ]
+            response["xrefs"] = response_xrefs
+            rb_send_kb_items_and_qualifiers(backend, item, response_xrefs, item_inverse_edges, item_inverse_qualifier_edges, lang=lang, verbose=verbose)
 
             response["categories"] = [ ]
 

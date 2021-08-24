@@ -251,15 +251,17 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
     opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
-    opt3=   '$descriptions: (n2)-[r:`%s`]->(d)' % KG_DESCRIPTIONS_LABEL,
-    owhere3='$LANG="any" or kgtk_lqstring_lang(d)=$LANG',
+    opt3=   '$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
+    owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
     ret=   'r as id, ' +
+           'n1 as node1, ' +
            'r.label as relationship, ' +
            'n2 as node2, ' +
            'llabel as relationship_label, ' +
-           'n2label as node2_label, ' +
-           'd as node2_description',
-    order= 'r.label, n2, r, llabel, n2label, d'
+           'n2 as target_node, ' +
+           'n2label as target_label, ' +
+           'n2desc as target_description',
+    order= 'r.label, n2, r, llabel, n2label, n2desc'
 )
 
 RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
@@ -272,7 +274,7 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     """,
     name='rb_node_edge_qualifiers_query',
     inputs=('edges', 'qualifiers', 'labels', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r]->(), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
     where= 'n1=$NODE',
     opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
@@ -281,6 +283,69 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
     ret=   'r as id, ' +
+           'n1 as node1, ' +
+           'q as qual_id, ' +
+           'q.label as qual_relationship, ' +
+           'qn2 as qual_node2, ' +
+           'qllabel as qual_relationship_label, ' +
+           'qn2label as qual_node2_label, ' +
+           'qd as qual_node2_description',
+    order= 'r, q.label, qn2, q, qllabel, qn2label, qd'
+)
+
+RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2.
+    Additionally retrieve descriptive information for all relationship labels.
+    Additionally retrieve descriptive information for all node2's such as their
+    label, and optionally any images and fanouts.  Parameter 'LANG' controls
+    the language for retrieved labels.
+    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
+    and label's 'label_label'.
+
+    """,
+    name='rb_node_inverse_edges_query',
+    inputs=('edges', 'labels', 'labels', 'descriptions'),
+    match= '$edges: (n1)-[r {label: rl}]->(n2)',
+    where= 'n2=$NODE',
+    opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
+    opt2=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
+    opt3=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
+    owhere3='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
+    ret=   'r as id, ' +
+           'n1 as node1, ' +
+           'r.label as relationship, ' +
+           'n2 as node2, ' +
+           'llabel as relationship_label, ' +
+           'n1 as target_node, ' +
+           'n1label as target_label, ' +
+           'n1desc as target_description',
+    order= 'r.label, n2, r, llabel, n1label, n1desc'
+)
+
+RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
+    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
+    and then all qualifier edges for all such base edges found.  For each 
+    qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
+    for base edges.
+    """,
+    name='rb_node_inverse_edge_qualifiers_query',
+    inputs=('edges', 'qualifiers', 'labels', 'labels', 'descriptions'),
+    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    where= 'n2=$NODE',
+    opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
+    opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
+    opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+    owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
+    ret=   'r as id, ' +
+           'n1 as node1, ' +
            'q as qual_id, ' +
            'q.label as qual_relationship, ' +
            'qn2 as qual_node2, ' +

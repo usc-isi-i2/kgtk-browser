@@ -361,3 +361,17 @@ class BrowserBackend(object):
         query = self.get_config('RB_NODE_EDGE_QUALIFIERS_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
+
+    def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all edges that have 'node' as their node1.
+        """
+        query = self.get_config('RB_NODE_INVERSE_EDGES_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+
+
+    def rb_get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve all edge qualifiers that have 'node' as their node1.
+        """
+        query = self.get_config('RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+
