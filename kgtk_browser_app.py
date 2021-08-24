@@ -234,7 +234,7 @@ def rb_send_kb_items_and_qualifiers(backend,
     target_node: str
     target_label: typing.Optional[str]
     target_description: typing.Optional[str]
-    node2_wikidatatype: str
+    wikidatatype: str
 
     item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
     item_qual_edge: typing.List[str]
@@ -257,7 +257,7 @@ def rb_send_kb_items_and_qualifiers(backend,
     idx: int
     item_edge_key: str
     for idx, item_edge in enumerate(item_edges):
-        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, node2_wikidatatype = item_edge
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if relationship_label is None:
             relationship_label = ""
         if target_label is None:
@@ -269,9 +269,9 @@ def rb_send_kb_items_and_qualifiers(backend,
         item_edge = keyed_item_edges[item_edge_key]
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
-        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, node2_wikidatatype = item_edge
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if verbose:
-            print("wikidatatype: %s" % repr(node2_wikidatatype)) # ***
+            print("wikidatatype: %s" % repr(wikidatatype)) # ***
 
         if current_edge_id is not None and current_edge_id == edge_id:
             if verbose:
@@ -286,7 +286,7 @@ def rb_send_kb_items_and_qualifiers(backend,
         if current_relationship is None or relationship != current_relationship:
             current_relationship = relationship
             current_property_map = dict()
-            if node2_wikidatatype == "external-id":
+            if wikidatatype is not None and wikidatatype == "external-id":
                 response_xrefs.append(current_property_map)
             else:
                 response_properties.append(current_property_map)
@@ -369,6 +369,8 @@ def rb_send_kb_categories(backend,
     node1_label: str
     node1_description: str
 
+    categories_seen: typing.Set[str] = set()
+
     # Sort the item categories
     category_key: str
     keyed_category_edges: typing.MutableMapping[str, typing.List[str]] = dict()
@@ -376,6 +378,10 @@ def rb_send_kb_categories(backend,
     category_edge: typing.List[str]
     for idx, category_edge in enumerate(category_edges):
         node1, node1_label, node1_description = category_edge
+        if node1 in categories_seen:
+            continue
+        categories_seen.add(node1)
+        
         if node1_label is None:
             node1_label = node1
         category_key = (node1_label + "|" + str(idx + 1000000)).lower()
@@ -402,11 +408,19 @@ def rb_send_kb_item(item: str):
     
     try:
         with get_backend(app) as backend:
+            if verbose:
+                print("Fetching item edges", file=sys.stderr, flush=True) # ***
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
+            if verbose:
+                print("Fetching qualifier edges", file=sys.stderr, flush=True) # ***
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
             # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
+            if verbose:
+                print("Fetching category edges", file=sys.stderr, flush=True) # ***
             item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
+            if verbose:
+                print("Done fetching edges", file=sys.stderr, flush=True) # ***
 
             response: typing.MutableMapping[str, any] = dict()
             response["ref"] = item

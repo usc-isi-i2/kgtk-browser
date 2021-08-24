@@ -21,6 +21,7 @@ KG_ALIASES_GRAPH      = 'aliases'
 KG_DESCRIPTIONS_GRAPH = 'descriptions'
 KG_IMAGES_GRAPH       = 'claims'
 KG_FANOUTS_GRAPH      = 'metadata'
+KG_DATATYPE_GRAPH     = 'metadata'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
@@ -28,6 +29,7 @@ KG_ALIASES_LABEL      = 'alias'
 KG_DESCRIPTIONS_LABEL = 'description'
 KG_IMAGES_LABEL       = 'P18'
 KG_FANOUTS_LABEL      = 'count_distinct_properties'
+KG_DATATYPE_LABEL     = 'datatype'
 
 
 ### Query configuration section:
@@ -244,8 +246,8 @@ RB_NODE_EDGES_QUERY = _api.get_query(
 
     """,
     name='rb_node_edges_query',
-    inputs=('edges', 'labels', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2 {wikidatatype: n2wdt})',
+    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH, KG_DATATYPE_GRAPH),
+    match= '$edges: (n1)-[r {label: rl}]->(n2)',
     where= 'n1=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
@@ -253,6 +255,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
     opt3=   '$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
+    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPE_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
@@ -261,7 +264,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
            'n2 as target_node, ' +
            'n2label as target_label, ' +
            'n2desc as target_description, ' +
-           'n2wdt as node2_wikidatatype',
+           'rlwdt as wikidatatype',
     order= 'r.label, n2, r, llabel, n2label, n2desc'
 )
 
@@ -274,7 +277,7 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     for base edges.
     """,
     name='rb_node_edge_qualifiers_query',
-    inputs=('edges', 'qualifiers', 'labels', 'labels', 'descriptions'),
+    inputs=(KG_EDGES_GRAPH, KG_QUALIFIERS_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
     match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
     where= 'n1=$NODE',
     opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
@@ -307,8 +310,8 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
 
     """,
     name='rb_node_inverse_edges_query',
-    inputs=('edges', 'labels', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2 {wikidatatype: n2wdt})',
+    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH, KG_DATATYPE_GRAPH),
+    match= '$edges: (n1)-[r {label: rl}]->(n2)',
     where= 'n2=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
@@ -316,6 +319,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     opt3=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
+    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPE_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
@@ -324,7 +328,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
            'n1 as target_node, ' +
            'n1label as target_label, ' +
            'n1desc as target_description, ' +
-           'n2wdt as node2_wikidatatype',
+           'rlwdt as wikidatatype',
     order= 'r.label, n2, r, llabel, n1label, n1desc'
 )
 
@@ -337,7 +341,7 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     for base edges.
     """,
     name='rb_node_inverse_edge_qualifiers_query',
-    inputs=('edges', 'qualifiers', 'labels', 'labels', 'descriptions'),
+    inputs=(KG_EDGES_GRAPH, KG_QUALIFIERS_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
     match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
     where= 'n2=$NODE',
     opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
@@ -372,15 +376,14 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
 
     """,
     name='rb_node_categories_query',
-    inputs=('edges', 'labels', 'descriptions'),
+    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
     match= '$edges: (n1)-[:P301]->(n2)',
     where= 'n2=$NODE',
     opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     opt2=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
-    ret=   'distinct ' +
-           'n1 as node1, ' +
+    ret=   'n1 as node1, ' +
            'n1label as node1_label, ' +
            'n1desc as node1_description',
     order= 'n1, n1label, n1desc'
