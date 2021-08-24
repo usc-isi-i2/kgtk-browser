@@ -14,7 +14,7 @@ import flask
 import browser.backend.kypher as kybe
 
 from kgtk.kgtkformat import KgtkFormat
-from kgtk.value.kgtkvalue import KgtkValue
+from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 
 
 # How to run:
@@ -187,7 +187,27 @@ def build_current_value(backend,
                 current_value["text"] = target_node
 
     elif rb_type == "/w/time":
-        current_value["text"] = target_node[1:] # Consider reformatting.
+        if value.parse_fields() and value.fields.precision is not None:
+            f: KgtkValueFields = value.fields
+            precision: int = f.precision
+            if precision <= 9 and f.yearstr is not None:
+                current_value["text"] = f.yearstr
+            elif precision == 10 and f.yearstr is not None and f.monthstr is not None:
+                 current_value["text"] = f.yearstr + "-" + f.monthstr
+            elif precision == 11 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None:
+                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr
+            elif precision == 12 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
+            elif precision == 13 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
+            else:
+                current_value["text"] = target_node[1:]
+        else:
+            # Validation failed.
+            #
+            # TODO: Add a validation failure indicator?
+            current_value["text"] = target_node[1:]
+            
         
     elif rb_type == "/w/geo":
         current_value["text"] = target_node[1:] # Consider reformatting
