@@ -245,7 +245,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     """,
     name='rb_node_edges_query',
     inputs=('edges', 'labels', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2)',
+    match= '$edges: (n1)-[r {label: rl}]->(n2 {wikidatatype: n2wdt})',
     where= 'n1=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
@@ -260,7 +260,8 @@ RB_NODE_EDGES_QUERY = _api.get_query(
            'llabel as relationship_label, ' +
            'n2 as target_node, ' +
            'n2label as target_label, ' +
-           'n2desc as target_description',
+           'n2desc as target_description, ' +
+           'n2wdt as node2_wikidatatype',
     order= 'r.label, n2, r, llabel, n2label, n2desc'
 )
 
@@ -295,7 +296,7 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
 
 RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     doc="""
-    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+    Create the Kypher query used by 'BrowserBackend.rb_get_node_inverse_edges()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2.
     Additionally retrieve descriptive information for all relationship labels.
     Additionally retrieve descriptive information for all node2's such as their
@@ -307,7 +308,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     """,
     name='rb_node_inverse_edges_query',
     inputs=('edges', 'labels', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2)',
+    match= '$edges: (n1)-[r {label: rl}]->(n2 {wikidatatype: n2wdt})',
     where= 'n2=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
@@ -322,13 +323,14 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
            'llabel as relationship_label, ' +
            'n1 as target_node, ' +
            'n1label as target_label, ' +
-           'n1desc as target_description',
+           'n1desc as target_description, ' +
+           'n2wdt as node2_wikidatatype',
     order= 'r.label, n2, r, llabel, n1label, n1desc'
 )
 
 RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
-    Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
+    Create the Kypher query used by 'BrowserBackend.get_node_inverse_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
     and then all qualifier edges for all such base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
@@ -353,5 +355,32 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
            'qn2label as qual_node2_label, ' +
            'qd as qual_node2_description',
     order= 'r, q.label, qn2, q, qllabel, qn2label, qd'
+)
+
+RB_NODE_CATEGORIES_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
+    under relationship P301.
+    Additionally retrieve descriptive information for all relationship labels.
+    Additionally retrieve descriptive information for all node2's such as their
+    label, and optionally any images and fanouts.  Parameter 'LANG' controls
+    the language for retrieved labels.
+    Return the category `node1`, 'node1_label', and'node1_description'.
+
+    """,
+    name='rb_node_categories_query',
+    inputs=('edges', 'labels', 'descriptions'),
+    match= '$edges: (n1)-[:P301]->(n2)',
+    where= 'n2=$NODE',
+    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
+    opt2=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
+    owhere2='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
+    ret=   'distinct ' +
+           'n1 as node1, ' +
+           'n1label as node1_label, ' +
+           'n1desc as node1_description',
+    order= 'n1, n1label, n1desc'
 )
 

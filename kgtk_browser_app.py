@@ -213,9 +213,9 @@ units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 def rb_send_kb_items_and_qualifiers(backend,
                                     item: str,
                                     response_properties: typing.MutableMapping[str, any],
+                                    response_xrefs: typing.MutableMapping[str, any],
                                     item_edges: typing.List[typing.List[str]],
                                     item_qualifier_edges: typing.List[typing.List[str]],
-                                    inverse: bool = False,
                                     lang: str = 'en',
                                     verbose: bool = False):
 
@@ -225,8 +225,10 @@ def rb_send_kb_items_and_qualifiers(backend,
     relationship: str
     node2: str
     relationship_label: typing.Optional[str]
-    node2_label: typing.Optional[str]
-    node2_description: typing.Optional[str]
+    target_node: str
+    target_label: typing.Optional[str]
+    target_description: typing.Optional[str]
+    node2_wikidatatype: str
 
     item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
     item_qual_edge: typing.List[str]
@@ -249,7 +251,7 @@ def rb_send_kb_items_and_qualifiers(backend,
     idx: int
     item_edge_key: str
     for idx, item_edge in enumerate(item_edges):
-        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description = item_edge
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, node2_wikidatatype = item_edge
         if relationship_label is None:
             relationship_label = ""
         if target_label is None:
@@ -261,7 +263,9 @@ def rb_send_kb_items_and_qualifiers(backend,
         item_edge = keyed_item_edges[item_edge_key]
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
-        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description = item_edge
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, node2_wikidatatype = item_edge
+        if verbose:
+            print("wikidatatype: %s" % repr(node2_wikidatatype)) # ***
 
         if current_edge_id is not None and current_edge_id == edge_id:
             if verbose:
@@ -276,7 +280,10 @@ def rb_send_kb_items_and_qualifiers(backend,
         if current_relationship is None or relationship != current_relationship:
             current_relationship = relationship
             current_property_map = dict()
-            response_properties.append(current_property_map)
+            if node2_wikidatatype == "external-id":
+                response_xrefs.append(current_property_map)
+            else:
+                response_properties.append(current_property_map)
             current_property_map["ref"] = relationship
             current_property_map["property"] = KgtkFormat.unstringify(relationship_label) if relationship_label is not None and len(relationship_label) > 0 else relationship
             current_property_map["type"] = rb_type # TODO: check for consistency
@@ -342,6 +349,47 @@ def rb_send_kb_items_and_qualifiers(backend,
                                                                                           lang)
                 current_qual_values.append(current_qual_value)
 
+def rb_send_kb_categories(backend,
+                          item: str,
+                          response_categories: typing.MutableMapping[str, any],
+                          category_edges: typing.List[typing.List[str]],
+                          lang: str = 'en',
+                          verbose: bool = False):
+
+    if verbose:
+        print("#categories: %d" % len(category_edges), file=sys.stderr, flush=True)
+
+    node1: str
+    node1_label: str
+    node1_description: str
+
+    # Sort the item categories
+    category_key: str
+    keyed_category_edges: typing.MutableMapping[str, typing.List[str]] = dict()
+    idx: int
+    category_edge: typing.List[str]
+    for idx, category_edge in enumerate(category_edges):
+        node1, node1_label, node1_description = category_edge
+        if node1_label is None:
+            node1_label = node1
+        category_key = (node1_label + "|" + str(idx + 1000000)).lower()
+        keyed_category_edges[category_key] = category_edge
+
+    for category_key in sorted(keyed_category_edges.keys()):
+        category_edge = keyed_category_edges[category_key]
+        if verbose:
+            print(repr(category_edge), file=sys.stderr, flush=True)
+        node1, node1_label, node1_description = category_edge
+
+        response_categories.append(
+            {
+                "ref": node1,
+                "text": KgtkFormat.unstringify(node1_label),
+                "description": KgtkFormat.unstringify(node1_description)
+            }
+        )
+
+
 def rb_send_kb_item(item: str):
     lang: str = 'en'
     verbose: bool = True
@@ -350,8 +398,9 @@ def rb_send_kb_item(item: str):
         with get_backend(app) as backend:
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
-            item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
-            item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
+            # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
+            # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
+            item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
 
             response: typing.MutableMapping[str, any] = dict()
             response["ref"] = item
@@ -364,14 +413,13 @@ def rb_send_kb_item(item: str):
 
             response_properties: typing.List[typing.MutableMapping[str, any]] = [ ]
             response["properties"] = response_properties
-            rb_send_kb_items_and_qualifiers(backend, item, response_properties, item_edges, item_qualifier_edges, lang=lang, verbose=verbose)
-
             response_xrefs: typing.List[typing.MutableMapping[str, any]] = [ ]
             response["xrefs"] = response_xrefs
-            rb_send_kb_items_and_qualifiers(backend, item, response_xrefs, item_inverse_edges, item_inverse_qualifier_edges, lang=lang, verbose=verbose)
+            rb_send_kb_items_and_qualifiers(backend, item, response_properties, response_xrefs, item_edges, item_qualifier_edges, lang=lang, verbose=verbose)
 
-            # TODO: What is this?
-            response["categories"] = [ ]
+            response_categories: typing.List[typing.MutableMapping[str, any]] = [ ]
+            response["categories"] = response_categories
+            rb_send_kb_categories(backend, item, response_categories, item_category_edges, lang=lang, verbose=verbose)
 
             # We cound assume a link to Wikipedia, but that won't be valid when
             # using KGTK for other data sources.
