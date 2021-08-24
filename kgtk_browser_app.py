@@ -355,13 +355,16 @@ def rb_send_kb_item(item: str):
             response["xrefs"] = response_xrefs
             rb_send_kb_items_and_qualifiers(backend, item, response_xrefs, item_inverse_edges, item_inverse_qualifier_edges, lang=lang, verbose=verbose)
 
+            # TODO: What is this?
             response["categories"] = [ ]
 
+            # We cound assume a link to Wikipedia, but that won't be valid when
+            # using KGTK for other data sources.
+            # response["url"] = "https://sample.url"
+            # response["document"] = "Sample document: " + item
+
+            # The data source would also, presumably, be responsible for providing images.
             response["gallery"] = [ ]
-
-            response["url"] = "https://sample.url"
-
-            response["document"] = "Sample document: " + item
 
             return flask.jsonify(response), 200
     except Exception as e:
