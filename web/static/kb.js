@@ -3,7 +3,8 @@
 import {Component} from "/common/lib/component.js";
 import {MdCard, MdModal} from "/common/lib/material.js";
 
-const mediadb = true;
+// const mediadb = true; // ***CMR*
+const mediadb = false;
 
 var mobile_ckecked = false;
 var is_mobile = false;
@@ -1324,7 +1325,7 @@ const desktop_template = `
           <!-- Item references card -->
           <kb-xref-card id="xrefs">
             <md-card-toolbar>
-              <div>References</div>
+              <div>Identifiers</div>
             </md-card-toolbar>
             <kb-property-table id="xref-table">
             </kb-property-table>
@@ -1417,4 +1418,3 @@ const mobile_template = `
 `;
 
 document.body.innerHTML = isMobile() ? mobile_template : desktop_template;
-

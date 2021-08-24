@@ -2,11 +2,13 @@
 Kypher backend support for the KGTK browser.
 """
 
-import os.path
+import hashlib
 from http import HTTPStatus
+import os.path
 import sys
 import traceback
 import typing
+import urllib.parse
 
 import flask
 import browser.backend.kypher as kybe
@@ -90,19 +92,22 @@ def rb_get_kb_query():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def link_to_url(text_value, current_value, lang: str = "en"):
+def link_to_url(text_value, current_value, lang: str = "en", prop: typing.Optional[str] = None)->bool:
     if text_value is None:
-        return
+        return False
 
     # Look for text strings that are URLs:
     if text_value.startswith(("https://", "http://")):
         # print("url spotted: %s" % repr(text_value)) # ***
         current_value["url"] = text_value
+        return True
 
     elif text_value.endswith((".jpg", ".svg")):
         image_url: str = "https://commons.wikimedia.org/wiki/File:"  + text_value
         # print("image spotted: %s" % repr(image_url)) # ***
         current_value["url"] = image_url
+        return True
+    return False
 
 def build_current_value(backend,
                         target_node: str,
@@ -220,6 +225,47 @@ def find_rb_type(node2: str, value: KgtkValue)->str:
         print("*** unknown datatype") # ***def rb_send_kb_item(item: str):
     return rb_type
 
+# The following routine was taken from Stack Overflow.
+# https://stackoverflow.com/questions/33689980/get-thumbnail-image-from-wikimedia-commons
+def get_wc_thumb(image, width=300): # image = e.g. from Wikidata, width in pixels
+    image = image.replace(' ', '_') # need to replace spaces with underline 
+    m = hashlib.md5()
+    m.update(image.encode('utf-8'))
+    d = m.hexdigest()
+    return "https://upload.wikimedia.org/wikipedia/commons/thumb/"+d[0]+'/'+d[0:2]+'/'+image+'/'+str(width)+'px-'+image
+
+def rb_build_gallery(item_edges: typing.List[typing.List[str]],
+                     item: str,
+                     item_labels: typing.List[typing.List[str]])->typing.List[typing.Mapping[str, str]]:
+    gallery: typing.List[typing.List[str]] = list()
+
+    item_edge: typing.List[str]
+    for item_edge in item_edges:
+        edge_id: str
+        node1: str
+        relationship: str
+        node2: str
+        relationship_label: typing.Optional[str]
+        target_node: str
+        target_label: typing.Optional[str]
+        target_description: typing.Optional[str]
+        wikidatatype: typing.Optional[str]
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
+
+        if relationship == "P18":
+            value: KgtkValue = KgtkValue(node2)
+            if value.is_string() or value.is_language_qualified_string():
+                new_image: typing.Mapping[str, str] = {
+                    "url": get_wc_thumb(KgtkFormat.unstringify(node2)),
+                    "text": KgtkFormat.unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+                }
+                # print("new image: %s" % repr(new_image), file=sys.stderr, flush=True)
+                gallery.append(new_image)
+
+    print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
+
+    return gallery    
+
 units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
 def rb_send_kb_items_and_qualifiers(backend,
@@ -240,7 +286,7 @@ def rb_send_kb_items_and_qualifiers(backend,
     target_node: str
     target_label: typing.Optional[str]
     target_description: typing.Optional[str]
-    wikidatatype: str
+    wikidatatype: typing.Optional[str]
 
     item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
     item_qual_edge: typing.List[str]
@@ -453,7 +499,8 @@ def rb_send_kb_item(item: str):
             # response["document"] = "Sample document: " + item
 
             # The data source would also, presumably, be responsible for providing images.
-            response["gallery"] = [ ]
+            # response["gallery"] = [ ] # This is required by kb.js as a minimum element.
+            response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
 
             return flask.jsonify(response), 200
     except Exception as e:
