@@ -101,11 +101,11 @@ def link_to_url(text_value, current_value, lang: str = "en"):
         current_value["url"] = image_url
 
 def build_current_value(backend,
-                        node2: str,
+                        target_node: str,
                         value: KgtkValue,
                         rb_type: str,
-                        node2_label: typing.Optional[str],
-                        node2_description: typing.Optional[str],
+                        target_node_label: typing.Optional[str],
+                        target_node_description: typing.Optional[str],
                         units_node_cache: typing.MutableMapping[str, typing.Optional[str]],
                         lang: str,
                         )->typing.Mapping[str, str]:
@@ -115,26 +115,26 @@ def build_current_value(backend,
     text_value: str
     
     if rb_type == "/w/item":
-        current_value["ref"] = node2
-        current_value["text"] = KgtkFormat.unstringify(node2_label) if node2_label is not None and len(node2_label) > 0 else ""
-        current_value["description"] = KgtkFormat.unstringify(node2_description) if node2_description is not None and len(node2_description) > 0 else ""
+        current_value["ref"] = target_node
+        current_value["text"] = KgtkFormat.unstringify(target_node_label) if target_node_label is not None and len(target_node_label) > 0 else target_node
+        current_value["description"] = KgtkFormat.unstringify(target_node_description) if target_node_description is not None and len(target_node_description) > 0 else target_node
 
     elif rb_type == "/w/text":
         language: str
         language_suffix: str
-        text_value, language, language_suffix = KgtkFormat.destringify(node2)
+        text_value, language, language_suffix = KgtkFormat.destringify(target_node)
         current_value["text"] = text_value
         current_value["lang"] = language + language_suffix
         link_to_url(text_value, current_value, lang=language)
 
     elif rb_type == "/w/string":
-        text_value = KgtkFormat.unstringify(node2)
+        text_value = KgtkFormat.unstringify(target_node)
         current_value["text"] = text_value
         link_to_url(text_value, current_value)
 
     elif rb_type == "/w/quantity":
         if datatype == KgtkFormat.DataType.NUMBER:
-            current_value["text"] = node2
+            current_value["text"] = target_node
         else:
             if value.parse_fields():
                 newnum: str = value.fields.numberstr
@@ -169,13 +169,13 @@ def build_current_value(backend,
                 # Validation failed.
                 #
                 # TODO: Add a validation failure indicator?
-                current_value["text"] = node2
+                current_value["text"] = target_node
 
     elif rb_type == "/w/time":
-        current_value["text"] = node2[1:] # Consider reformatting.
+        current_value["text"] = target_node[1:] # Consider reformatting.
         
     elif rb_type == "/w/geo":
-        current_value["text"] = node2[1:] # Consider reformatting
+        current_value["text"] = target_node[1:] # Consider reformatting
         # "url": "http://maps.google.com/maps?q=51.566513061523438,-0.14549720287322998"
     else:
         print("*** unknown rb_type %s" % repr(rb_type)) # ***
