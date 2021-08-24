@@ -268,6 +268,15 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 
 units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
+# List the properties in the order that you want them to appear.  All unlisted
+# properties will appear after these.q
+property_priority_list: typing.List[str] = [
+    "P31",
+    "P231",
+]
+
+property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(property_priority_list) }
+
 def rb_send_kb_items_and_qualifiers(backend,
                                     item: str,
                                     response_properties: typing.MutableMapping[str, any],
@@ -314,7 +323,8 @@ def rb_send_kb_items_and_qualifiers(backend,
             relationship_label = ""
         if target_label is None:
             target_label = target_node
-        item_edge_key = (relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        priority: int = property_priority_map.get(relationship, 99999)
+        item_edge_key = (str(priority+100000) + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
         keyed_item_edges[item_edge_key] = item_edge
 
     for item_edge_key in sorted(keyed_item_edges.keys()):
