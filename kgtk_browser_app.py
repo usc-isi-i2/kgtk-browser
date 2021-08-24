@@ -408,18 +408,18 @@ def rb_send_kb_item(item: str):
     
     try:
         with get_backend(app) as backend:
-            if verbose:
+            if verbose or True:
                 print("Fetching item edges", file=sys.stderr, flush=True) # ***
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
-            if verbose:
+            if verbose or True:
                 print("Fetching qualifier edges", file=sys.stderr, flush=True) # ***
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
             # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
-            if verbose:
+            if verbose or True:
                 print("Fetching category edges", file=sys.stderr, flush=True) # ***
             item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
-            if verbose:
+            if verbose or True:
                 print("Done fetching edges", file=sys.stderr, flush=True) # ***
 
             response: typing.MutableMapping[str, any] = dict()
