@@ -392,7 +392,7 @@ def rb_send_kb_categories(backend,
 
 def rb_send_kb_item(item: str):
     lang: str = 'en'
-    verbose: bool = True
+    verbose: bool = False
     
     try:
         with get_backend(app) as backend:
