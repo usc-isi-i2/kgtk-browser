@@ -243,7 +243,22 @@ def rb_send_kb_items_and_qualifiers(backend,
     current_node2: typing.Optional[str] = None
 
     item_edge: typing.List[str]
-    for item_edge in item_edges:
+
+    # Sort the item edges
+    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
+    idx: int
+    item_edge_key: str
+    for idx, item_edge in enumerate(item_edges):
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description = item_edge
+        if relationship_label is None:
+            relationship_label = ""
+        if target_label is None:
+            target_label = target_node
+        item_edge_key = (relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        keyed_item_edges[item_edge_key] = item_edge
+
+    for item_edge_key in sorted(keyed_item_edges.keys()):
+        item_edge = keyed_item_edges[item_edge_key]
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description = item_edge
