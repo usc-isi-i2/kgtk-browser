@@ -4,9 +4,11 @@ Kypher backend support for the KGTK browser.
 
 import os.path
 from http import HTTPStatus
+import typing
 
 import flask
 import browser.backend.kypher as kybe
+
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue
 
@@ -85,12 +87,115 @@ def rb_get_kb_query():
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
-def rb_send_kb_item(item: str):
 
+def build_current_value(backend,
+                        node2: str,
+                        value: KgtkValue,
+                        rb_type: str,
+                        node2_label: typing.Optional[str],
+                        node2_description: typing.Optional[str],
+                        units_node_cache: typing.MutableMapping[str, typing.Optional[str]],
+                        lang: str,
+                        )->typing.Mapping[str, str]:
+    current_value: typing.MutableMapping[str, any] = dict()
+    datatype: KgtkFormat.DataType = value.classify()
+    if rb_type == "/w/item":
+        current_value["ref"] = node2
+        current_value["text"] = KgtkFormat.unstringify(node2_label) if node2_label is not None and len(node2_label) > 0 else ""
+        current_value["description"] = KgtkFormat.unstringify(node2_description) if node2_description is not None and len(node2_description) > 0 else ""
+
+    elif rb_type == "/w/text":
+        text_value: str
+        language: str
+        language_suffix: str
+        text_value, language, language_suffix = KgtkFormat.destringify(node2)
+        current_value["text"] = text_value
+        current_value["lang"] = language + language_suffix
+
+    elif rb_type == "/w/string":
+        current_value["text"] = KgtkFormat.unstringify(node2)
+
+    elif rb_type == "/w/quantity":
+        if datatype == KgtkFormat.DataType.NUMBER:
+            current_value["text"] = node2
+        else:
+            if value.parse_fields():
+                newnum: str = value.fields.numberstr
+                if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
+                    newnum += "["
+                    if value.fields.low_tolerancestr is not None:
+                        newnum += value.fields.low_tolerancestr
+                    newnum += ","
+                    if value.fields.high_tolerancestr is not None:
+                        newnum += value.fields.high_tolerancestr
+                    newnum += "]"
+                if value.fields.si_units is not None:
+                    newnum += value.fields.si_units
+                if value.fields.units_node is not None:
+                    # Here's where it gets fancy:
+                    units_node: str = value.fields.units_node
+                    if units_node not in units_node_cache:
+                        units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
+                        if len(units_node_labels) > 0:
+                            units_node_label: str = units_node_labels[0][1]
+                            units_node_cache[units_node] = KgtkFormat.unstringify(units_node_label)
+                        else:
+                            units_node_cache[units_node] = None # Remember the failure.
+                                       
+                    if units_node_cache[units_node] is not None:
+                        newnum += " " + units_node_cache[units_node] + " (" + units_node + ")"
+                    else:
+                        newnum += " " + units_node # We could not find a label for this node when we looked last time.
+
+                current_value["text"] = newnum
+            else:
+                # Validation failed.
+                #
+                # TODO: Add a validation failure indicator?
+                current_value["text"] = node2
+
+    elif rb_type == "/w/time":
+        current_value["text"] = node2[1:] # Consider reformatting.
+        
+    elif rb_type == "/w/geo":
+        current_value["text"] = node2[1:] # Consider reformatting
+        # "url": "http://maps.google.com/maps?q=51.566513061523438,-0.14549720287322998"
+    else:
+        print("*** unknown rb_type %s" % repr(rb_type)) # ***
+
+    return current_value
+
+def find_rb_type(node2: str, value: KgtkValue)->str:
+    datatype: KgtkFormat.DataType = value.classify()
+    rb_type: str
+
+    if datatype == KgtkFormat.DataType.SYMBOL:
+        if node2.startswith(("P", "Q")):
+            rb_type = "/w/item"
+        else:
+            rb_type = "unknown"
+    elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
+        rb_type = "/w/text"
+    elif datatype == KgtkFormat.DataType.STRING:
+        rb_type = "/w/string"
+    elif datatype == KgtkFormat.DataType.QUANTITY:
+        rb_type = "/w/quantity"
+    elif datatype == KgtkFormat.DataType.NUMBER:
+        rb_type = "/w/quantity"
+    elif datatype == KgtkFormat.DataType.DATE_AND_TIMES:
+        rb_type = "/w/time"
+    elif datatype == KgtkFormat.DataType.LOCATION_COORDINATES:
+        rb_type = "/w/geo"
+    else:
+        rb_type = "/w/unknown" # Includes EMPTY, LIST, EXTENSION, BOOLEAN
+        print("*** unknown datatype") # ***def rb_send_kb_item(item: str):
+    return rb_type
+
+def rb_send_kb_item(item: str):
     lang: str = 'en'
 
     units_node_cache: typing.MutableMap[str, typing.Optional[str]] = dict()
-
+    
     try:
         with get_backend(app) as backend:
             response: typing.MutableMapping[str, any] = dict()
@@ -120,29 +225,7 @@ def rb_send_kb_item(item: str):
                 edge_id, relationship, node2, relationship_label, node2_label, node2_description = item_edge
 
                 value: KgtkValue = KgtkValue(node2)
-                datatype: KgtkFormat.DataType = value.classify()
-                rb_type: str
-                if datatype == KgtkFormat.DataType.SYMBOL:
-                    if node2.startswith(("P", "Q")):
-                        rb_type = "/w/item"
-                    else:
-                        rb_type = "unknown"
-                elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
-                    rb_type = "/w/text"
-                elif datatype == KgtkFormat.DataType.STRING:
-                    rb_type = "/w/string"
-                elif datatype == KgtkFormat.DataType.QUANTITY:
-                    rb_type = "/w/quantity"
-                elif datatype == KgtkFormat.DataType.NUMBER:
-                    rb_type = "/w/quantity"
-                elif datatype == KgtkFormat.DataType.DATE_AND_TIMES:
-                    rb_type = "/w/time"
-                elif datatype == KgtkFormat.DataType.LOCATION_COORDINATES:
-                    rb_type = "/w/geo"
-                else:
-                    rb_type = "/w/unknown" # Includes EMPTY, LIST, EXTENSION, BOOLEAN
-                    print("*** unknown datatype") # ***
-                
+                rb_type: str = find_rb_type(node2, value)
                 
                 if current_relationship is None or relationship != current_relationship:
                     current_relationship = relationship
@@ -162,75 +245,8 @@ def rb_send_kb_item(item: str):
                     continue
                 current_node2 = node2
 
-                current_value: typing.MutableMapping[str, any] = dict()
+                current_value: typing.MutableMapping[str, any] = build_current_value(backend, node2, value, rb_type, node2_label, node2_description, units_node_cache, lang)
                 current_values.append(current_value)
-
-                if rb_type == "/w/item":
-                    current_value["ref"] = node2
-                    current_value["text"] = KgtkFormat.unstringify(node2_label) if node2_label is not None and len(node2_label) > 0 else ""
-                    current_value["description"] = KgtkFormat.unstringify(node2_description) if node2_description is not None and len(node2_description) > 0 else ""
-
-                elif rb_type == "/w/text":
-                    text_value: str
-                    language: str
-                    language_suffix: str
-                    text_value, language, language_suffix = KgtkFormat.destringify(node2)
-                    current_value["text"] = text_value
-                    current_value["lang"] = language + language_suffix
-
-                elif rb_type == "/w/string":
-                    current_value["text"] = KgtkFormat.unstringify(node2)
-
-                elif rb_type == "/w/quantity":
-                    # Consider reformatting:
-                    # 1) expand units
-                    # 2) look up the label for a Qnode
-                    if datatype == KgtkFormat.DataType.NUMBER:
-                        current_value["text"] = node2
-                    else:
-                        if value.parse_fields():
-                            newnum: str = value.fields.numberstr
-                            if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
-                                newnum += "["
-                                if value.fields.low_tolerancestr is not None:
-                                    newnum += value.fields.low_tolerancestr
-                                newnum += ","
-                                if value.fields.high_tolerancestr is not None:
-                                    newnum += value.fields.high_tolerancestr
-                                newnum += "]"
-                            if value.fields.si_units is not None:
-                                newnum += value.fields.si_units
-                            if value.fields.units_node is not None:
-                                # Here's where it gets fancy:
-                                units_node: str = value.fields.units_node
-                                if units_node not in units_node_cache:
-                                    units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
-                                    if len(units_node_labels) > 0:
-                                        units_node_label: str = units_node_labels[0][1]
-                                        units_node_cache[units_node] = KgtkFormat.unstringify(units_node_label)
-                                    else:
-                                        units_node_cache[units_node] = None # Remember the failure.
-                                         
-                                if units_node_cache[units_node] is not None:
-                                    newnum += " " + units_node_cache[units_node] + " (" + units_node + ")"
-                                else:
-                                    newnum += " " + units_node # We could not find a label for this node when we looked last time.
-
-                            current_value["text"] = newnum
-                        else:
-                            # Validation failed.
-                            #
-                            # TODO: Add a validation failure indicator?
-                            current_value["text"] = node2
-
-                elif rb_type == "/w/time":
-                    current_value["text"] = node2[1:] # Consider reformatting.
-
-                elif rb_type == "/w/geo":
-                    current_value["text"] = node2[1:] # Consider reformatting
-                    # "url": "http://maps.google.com/maps?q=51.566513061523438,-0.14549720287322998"
-                else:
-                    print("*** unknown rb_type %s" % repr(rb_type)) # ***
 
             response["xrefs"] = [ ]
 
