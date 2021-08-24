@@ -207,22 +207,43 @@ def rb_send_kb_item(item: str):
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
             response["description"] = KgtkFormat.unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
 
-            response["properties"] = [ ]
+            response_properties = [ ]
+            response["properties"] = response_properties
+
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
+            edge_id: str
+            relationship: str
+            node2: str
+            relationship_label: typing.Optional[str]
+            node2_label: typing.Optional[str]
+            node2_description: typing.Optional[str]
+
+            item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
+
+            qual_edge_id: str
+            item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
+            item_qual_edge: typing.List[str]
+            for item_qual_edge in item_qualifier_edges:
+                edge_id = item_qual_edge[0]
+                if edge_id not in item_qual_map:
+                    item_qual_map[edge_id] = [ ]
+                item_qual_map[edge_id].append(item_qual_edge)
+                
+            current_edge_id: typing.Optional[str] = None
             current_relationship: typing.Optional[str] = None
             current_property_map: typing.MutableMapping[str, any] = dict()
             current_values: typing.List[typing.MutableMapping[str, any]] = list()
             current_node2: typing.Optional[str] = None
             item_edge: typing.List[str]
             for item_edge in item_edges:
-                print(repr(item_edge))
-                edge_id: str
-                relationship: str
-                node2: str
-                relationship_label: typing.Optional[str]
-                node2_label: typing.Optional[str]
-                node2_description: typing.Optional[str]
+                print(repr(item_edge)) # ***
                 edge_id, relationship, node2, relationship_label, node2_label, node2_description = item_edge
+
+                if current_edge_id is not None and current_edge_id == edge_id:
+                    print("*** skipping duplicate %s" % repr(current_edge_id)) # ***
+                    # Skip duplicates (say, multiple labels or descriptions).
+                    continue
+                current_edge_id = edge_id
 
                 value: KgtkValue = KgtkValue(node2)
                 rb_type: str = find_rb_type(node2, value)
@@ -230,23 +251,63 @@ def rb_send_kb_item(item: str):
                 if current_relationship is None or relationship != current_relationship:
                     current_relationship = relationship
                     current_property_map = dict()
-                    response["properties"].append(current_property_map)
+                    response_properties.append(current_property_map)
                     current_property_map["ref"] = relationship
                     current_property_map["property"] = KgtkFormat.unstringify(relationship_label) if relationship_label is not None and len(relationship_label) > 0 else relationship
                     current_property_map["type"] = rb_type # TODO: check for consistency
                     current_values = list()
                     current_property_map["values"] = current_values
-                    current_node2 = None
-                    
-                if current_node2 is not None and current_node2 == node2:
-                    # Skip duplicates (say, multiple labels or descriptions).
-                    # This will have to change when we support qualifiers.
-                    print("*** skipping duplicate %s" % repr(node2)) # ***
-                    continue
-                current_node2 = node2
 
                 current_value: typing.MutableMapping[str, any] = build_current_value(backend, node2, value, rb_type, node2_label, node2_description, units_node_cache, lang)
                 current_values.append(current_value)
+
+                if edge_id in item_qual_map:
+                    current_qual_edge_id: typing.Optional[str] = None
+                    current_qual_relationship: typing.Optional[str] = None
+                    current_qual_property_map: typing.MutableMapping[str, any] = dict()
+                    current_qual_node2: typing.Optional[str] = None
+                    current_qualifiers: typing.List[typing.MutableMapping[str, any]] = list()
+                    current_value["qualifiers"] = current_qualifiers
+
+                    qual_relationship: str
+                    qual_node2: str
+                    qual_relationship_label: typing.Optional[str]
+                    qual_node2_label: typing.Optional[str]
+                    qual_node2_description: typing.Optional[str]
+                    
+                    for item_qual_edge in item_qual_map[edge_id]:
+                        print(repr(item_qual_edge)) # ***
+                        _, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
+                        
+                        if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
+                            print("*** skipping duplicate qualifier %s" % repr(current_qual_edge_id)) # ***
+                            # Skip duplicates (say, multiple labels or descriptions).
+                            continue
+                        current_qual_edge_id = qual_edge_id
+                        
+                        qual_value: KgtkValue = KgtkValue(qual_node2)
+                        qual_rb_type: str = find_rb_type(qual_node2, qual_value)
+
+                        if current_qual_relationship is None or qual_relationship != current_qual_relationship:
+                            current_qual_relationship = qual_relationship
+                            current_qual_property_map = dict()
+                            current_qualifiers.append(current_qual_property_map)
+                            current_qual_property_map["ref"] = qual_relationship
+                            current_qual_property_map["property"] = KgtkFormat.unstringify(qual_relationship_label) if qual_relationship_label is not None and len(qual_relationship_label) > 0 else qual_relationship
+                            current_qual_property_map["type"] = qual_rb_type # TODO: check for consistency
+                            current_qual_values = list()
+                            current_qual_property_map["values"] = current_qual_values
+                    
+                        current_qual_value: typing.MutableMapping[str, any] = build_current_value(backend,
+                                                                                                  qual_node2,
+                                                                                                  qual_value,
+                                                                                                  qual_rb_type,
+                                                                                                  qual_node2_label,
+                                                                                                  qual_node2_description,
+                                                                                                  units_node_cache,
+                                                                                                  lang)
+                        current_qual_values.append(current_qual_value)
+
 
             response["xrefs"] = [ ]
 
