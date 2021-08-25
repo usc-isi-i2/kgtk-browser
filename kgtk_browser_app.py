@@ -233,8 +233,9 @@ def build_current_value(backend,
             
         
     elif rb_type == "/w/geo":
-        current_value["text"] = target_node[1:] # Consider reformatting
-        # "url": "http://maps.google.com/maps?q=51.566513061523438,-0.14549720287322998"
+        geoloc = target_node[1:]
+        current_value["text"] = geoloc # Consider reformatting
+        current_value["url"] = "http://maps.google.com/maps?q=" + geoloc.replace("/", ",")
     else:
         print("*** unknown rb_type %s" % repr(rb_type)) # ***
 
