@@ -92,7 +92,7 @@ def rb_get_kb_query():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def link_to_url(text_value, current_value, lang: str = "en", prop: typing.Optional[str] = None)->bool:
+def rb_link_to_url(text_value, current_value, lang: str = "en", prop: typing.Optional[str] = None)->bool:
     if text_value is None:
         return False
 
@@ -109,47 +109,51 @@ def link_to_url(text_value, current_value, lang: str = "en", prop: typing.Option
         return True
     return False
 
-image_formatter_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
+def rb_unstringify(item: str, default: str = "")->str:
+    return KgtkFormat.unstringify(item) if item is not None and len(item) > 0 else default
+
+rb_image_formatter_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
 def get_image_formatter(backend, relationship: str)->typing.Optional[str]:
-    if relationship not in image_formatter_cache:
+    if relationship not in rb_image_formatter_cache:
         result: typing.List[typing.List[str]] = backend.rb_get_image_formatter(relationship)
         if len(result) == 0:
-            image_formatter_cache[relationship] = None
+            rb_image_formatter_cache[relationship] = None
         else:
-            image_formatter_cache[relationship] = KgtkFormat.unstringify(result[0][0])
-    return image_formatter_cache[relationship]
+            rb_image_formatter_cache[relationship] = rb_unstringify(result[0][0])
+    return rb_image_formatter_cache[relationship]
 
-def build_current_value(backend,
-                        target_node: str,
-                        value: KgtkValue,
-                        rb_type: str,
-                        target_node_label: typing.Optional[str],
-                        target_node_description: typing.Optional[str],
-                        units_node_cache: typing.MutableMapping[str, typing.Optional[str]],
-                        lang: str,
-                        relationship: str = "",
-                        wikidatatype: str = ""
-                        )->typing.Mapping[str, str]:
+rb_units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
+
+def rb_build_current_value(backend,
+                           target_node: str,
+                           value: KgtkValue,
+                           rb_type: str,
+                           target_node_label: typing.Optional[str],
+                           target_node_description: typing.Optional[str],
+                           lang: str,
+                           relationship: str = "",
+                           wikidatatype: str = ""
+                           )->typing.Mapping[str, str]:
     current_value: typing.MutableMapping[str, any] = dict()
     datatype: KgtkFormat.DataType = value.classify()
 
     text_value: str
     
     if wikidatatype == "external-id":
-        text_value = KgtkFormat.unstringify(target_node)
+        text_value = rb_unstringify(target_node)
         current_value["text"] = text_value
         formatter: typing.Optional[str] = get_image_formatter(backend, relationship)
         if formatter is not None:
             # print("formatter: %s" % formatter, file=sys.stderr, flush=True) # ***
             current_value["url"] = formatter.replace("$1", text_value)
         else:
-            link_to_url(text_value, current_value)
+            rb_link_to_url(text_value, current_value)
 
     elif rb_type == "/w/item":
         current_value["ref"] = target_node
-        current_value["text"] = KgtkFormat.unstringify(target_node_label) if target_node_label is not None and len(target_node_label) > 0 else target_node
-        current_value["description"] = KgtkFormat.unstringify(target_node_description) if target_node_description is not None and len(target_node_description) > 0 else target_node
+        current_value["text"] = rb_unstringify(target_node_label, default=target_node)
+        current_value["description"] = rb_unstringify(target_node_description, default=target_node)
 
     elif rb_type == "/w/text":
         language: str
@@ -157,12 +161,12 @@ def build_current_value(backend,
         text_value, language, language_suffix = KgtkFormat.destringify(target_node)
         current_value["text"] = text_value
         current_value["lang"] = language + language_suffix
-        link_to_url(text_value, current_value, lang=language)
+        rb_link_to_url(text_value, current_value, lang=language)
 
     elif rb_type == "/w/string":
-        text_value = KgtkFormat.unstringify(target_node)
+        text_value = rb_unstringify(target_node)
         current_value["text"] = text_value
-        link_to_url(text_value, current_value)
+        rb_link_to_url(text_value, current_value)
 
     elif rb_type == "/w/quantity":
         if datatype == KgtkFormat.DataType.NUMBER:
@@ -188,16 +192,16 @@ def build_current_value(backend,
                 if value.fields.units_node is not None:
                     # Here's where it gets fancy:
                     units_node: str = value.fields.units_node
-                    if units_node not in units_node_cache:
+                    if units_node not in rb_units_node_cache:
                         units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
                         if len(units_node_labels) > 0:
                             units_node_label: str = units_node_labels[0][1]
-                            units_node_cache[units_node] = KgtkFormat.unstringify(units_node_label)
+                            rb_units_node_cache[units_node] = rb_unstringify(units_node_label)
                         else:
-                            units_node_cache[units_node] = None # Remember the failure.
+                            rb_units_node_cache[units_node] = None # Remember the failure.
                                        
-                    if units_node_cache[units_node] is not None:
-                        newnum += " " + units_node_cache[units_node]
+                    if rb_units_node_cache[units_node] is not None:
+                        newnum += " " + rb_units_node_cache[units_node]
                     else:
                         newnum += " " + units_node # We could not find a label for this node when we looked last time.
                     current_value["ref"] = units_node
@@ -241,7 +245,7 @@ def build_current_value(backend,
 
     return current_value
 
-def find_rb_type(node2: str, value: KgtkValue)->str:
+def rb_find_type(node2: str, value: KgtkValue)->str:
     datatype: KgtkFormat.DataType = value.classify()
     rb_type: str
 
@@ -271,11 +275,11 @@ def find_rb_type(node2: str, value: KgtkValue)->str:
 
 # The following routine was taken from Stack Overflow.
 # https://stackoverflow.com/questions/33689980/get-thumbnail-image-from-wikimedia-commons
-def get_wc_thumb(image, width=300): # image = e.g. from Wikidata, width in pixels
+def rb_get_wc_thumb(image: str, width: int = 300): # image = e.g. from Wikidata, width in pixels
     image = image.replace(' ', '_') # need to replace spaces with underline 
     m = hashlib.md5()
     m.update(image.encode('utf-8'))
-    d = m.hexdigest()
+    d: str = m.hexdigest()
     return "https://upload.wikimedia.org/wikipedia/commons/thumb/"+d[0]+'/'+d[0:2]+'/'+image+'/'+str(width)+'px-'+image
 
 def rb_build_gallery(item_edges: typing.List[typing.List[str]],
@@ -300,8 +304,8 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
             value: KgtkValue = KgtkValue(node2)
             if value.is_string() or value.is_language_qualified_string():
                 new_image: typing.Mapping[str, str] = {
-                    "url": get_wc_thumb(KgtkFormat.unstringify(node2)),
-                    "text": KgtkFormat.unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+                    "url": rb_get_wc_thumb(rb_unstringify(node2)),
+                    "text": rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
                 }
                 # print("new image: %s" % repr(new_image), file=sys.stderr, flush=True)
                 gallery.append(new_image)
@@ -310,16 +314,42 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 
     return gallery    
 
-units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
 # List the properties in the order that you want them to appear.  All unlisted
-# properties will appear after these.q
-property_priority_list: typing.List[str] = [
+# properties will appear after these.  The list may include 
+rb_property_priority_list: typing.List[str] = [
     "P31",
     "P231",
 ]
 
-property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(property_priority_list) }
+rb_property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_property_priority_list) }
+
+def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing.MutableMapping[str, typing.List[str]]:
+    # Sort the item edges
+    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
+
+    idx: int
+    item_edge: typing.List[str]
+    for idx, item_edge in enumerate(item_edges):
+        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
+        if relationship_label is None:
+            relationship_label = ""
+        if target_label is None:
+            target_label = target_node
+            priority: int = rb_property_priority_map.get(relationship, 99999)
+        item_edge_key: str = (str(priority+100000) + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        keyed_item_edges[item_edge_key] = item_edge
+    return keyed_item_edges
+
+def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[str]])->typing.MutableMapping[str, typing.List[typing.List[str]]]:
+    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
+    item_qual_edge: typing.List[str]
+    for item_qual_edge in item_qualifier_edges:
+        edge_id: str = item_qual_edge[0]
+        if edge_id not in item_qual_map:
+            item_qual_map[edge_id] = list()
+        item_qual_map[edge_id].append(item_qual_edge)
+    return item_qual_map
 
 def rb_send_kb_items_and_qualifiers(backend,
                                     item: str,
@@ -330,24 +360,7 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     lang: str = 'en',
                                     verbose: bool = False):
 
-    edge_id: str
-    qual_edge_id: str
-    node1: str
-    relationship: str
-    node2: str
-    relationship_label: typing.Optional[str]
-    target_node: str
-    target_label: typing.Optional[str]
-    target_description: typing.Optional[str]
-    wikidatatype: typing.Optional[str]
-
-    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
-    item_qual_edge: typing.List[str]
-    for item_qual_edge in item_qualifier_edges:
-        edge_id = item_qual_edge[0]
-        if edge_id not in item_qual_map:
-            item_qual_map[edge_id] = [ ]
-        item_qual_map[edge_id].append(item_qual_edge)
+    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
 
     current_edge_id: typing.Optional[str] = None
     current_relationship: typing.Optional[str] = None
@@ -355,29 +368,25 @@ def rb_send_kb_items_and_qualifiers(backend,
     current_values: typing.List[typing.MutableMapping[str, any]] = list()
     current_node2: typing.Optional[str] = None
 
-    item_edge: typing.List[str]
-
     # Sort the item edges
-    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
-    idx: int
-    item_edge_key: str
-    for idx, item_edge in enumerate(item_edges):
-        edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
-        if relationship_label is None:
-            relationship_label = ""
-        if target_label is None:
-            target_label = target_node
-        priority: int = property_priority_map.get(relationship, 99999)
-        item_edge_key = (str(priority+100000) + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
-        keyed_item_edges[item_edge_key] = item_edge
+    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = rb_build_keyed_item_edges(item_edges)
 
+    item_edge_key: str
     for item_edge_key in sorted(keyed_item_edges.keys()):
-        item_edge = keyed_item_edges[item_edge_key]
+        item_edge: typing.List[str] = keyed_item_edges[item_edge_key]
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
+
+        edge_id: str
+        node1: str
+        relationship: str
+        node2: str
+        relationship_label: typing.Optional[str]
+        target_node: str
+        target_label: typing.Optional[str]
+        target_description: typing.Optional[str]
+        wikidatatype: typing.Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
-        if verbose:
-            print("wikidatatype: %s" % repr(wikidatatype)) # ***
 
         if current_edge_id is not None and current_edge_id == edge_id:
             if verbose:
@@ -387,7 +396,7 @@ def rb_send_kb_items_and_qualifiers(backend,
         current_edge_id = edge_id
 
         value: KgtkValue = KgtkValue(target_node)
-        rb_type: str = find_rb_type(target_node, value)
+        rb_type: str = rb_find_type(target_node, value)
                 
         if current_relationship is None or relationship != current_relationship:
             current_relationship = relationship
@@ -397,21 +406,20 @@ def rb_send_kb_items_and_qualifiers(backend,
             else:
                 response_properties.append(current_property_map)
             current_property_map["ref"] = relationship
-            current_property_map["property"] = KgtkFormat.unstringify(relationship_label) if relationship_label is not None and len(relationship_label) > 0 else relationship
+            current_property_map["property"] = rb_unstringify(relationship_label, default=relationship)
             current_property_map["type"] = rb_type # TODO: check for consistency
             current_values = list()
             current_property_map["values"] = current_values
 
-        current_value: typing.MutableMapping[str, any] = build_current_value(backend,
-                                                                             target_node,
-                                                                             value,
-                                                                             rb_type,
-                                                                             target_label,
-                                                                             target_description,
-                                                                             units_node_cache,
-                                                                             lang,
-                                                                             relationship,
-                                                                             wikidatatype)
+        current_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
+                                                                                target_node,
+                                                                                value,
+                                                                                rb_type,
+                                                                                target_label,
+                                                                                target_description,
+                                                                                lang,
+                                                                                relationship,
+                                                                                wikidatatype)
         current_values.append(current_value)
 
         if edge_id in item_qual_map:
@@ -431,6 +439,8 @@ def rb_send_kb_items_and_qualifiers(backend,
             for item_qual_edge in item_qual_map[edge_id]:
                 if verbose:
                     print(repr(item_qual_edge), file=sys.stderr, flush=True)
+
+                qual_edge_id: str
                 _, node1, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
                         
                 if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
@@ -441,26 +451,25 @@ def rb_send_kb_items_and_qualifiers(backend,
                 current_qual_edge_id = qual_edge_id
                         
                 qual_value: KgtkValue = KgtkValue(qual_node2)
-                qual_rb_type: str = find_rb_type(qual_node2, qual_value)
+                qual_rb_type: str = rb_find_type(qual_node2, qual_value)
 
                 if current_qual_relationship is None or qual_relationship != current_qual_relationship:
                     current_qual_relationship = qual_relationship
                     current_qual_property_map = dict()
                     current_qualifiers.append(current_qual_property_map)
                     current_qual_property_map["ref"] = qual_relationship
-                    current_qual_property_map["property"] = KgtkFormat.unstringify(qual_relationship_label) if qual_relationship_label is not None and len(qual_relationship_label) > 0 else qual_relationship
+                    current_qual_property_map["property"] = rb_unstringify(qual_relationship_label, default=qual_relationship)
                     current_qual_property_map["type"] = qual_rb_type # TODO: check for consistency
                     current_qual_values = list()
                     current_qual_property_map["values"] = current_qual_values
                     
-                current_qual_value: typing.MutableMapping[str, any] = build_current_value(backend,
-                                                                                          qual_node2,
-                                                                                          qual_value,
-                                                                                          qual_rb_type,
-                                                                                          qual_node2_label,
-                                                                                          qual_node2_description,
-                                                                                          units_node_cache,
-                                                                                          lang)
+                current_qual_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
+                                                                                             qual_node2,
+                                                                                             qual_value,
+                                                                                             qual_rb_type,
+                                                                                             qual_node2_label,
+                                                                                             qual_node2_description,
+                                                                                             lang)
                 current_qual_values.append(current_qual_value)
 
 def rb_send_kb_categories(backend,
@@ -504,8 +513,8 @@ def rb_send_kb_categories(backend,
         response_categories.append(
             {
                 "ref": node1,
-                "text": KgtkFormat.unstringify(node1_label) if node1_label is not None and len(node1_label) > 0 else node1,
-                "description": KgtkFormat.unstringify(node1_description) if node1_description is not None and len(node1_description) > 0 else node1
+                "text": rb_unstringify(node1_label, default=node1),
+                "description": rb_unstringify(node1_description, default=node1)
             }
         )
 
@@ -534,10 +543,10 @@ def rb_send_kb_item(item: str):
             response["ref"] = item
 
             item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item, lang=lang)
-            response["text"] = KgtkFormat.unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+            response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
 
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
-            response["description"] = KgtkFormat.unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
+            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
 
             response_properties: typing.List[typing.MutableMapping[str, any]] = [ ]
             response["properties"] = response_properties
