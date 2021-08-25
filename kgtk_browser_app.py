@@ -336,44 +336,128 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing
             relationship_label = ""
         if target_label is None:
             target_label = target_node
-            priority: int = rb_property_priority_map.get(relationship, 99999)
+        priority: int = rb_property_priority_map.get(relationship, 99999)
         item_edge_key: str = (str(priority+100000) + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
         keyed_item_edges[item_edge_key] = item_edge
     return keyed_item_edges
 
-def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[str]])->typing.MutableMapping[str, typing.List[typing.List[str]]]:
-    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
-    item_qual_edge: typing.List[str]
-    for item_qual_edge in item_qualifier_edges:
-        edge_id: str = item_qual_edge[0]
-        if edge_id not in item_qual_map:
-            item_qual_map[edge_id] = list()
-        item_qual_map[edge_id].append(item_qual_edge)
-    return item_qual_map
+def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]])->typing.List[typing.List[str]]:
+    # Sort the item edges:
+    sorted_item_edges: typing.List[typing.List[str]] = list()
 
-def rb_send_kb_items_and_qualifiers(backend,
-                                    item: str,
-                                    response_properties: typing.MutableMapping[str, any],
-                                    response_xrefs: typing.MutableMapping[str, any],
-                                    item_edges: typing.List[typing.List[str]],
-                                    item_qualifier_edges: typing.List[typing.List[str]],
-                                    lang: str = 'en',
-                                    verbose: bool = False):
-
-    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
-
-    current_edge_id: typing.Optional[str] = None
-    current_relationship: typing.Optional[str] = None
-    current_property_map: typing.MutableMapping[str, any] = dict()
-    current_values: typing.List[typing.MutableMapping[str, any]] = list()
-    current_node2: typing.Optional[str] = None
-
-    # Sort the item edges
     keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = rb_build_keyed_item_edges(item_edges)
 
     item_edge_key: str
     for item_edge_key in sorted(keyed_item_edges.keys()):
-        item_edge: typing.List[str] = keyed_item_edges[item_edge_key]
+        sorted_item_edges.append(keyed_item_edges[item_edge_key])
+
+    return sorted_item_edges
+
+def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[str]])->typing.Mapping[str, typing.List[typing.List[str]]]:
+    item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
+
+    edge_id: str
+
+    # Map the qualifiers onto the edges that they qualify.
+    item_qual_edge: typing.List[str]
+    for item_qual_edge in item_qualifier_edges:
+        edge_id = item_qual_edge[0]
+        if edge_id not in item_qual_map:
+            item_qual_map[edge_id] = list()
+        item_qual_map[edge_id].append(item_qual_edge)
+
+    # Sort the qualifiers for each edge in alphabetical order by qualifier
+    # label, then by value label.  If a qualifier has multiple values, it is
+    # important that the values be adjacent to each other in the resulting
+    # output.
+    for edge_id in item_qual_map:
+        keyed_edge_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
+        qual_relationship_key: str
+        for item_qual_edge in item_qual_map[edge_id]:
+            qual_relationship_key = rb_unstringify(item_qual_edge[5], default=item_qual_edge[3]) + "|" + rb_unstringify(item_qual_edge[6], default=item_qual_edge[4])
+            if qual_relationship_key not in keyed_edge_map:
+                keyed_edge_map[qual_relationship_key] = list()
+            keyed_edge_map[qual_relationship_key].append(item_qual_edge)
+        
+        sorted_item_qual_edges: typing.List[typing.List[str]] = list()
+        for qual_relationship_key in sorted(keyed_edge_map.keys()):
+            item_qual_edges: typing.List[typing.List[str]] = keyed_edge_map[qual_relationship_key]
+            sorted_item_qual_edges.extend(item_qual_edges)
+        item_qual_map[edge_id] = sorted_item_qual_edges
+
+    return item_qual_map
+
+def rb_render_item_qualifiers(backend,
+                              item_qualifier_edges: typing.List[typing.List[str]],
+                              lang: str,
+                              verbose: bool)->typing.List[typing.MutableMapping[str, any]]:
+    current_qual_edge_id: typing.Optional[str] = None
+    current_qual_relationship: typing.Optional[str] = None
+    current_qualifiers: typing.List[typing.MutableMapping[str, any]] = list()
+
+    for item_qual_edge in item_qualifier_edges:
+        if verbose:
+            print(repr(item_qual_edge), file=sys.stderr, flush=True)
+
+        qual_edge_id: str
+        qual_relationship: str
+        qual_node2: str
+        qual_relationship_label: typing.Optional[str]
+        qual_node2_label: typing.Optional[str]
+        qual_node2_description: typing.Optional[str]
+        _, _, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
+                        
+        if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
+            if verbose:
+                print("*** skipping duplicate qualifier %s" % repr(current_qual_edge_id), file=sys.stderr, flush=True)
+            # Skip duplicates (say, multiple labels or descriptions).
+            continue
+        current_qual_edge_id = qual_edge_id
+                        
+        qual_value: KgtkValue = KgtkValue(qual_node2)
+        qual_rb_type: str = rb_find_type(qual_node2, qual_value)
+
+        if current_qual_relationship is None or qual_relationship != current_qual_relationship:
+            # We are starting a new qualifier. Create the entry for the
+            # qualifier, and start building the qualifier's list of values.
+            current_qual_relationship = qual_relationship
+            current_qual_values = list()
+            current_qual_property_map: typing.MutableMapping[str, any] = {
+                "ref": qual_relationship,
+                "property": rb_unstringify(qual_relationship_label, default=qual_relationship),
+                "type": qual_rb_type, # TODO: check for consistency
+                "values": current_qual_values
+            }
+            current_qualifiers.append(current_qual_property_map)
+                    
+        current_qual_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
+                                                                                     qual_node2,
+                                                                                     qual_value,
+                                                                                     qual_rb_type,
+                                                                                     qual_node2_label,
+                                                                                     qual_node2_description,
+                                                                                     lang)
+        current_qual_values.append(current_qual_value)
+
+    return current_qualifiers
+
+def rb_render_kb_items_and_qualifiers(backend,
+                                      item: str,
+                                      item_edges: typing.List[typing.List[str]],
+                                      item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]],
+                                      lang: str = 'en',
+                                      verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                                                           typing.List[typing.MutableMapping[str, any]]]:
+
+    response_properties: typing.List[typing.MutableMapping[str, any]] = list()
+    response_xrefs: typing.List[typing.MutableMapping[str, any]] = list()
+
+    current_edge_id: typing.Optional[str] = None
+    current_relationship: typing.Optional[str] = None
+    current_values: typing.List[typing.MutableMapping[str, any]] = list()
+
+    item_edge: typing.List[str]
+    for item_edge in item_edges:
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
 
@@ -398,18 +482,24 @@ def rb_send_kb_items_and_qualifiers(backend,
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
                 
+        # If a relationship has multiple values, they must be next to each
+        # other in the sorted list of item_edges.
         if current_relationship is None or relationship != current_relationship:
+            # We are starting a new relationship.
             current_relationship = relationship
-            current_property_map = dict()
+            current_values = list()
+            current_property_map: typing.MutableMapping[str, any] = {
+                "ref": relationship,
+                "property": rb_unstringify(relationship_label, default=relationship),
+                "type": rb_type, # TODO: check for consistency
+                "values": current_values
+            }
             if wikidatatype is not None and wikidatatype == "external-id":
                 response_xrefs.append(current_property_map)
             else:
                 response_properties.append(current_property_map)
-            current_property_map["ref"] = relationship
-            current_property_map["property"] = rb_unstringify(relationship_label, default=relationship)
-            current_property_map["type"] = rb_type # TODO: check for consistency
-            current_values = list()
-            current_property_map["values"] = current_values
+            # TODO: check that the wikidatatype is the same for all edges with
+            # the same relationship.
 
         current_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
                                                                                 target_node,
@@ -420,57 +510,35 @@ def rb_send_kb_items_and_qualifiers(backend,
                                                                                 lang,
                                                                                 relationship,
                                                                                 wikidatatype)
+        if edge_id in item_qual_map:
+            current_value["qualifiers"] = rb_render_item_qualifiers(backend, item_qual_map[edge_id], lang, verbose)
         current_values.append(current_value)
 
-        if edge_id in item_qual_map:
-            current_qual_edge_id: typing.Optional[str] = None
-            current_qual_relationship: typing.Optional[str] = None
-            current_qual_property_map: typing.MutableMapping[str, any] = dict()
-            current_qual_node2: typing.Optional[str] = None
-            current_qualifiers: typing.List[typing.MutableMapping[str, any]] = list()
-            current_value["qualifiers"] = current_qualifiers
 
-            qual_relationship: str
-            qual_node2: str
-            qual_relationship_label: typing.Optional[str]
-            qual_node2_label: typing.Optional[str]
-            qual_node2_description: typing.Optional[str]
-                    
-            for item_qual_edge in item_qual_map[edge_id]:
-                if verbose:
-                    print(repr(item_qual_edge), file=sys.stderr, flush=True)
+    return response_properties, response_xrefs
 
-                qual_edge_id: str
-                _, node1, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
-                        
-                if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
-                    if verbose:
-                        print("*** skipping duplicate qualifier %s" % repr(current_qual_edge_id), file=sys.stderr, flush=True)
-                    # Skip duplicates (say, multiple labels or descriptions).
-                    continue
-                current_qual_edge_id = qual_edge_id
-                        
-                qual_value: KgtkValue = KgtkValue(qual_node2)
-                qual_rb_type: str = rb_find_type(qual_node2, qual_value)
+def rb_send_kb_items_and_qualifiers(backend,
+                                    item: str,
+                                    item_edges: typing.List[typing.List[str]],
+                                    item_qualifier_edges: typing.List[typing.List[str]],
+                                    lang: str = 'en',
+                                    verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                                                         typing.List[typing.MutableMapping[str, any]]]:
 
-                if current_qual_relationship is None or qual_relationship != current_qual_relationship:
-                    current_qual_relationship = qual_relationship
-                    current_qual_property_map = dict()
-                    current_qualifiers.append(current_qual_property_map)
-                    current_qual_property_map["ref"] = qual_relationship
-                    current_qual_property_map["property"] = rb_unstringify(qual_relationship_label, default=qual_relationship)
-                    current_qual_property_map["type"] = qual_rb_type # TODO: check for consistency
-                    current_qual_values = list()
-                    current_qual_property_map["values"] = current_qual_values
-                    
-                current_qual_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
-                                                                                             qual_node2,
-                                                                                             qual_value,
-                                                                                             qual_rb_type,
-                                                                                             qual_node2_label,
-                                                                                             qual_node2_description,
-                                                                                             lang)
-                current_qual_values.append(current_qual_value)
+    # Sort the item edges:
+    sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
+
+    # Group the qualifiers by the item they qualify, identified by the item's
+    # edge_id (which should be unique):
+    item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
+
+    return rb_render_kb_items_and_qualifiers(backend,
+                                             item,
+                                             sorted_item_edges,
+                                             item_qual_map,
+                                             lang=lang,
+                                             verbose=verbose)
+
 
 def rb_send_kb_categories(backend,
                           item: str,
@@ -548,11 +616,16 @@ def rb_send_kb_item(item: str):
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
             response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
 
-            response_properties: typing.List[typing.MutableMapping[str, any]] = [ ]
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            response_xrefs: typing.List[typing.MutableMapping[str, any]]
+            response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
+                                                                                  item,
+                                                                                  item_edges,
+                                                                                  item_qualifier_edges,
+                                                                                  lang=lang,
+                                                                                  verbose=verbose)
             response["properties"] = response_properties
-            response_xrefs: typing.List[typing.MutableMapping[str, any]] = [ ]
             response["xrefs"] = response_xrefs
-            rb_send_kb_items_and_qualifiers(backend, item, response_properties, response_xrefs, item_edges, item_qualifier_edges, lang=lang, verbose=verbose)
 
             # response_categories: typing.List[typing.MutableMapping[str, any]] = [ ]
             # response["categories"] = response_categories
