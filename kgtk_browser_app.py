@@ -81,23 +81,130 @@ def rb_get_kb_query():
     q = flask.request.args.get('q')
     print("rb_get_kb_query: " + q)
 
+    verbose: bool = False # Debugging control
+
+    lang: str = "en" # TODO: Make this an optional parameter for the search.
+    match_item_exactly: bool = True # TODO: Make this an optional parameter for the search.
+    match_label_exactly: bool = True # TODO: Make this an optional parameter for the search.
+    match_item_prefixes: bool = True # TODO: Make this an optional parameter for the search.
+    match_label_prefixes: bool = True # TODO: Make this an optional parameter for the search.
+    match_label_ignore_case: bool = True # TODO: Make this an optional parameter for the search.
+
     try:
         with get_backend(app) as backend:
             matches = [ ]
 
+            # We will look for exact matches first on the node name and label,
+            # then prefix matches.  We keep track of the matches we've seen and
+            # produce only one match per node.
+            items_seen: typing.Set[str] = set()
+
             # q.upper() means that lower-case entries (e.e.g, "q42") will
             # still match the item names (e.g., "Q42").
-            results = backend.rb_get_nodes_starting_with(q.upper(), lang="en")
-            for result in results:
-                item = result[0]
-                label = KgtkFormat.unstringify(result[1])
-                matches.append(
-                    {
-                        "ref": item,
-                        "text": item,
-                        "description": label
-                    }
-                )
+            qupper: str = q.upper()
+
+            if match_item_exactly:
+                if verbose:
+                    print("Searching for node %s" % qupper, file=sys.stderr, flush=True)
+                # Look for an exact match for the node name:
+                results = backend.get_node_labels(qupper, lang=lang)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_label_exactly:
+                # Query the labels. Exact case is a requirement.
+                #
+                # Labels are encoded as language-qualified strings.  We want to do an
+                # exact match, so we stringify.
+                l: str = KgtkFormat.stringify(q, language=lang)
+                if verbose:
+                    print("Searching for label %s" % l, file=sys.stderr, flush=True)
+                if match_label_ignore_case:
+                    results = backend.rb_get_nodes_for_upper_label(l, lang=lang)
+                else:
+                    results = backend.rb_get_nodes_for_label(l, lang=lang)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_item_prefixes:
+                if verbose:
+                    print("Searching for node prefix %s" % qupper, file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_starting_with(qupper, lang=lang)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_label_prefixes:
+                # Query the labels pefixes. Exact case is a requirement.
+                #
+                # Labels are encoded as language-qualified strings.  We want to do a prefix
+                # match, so we stringify to a plain string, replace the leading '"' with "'",
+                # and remove the trailing '"'
+                prefix: str = "'" + KgtkFormat.stringify(q)[1:-1]
+                if verbose:
+                    print("Searching for label prefix %s" % prefix, file=sys.stderr, flush=True)
+                if match_label_ignore_case:
+                    results = backend.rb_get_nodes_with_upper_labels_starting_with(prefix, lang=lang)
+                else:
+                    results = backend.rb_get_nodes_with_labels_starting_with(prefix, lang=lang)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if verbose:
+                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+
+            # Build the final response:
             response_data = {
                 "matches": matches
             }

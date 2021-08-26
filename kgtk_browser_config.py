@@ -218,19 +218,88 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     order= 'r, qn2 desc',
 )
 
+RB_NODES_FOR_LABEL_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_nodes_for_label()'.
+    Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result
+    """,
+    name='rb_nodse_for_label_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='l=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
+RB_NODES_FOR_UPPER_LABEL_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_nodes_for_label()'.
+    Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result
+    """,
+    name='rb_nodse_for_upper_label_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
+    where='ul=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
 RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()'.
     Given parameters 'NODE' (which should end with '.*') and 'LANG' retrieve labels for 'NODE' in
     the specified language (using 'any' for 'LANG' retrieves all labels).
-    Return distinct 'node1', 'node_label' pairs as the result.
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
     """,
     name='browser_nodes_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    ret=  'n as node1, l as node_label',
+    order= "n, l",
+    limit= "$LIMIT"
+)
+
+RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
+    Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+    """,
+    name='browser_nodes_with_labels_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='glob($LABEL, l) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    order= "n, l",
+    limit= "$LIMIT"
+)
+
+RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
+    Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+    """,
+    name='browser_nodes_with_upper_labels_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
+    where='glob($LABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    order= "n, l",
+    limit= "$LIMIT"
 )
 
 RB_NODE_EDGES_QUERY = _api.get_query(

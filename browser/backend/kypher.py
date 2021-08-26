@@ -337,8 +337,20 @@ class BrowserBackend(object):
             return formatter.format_node_data(node_data)
 
     ### Support for the Ringgaard browser:
+    def rb_get_nodes_for_label(self, label, lang=None, fmt=None):
+        """Retrieve all nodes with label 'label'.
+        """
+        query = self.get_config('RB_NODES_FOR_LABEL_QUERY')
+        return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
+
+    def rb_get_nodes_for_upper_label(self, label, lang=None, fmt=None):
+        """Retrieve all nodes with label 'label'.
+        """
+        query = self.get_config('RB_NODES_FOR_UPPER_LABEL_QUERY')
+        return self.execute_query(query, LABEL=label.upper(), LANG=self.get_lang(lang), fmt=fmt)
+
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_starting_with(self, node, lang=None, fmt=None):
+    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes starting with 'node'.
         """
 
@@ -346,7 +358,29 @@ class BrowserBackend(object):
         safenode: str = node.translate({ord(i): None for i in '*[?'})
         
         query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
-        return self.execute_query(query, NODE=safenode + '*', LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query, NODE=safenode + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
+    def rb_get_nodes_with_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None):
+        """Retrieve nodes and labels for all nodes with labels starting with 'label'.
+        """
+
+        # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
+        safe_label: str = label.translate({ord(i): None for i in '*[?'})
+
+        query = self.get_config('RB_NODES_WITH_LABELS_STARTING_WITH_QUERY')
+        return self.execute_query(query, LABEL=safe_label + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
+    def rb_get_nodes_with_upper_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None):
+        """Retrieve nodes and labels for all nodes with labels starting with 'label'.
+        """
+
+        # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
+        safe_label: str = label.translate({ord(i): None for i in '*[?'})
+
+        query = self.get_config('RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY')
+        return self.execute_query(query, LABEL=safe_label.upper() + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node1.
