@@ -3,6 +3,9 @@ import Grid from '@material-ui/core/Grid'
 import Link from '@material-ui/core/Link'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
+import ImageList from '@material-ui/core/ImageList'
+import ImageListItem from '@material-ui/core/ImageListItem'
+import ImageListItemBar from '@material-ui/core/ImageListItemBar'
 import { makeStyles } from '@material-ui/core/styles'
 
 
@@ -55,6 +58,23 @@ const useStyles = makeStyles(theme => ({
   row: {
     paddingTop: theme.spacing(3),
     borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+  },
+  imageList: {
+    flexWrap: 'nowrap',
+    // Promote the list into his own layer on Chrome.
+    // This cost memory but helps keeping high FPS.
+    transform: 'translateZ(0)',
+  },
+  imageItem: {
+    width: '50%',
+    height: '300px',
+  },
+  title: {
+    color: '#fefefe',
+  },
+  titleBar: {
+    background:
+      'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
   },
 }))
 
@@ -149,6 +169,22 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
+          <ImageList className={classes.imageList}
+            rowHeight={350}
+            cols={1.25} gap={15}>
+            {data.gallery.map((image, index) => (
+              <ImageListItem key={index}>
+                <img src={image.url} alt={image.text} />
+                <ImageListItemBar
+                  title={image.text}
+                  classes={{
+                    root: classes.titleBar,
+                    title: classes.title,
+                  }}
+                />
+              </ImageListItem>
+            ))}
+          </ImageList>
         </Paper>
       </Grid>
     )
