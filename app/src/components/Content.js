@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import Grid from '@material-ui/core/Grid'
 import Link from '@material-ui/core/Link'
 import Paper from '@material-ui/core/Paper'
+import Container from '@material-ui/core/Container'
 import Typography from '@material-ui/core/Typography'
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -13,13 +13,6 @@ import fetchData from '../utils/fetchData'
 
 
 const useStyles = makeStyles(theme => ({
-  content: {
-    width: '100vw',
-    height: '100vh',
-    background: 'linear-gradient(150deg, #708090, #002133)',
-    backgroundAttachment: 'fixed',
-    backgroundSize: '100% 150%',
-  },
   header: {
     color: '#fefefe',
     marginTop: theme.spacing(3),
@@ -49,7 +42,7 @@ const Content = () => {
   }, [])
 
   return (
-    <Grid className={classes.content}>
+    <Container maxWidth="xl">
       <div id="top" />
       <Typography component="h3" variant="h3" className={classes.header}>
         <a href="https://github.com/usc-isi-i2/kgtk" title="Knowledge Graph Toolkit" rel="noopener noreferrer nofollow" target="_blank">
@@ -61,7 +54,7 @@ const Content = () => {
       </Typography>
       {!!data && <Data data={data} />}
       <ArrowUp/>
-    </Grid>
+    </Container>
   )
 }
 
