@@ -103,11 +103,18 @@ const Data = ({ data }) => {
             <Grid container spacing={3} key={index}
               className={classes.row}>
               <Grid item xs={3}>
-                <Link variant='body1'
-                  className={classes.link}
-                  href={`/?id=${property.ref}`}>
-                  {property.property}
-                </Link>
+                {property.url || property.ref ? (
+                  <Link variant='body1'
+                    className={classes.link}
+                    href={property.url ? property.url : `/?id=${property.ref}`}>
+                    {property.property}
+                  </Link>
+                ) : (
+                  <Typography variant='body1'
+                    className={classes.text}>
+                    {property.property}
+                  </Typography>
+                )}
               </Grid>
               <Grid item xs={9}>
                 {!!property.values && property.values.map((value, index) => (
@@ -116,7 +123,7 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link variant='body1'
                           className={classes.link}
-                          href={`/?id=${value.ref}`}>
+                          href={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
                         </Link>
                       ) : (
@@ -128,11 +135,18 @@ const Data = ({ data }) => {
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
                         <Grid container spacing={3} key={index}>
                           <Grid item xs={4}>
-                            <Link variant='body2'
-                              className={classes.link2}
-                              href={`/?id=${qualifier.ref}`}>
-                              {qualifier.property}
-                            </Link>
+                            {qualifier.url || qualifier.ref ? (
+                              <Link variant='body2'
+                                className={classes.link2}
+                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                {qualifier.property}
+                              </Link>
+                            ) : (
+                              <Typography variant='body2'
+                                className={classes.text2}>
+                                {qualifier.text}
+                              </Typography>
+                            )}
                           </Grid>
                           <Grid item xs={8}>
                             {!!qualifier.values && qualifier.values.map((value, index) => (
@@ -198,11 +212,18 @@ const Data = ({ data }) => {
             <Grid container spacing={3} key={index}
               className={classes.row}>
               <Grid item xs={6}>
-                <Link variant='body1'
-                  className={classes.link}
-                  href={`/?id=${property.ref}`}>
-                  {property.property}
-                </Link>
+                {property.url || property.ref ? (
+                  <Link variant='body1'
+                    className={classes.link}
+                    href={property.url ? property.url : `/?id=${property.ref}`}>
+                    {property.property}
+                  </Link>
+                ) : (
+                  <Typography variant='body1'
+                    className={classes.text}>
+                    {property.property}
+                  </Typography>
+                )}
               </Grid>
               <Grid item xs={6}>
                 {!!property.values && property.values.map((value, index) => (
@@ -211,7 +232,7 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link variant='body1'
                           className={classes.link}
-                          href={`/?id=${value.ref}`}>
+                          href={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
                         </Link>
                       ) : (
@@ -223,11 +244,18 @@ const Data = ({ data }) => {
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
                         <Grid container spacing={3} key={index}>
                           <Grid item xs={4}>
-                            <Link variant='body2'
-                              className={classes.link2}
-                              href={`/?id=${qualifier.ref}`}>
-                              {qualifier.property}
-                            </Link>
+                            {qualifier.url || qualifier.ref ? (
+                              <Link variant='body2'
+                                className={classes.link2}
+                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                {qualifier.property}
+                              </Link>
+                            ) : (
+                              <Typography variant='body2'
+                                className={classes.text2}>
+                                {qualifier.text}
+                              </Typography>
+                            )}
                           </Grid>
                           <Grid item xs={8}>
                             {!!qualifier.values && qualifier.values.map((value, index) => (
