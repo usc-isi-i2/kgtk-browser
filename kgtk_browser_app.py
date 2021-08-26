@@ -17,14 +17,28 @@ from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 
 
-# How to run:
+# How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
 # > export FLASK_ENV=development
 # > export KGTK_BROWSER_CONFIG=$PWD/kgtk_browser_config.py
 # > flask run
 
-# Example invocation:
+# Example URLs for local server access:
 # http://127.0.0.1:5000/kgtk/browser/backend/get_all_node_data?node=Q5
+# http://127.0.0.1:5000/kgtk/kb
+# http://127.0.0.1:5000/kgtk/kb/Q42
+
+# How to run as a more general server (but please use nginx for
+# deployment)::
+# > export FLASK_APP=kgtk_browser_app.py
+# > export FLASK_ENV=development
+# > export KGTK_BROWSER_CONFIG=$PWD/kgtk_browser_config.py
+# > flask run --host 0.0.0.0 --port 1234
+
+# Example URL for named server access:
+# http://ckg07.isi.edu:1234/kgtk/browser/backend/get_all_node_data?node=Q5
+# http://ckg07.isi.edu:1234/kb
+# http://ckg07.isi.edu:1234/kb/Q42
 
 
 ### Flask application
