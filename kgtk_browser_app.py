@@ -338,6 +338,13 @@ rb_property_priority_list: typing.List[str] = [
 
 rb_property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_property_priority_list) }
 
+rb_qualifier_priority_list: typing.List[str] = [
+    "P580", # start time
+    "P582", # end time
+]
+
+rb_qualifier_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_qualifier_priority_list) }
+
 def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing.MutableMapping[str, typing.List[str]]:
     # Sort the item edges
     keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
@@ -388,7 +395,18 @@ def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[st
         keyed_edge_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
         qual_relationship_key: str
         for item_qual_edge in item_qual_map[edge_id]:
-            qual_relationship_key = rb_unstringify(item_qual_edge[5], default=item_qual_edge[3]) + "|" + rb_unstringify(item_qual_edge[6], default=item_qual_edge[4])
+            qual_relationship: str = item_qual_edge[3]
+            qual_node2: str = item_qual_edge[4]
+            qual_relationship_label: typing.Optional[str] = item_qual_edge[5]
+            qual_node2_label: typing.Optional[str] = item_qual_edge[6]
+
+            priority: str = rb_qualifier_priority_map.get(qual_relationship, 99999)
+            prikey: str = str(priority + 100000)
+
+            relkey: str = qual_relationship_label if qual_relationship_label is not None and len(qual_relationship_label) > 0 else qual_relationship
+            n2key: str = qual_node2_label if qual_node2_label is not None and len(qual_node2_label) > 0 else qual_node2
+
+            qual_relationship_key: str = prikey + "|" + relkey + "|" + n2key
             if qual_relationship_key not in keyed_edge_map:
                 keyed_edge_map[qual_relationship_key] = list()
             keyed_edge_map[qual_relationship_key].append(item_qual_edge)
