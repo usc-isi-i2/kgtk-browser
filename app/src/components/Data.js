@@ -99,6 +99,7 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
+          <Typography variant="h4">Properties</Typography>
           {data.properties.map((property, index) => (
             <Grid container spacing={3} key={index}
               className={classes.row}>
@@ -208,6 +209,7 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
+          <Typography variant="h4">Identifiers</Typography>
           {data.xrefs.map((property, index) => (
             <Grid container spacing={3} key={index}
               className={classes.row}>
