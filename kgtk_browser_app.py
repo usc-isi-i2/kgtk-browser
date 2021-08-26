@@ -332,8 +332,8 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.  The list may include 
 rb_property_priority_list: typing.List[str] = [
-    "P31",
-    "P231",
+    "P31", # instance of
+    "P279", # subclass of
 ]
 
 rb_property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_property_priority_list) }
