@@ -85,7 +85,9 @@ def rb_get_kb_query():
         with get_backend(app) as backend:
             matches = [ ]
 
-            results = backend.rb_get_nodes_starting_with(q, lang="en")
+            # q.upper() means that lower-case entries (e.e.g, "q42") will
+            # still match the item names (e.g., "Q42").
+            results = backend.rb_get_nodes_starting_with(q.upper(), lang="en")
             for result in results:
                 item = result[0]
                 label = KgtkFormat.unstringify(result[1])
