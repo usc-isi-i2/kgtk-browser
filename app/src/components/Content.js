@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography'
 import { makeStyles } from '@material-ui/core/styles'
 
 
+import Data from './Data'
 import Logo from './Logo'
 import ArrowUp from './ArrowUp'
 import fetchData from '../utils/fetchData'
@@ -58,7 +59,7 @@ const Content = () => {
         </a>
         KGTK Browser
       </Typography>
-
+      {!!data && <Data data={data} />}
       <ArrowUp/>
     </Grid>
   )
