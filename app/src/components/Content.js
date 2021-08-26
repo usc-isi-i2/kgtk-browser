@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import Link from '@material-ui/core/Link'
-import Paper from '@material-ui/core/Paper'
 import Container from '@material-ui/core/Container'
 import Typography from '@material-ui/core/Typography'
 import { makeStyles } from '@material-ui/core/styles'
