@@ -336,56 +336,100 @@ class BrowserBackend(object):
                 formatter == self.formatter
             return formatter.format_node_data(node_data)
 
-    ### Support for the Ringgaard browser:
-    def rb_get_nodes_for_label(self, label, lang=None, fmt=None):
-        """Retrieve all nodes with label 'label'.
-        """
-        query = self.get_config('RB_NODES_FOR_LABEL_QUERY')
-        return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
+    ### Support for the revised browser:
+    def rb_get_node_labels(self, node, lang=None, fmt=None):
+        """Retrieve all labels for 'node'.
 
-    def rb_get_nodes_for_upper_label(self, label, lang=None, fmt=None):
-        """Retrieve all nodes with label 'label'.
+        Node names are assumed to always be in upper case in the database and
+        the search is always assumed to be case-insensitive.  We don't have
+        seperate exact case/case-insensitive queries for this retreival.
+
+
+        This search method supports rb_get_kb_query(), which generates a list of
+        candidate nodes.  The search must be fast.
         """
-        query = self.get_config('RB_NODES_FOR_UPPER_LABEL_QUERY')
-        return self.execute_query(query, LABEL=label.upper(), LANG=self.get_lang(lang), fmt=fmt)
+        # Raise the case of the node to implement a case-insensitive search.
+        #
+        # TODO: Can we do this in the SQL query?
+        node = node.upper()
+
+        query = self.get_config('NODE_LABELS_QUERY')
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+
+    def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
+        """Retrieve all nodes with label 'label'.
+
+        This search method supports rb_get_kb_query(), which generates a list
+        of candidate nodes.  The label is searched for a complete match, which
+        may or may not be case-insensitive.  The search must be fast.
+
+        """
+
+        if ignore_case:
+            # Raise the case of the label to implement a case-insensitive search.
+            label = label.upper()
+            query = self.get_config('RB_NODES_WITH_UPPER_LABEL_QUERY')
+
+        else:
+            # This query relies on making an exact match for the label.
+            query = self.get_config('RB_NODES_WITH_LABEL_QUERY')
+            
+        return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes starting with 'node'.
+
+        Node names are assumed to always be in upper case in the database and
+        the search is always assumed to be case-insensitive.  We don't have
+        seperate exact case/case-insensitive queries for this retreival.
+
+        This search method supports rb_get_kb_query(), which generates a list of
+        candidate nodes.  The search must be fast.
         """
+
+        # Raise the case of the node to implement a case-insensitive search.
+        #
+        # TODO: Can we do this in the SQL query?
+        node = node.upper()
 
         # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
-        safenode: str = node.translate({ord(i): None for i in '*[?'})
+        safe_node: str = node.translate({ord(i): None for i in '*[?'})
         
         query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
-        return self.execute_query(query, NODE=safenode + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
+        # We have to append the wildcard "*" here because kypher currently
+        # does not accept the SQL concatenation operator ('||') in the query definition.
+        #
+        # TODO: migrate the "*" to the SQL query definition.
+        return self.execute_query(query, NODE=safe_node + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_with_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None):
+    def rb_get_nodes_with_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
         """Retrieve nodes and labels for all nodes with labels starting with 'label'.
+
+        This search method supports rb_get_kb_query(), which generates a list of
+        candidate nodes. The label is searched for a complete match, which                                                                                       
+        may or may not be case-insensitive.  The search must be fast.
         """
+
+        if ignore_case:
+            # Raise the case of the label to implement a case-insensitive search.
+            label = label.upper()
+            query = self.get_config('RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY')
+
+        else:
+            query = self.get_config('RB_NODES_WITH_LABELS_STARTING_WITH_QUERY')
 
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        query = self.get_config('RB_NODES_WITH_LABELS_STARTING_WITH_QUERY')
+        # We have to append the wildcard "*" here because kypher currently
+        # does not accept SQL concatenation operator ('||') in the query definition.
+        #
+        # TODO: migrate the "*" to the query definition.
         return self.execute_query(query,
                                   LABEL=safe_label + '*',
-                                  LIMIT=limit,
-                                  LANG=self.get_lang(lang),
-                                  fmt=fmt)
-
-    @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_with_upper_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None):
-        """Retrieve nodes and labels for all nodes with labels starting with 'label'.
-        """
-
-        # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
-        safe_label: str = label.translate({ord(i): None for i in '*[?'})
-
-        query = self.get_config('RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY')
-        return self.execute_query(query,
-                                  ULABEL=safe_label.upper() + '*',
                                   LIMIT=limit,
                                   LANG=self.get_lang(lang),
                                   fmt=fmt)

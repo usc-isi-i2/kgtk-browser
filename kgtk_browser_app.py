@@ -99,27 +99,38 @@ def rb_get_kb_query():
 
     lang      This controls the language code of matching labels.  The default is "en",
 
-    match_item_exactly This controls whether or not to perform an exact item match.  The default is True.
+    match_item_exactly This controls whether or not to perform an exact-length item match.
+                       Item names are assumed to be stored in upper-case in the database.
+                       The default is True.
                        Example: http://kgtk.isi.edu/kb/query/q=Q42&match_item_exactly=True
 
-    match_label_exactly This controls whether or not to perform an exact label match.  The default is True.
+    match_label_exactly This controls whether or not to perform an exact-length label match.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
                         Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
 
     match_item_prefixes This controls whether or not to return item prefix matches.
+                        Item names are assumed to be stored in upper-case in the database.
                         Prefix matching is slower than exact matching.
+                       The default is True.
 
-    match_item_prefixes_limit
-
-    match_item_ignore_case
+    match_item_prefixes_limit Limit the number of item prefix match results that will
+                              be presented.
 
     match_label_prefixes This controls whether or not to return label prefix matches.
                         Prefix matching is slower than exact matching.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
 
-    match_label_prefixes_limit
+    match_label_prefixes_limit Limit the number of label prefix match results that will
+                               be presented.
 
-    match_label_ignore_case
-
-
+    match_label_ignore_case When true, ignore case when matching labels.  This applies
+                            to both exact-length label searches and label prefix searches.
 
     The result returned is:
 
@@ -170,15 +181,12 @@ def rb_get_kb_query():
             # produce only one match per node.
             items_seen: typing.Set[str] = set()
 
-            # q.upper() means that lower-case entries (e.e.g, "q42") will
-            # still match the item names (e.g., "Q42").
-            qupper: str = q.upper()
-
             if match_item_exactly:
+                # We don't limit the number of results from this query.  Should we?
                 if verbose:
-                    print("Searching for node %s" % qupper, file=sys.stderr, flush=True)
+                    print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
-                results = backend.get_node_labels(qupper, lang=lang)
+                results = backend.rb_get_node_labels(q, lang=lang)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in results:
@@ -196,19 +204,29 @@ def rb_get_kb_query():
                     )
     
             if match_label_exactly:
-                # Query the labels. Exact case is a requirement.
+                # Query the labels, looking for an exact length match. The
+                # search may be case-sensitive or case-insensitive, according
+                # to "match_label_ignore_case".
                 #
-                # Labels are encoded as language-qualified strings.  We want to do an
-                # exact match, so we stringify.
+                # We don't limit the number of results from this query.  Should we?
+
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do an exact match, so
+                # we stringify.
+                #
+                # TODO: This will not work when "lang" is "any"!  We would
+                # have to do a prefix match including the initial and final
+                # "'" delimiters, but excluding the "@lang" suffix.
                 l: str = KgtkFormat.stringify(q, language=lang)
+
                 if verbose:
-                    print("Searching for label %s" % l, file=sys.stderr, flush=True)
-                if match_label_ignore_case:
-                    results = backend.rb_get_nodes_for_upper_label(l, lang=lang)
-                else:
-                    results = backend.rb_get_nodes_for_label(l, lang=lang)
+                    print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_label(l,
+                                                          lang=lang,
+                                                          ignore_case=match_label_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+
                 for result in results:
                     item = result[0]
                     if item in items_seen:
@@ -225,8 +243,8 @@ def rb_get_kb_query():
     
             if match_item_prefixes:
                 if verbose:
-                    print("Searching for node prefix %s" % qupper, file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_starting_with(qupper, lang=lang, limit=match_item_prefixes_limit)
+                    print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_starting_with(q, lang=lang, limit=match_item_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in results:
@@ -244,18 +262,23 @@ def rb_get_kb_query():
                     )
     
             if match_label_prefixes:
-                # Query the labels pefixes. Exact case is a requirement.
+                # Query the labels, looking for a prefix match. The search may
+                # be case-sensitive or case-insensitive, according to
+                # "match_label_ignore_case".
                 #
-                # Labels are encoded as language-qualified strings.  We want to do a prefix
-                # match, so we stringify to a plain string, replace the leading '"' with "'",
-                # and remove the trailing '"'
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do a prefix match, so
+                # we stringify to a plain string, replace the leading '"' with
+                # "'", and remove the trailing '"'
+                #
+                # TODO: create a KgtkFormat method for this this transformation.
                 prefix: str = "'" + KgtkFormat.stringify(q)[1:-1]
                 if verbose:
-                    print("Searching for label prefix %s" % prefix, file=sys.stderr, flush=True)
-                if match_label_ignore_case:
-                    results = backend.rb_get_nodes_with_upper_labels_starting_with(prefix, lang=lang, limit=match_label_prefixes_limit)
-                else:
-                    results = backend.rb_get_nodes_with_labels_starting_with(prefix, lang=lang)
+                    print("Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_labels_starting_with(prefix,
+                                                                         lang=lang,
+                                                                         ignore_case=match_label_ignore_case,
+                                                                         limit=match_label_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in results:
