@@ -151,7 +151,7 @@ def rb_get_kb_query():
     q = args.get('q')
     print("rb_get_kb_query: " + q)
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true) or True # Debugging control
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
     lang: str = args.get("lang", default="en")
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
     match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
