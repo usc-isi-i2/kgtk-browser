@@ -92,14 +92,40 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
 
     Instead, we ask the database for unordered results.  We'll sort them ourselves.
 
+    Since we're sorting the results ourselves, let's assume that item names
+    take the form "[PQ]\d+".  We'd like to sort Q42 before Q102.  This also
+    has the beneficial side-effect of putting most-wanted search results
+    first, assuming that most-wanted results have a lower Q or P number.
+
     Note: We assume that each item name appears at most once in the results.
 
     """
-    result_map: typing.MutableMapping[str, typing.List[str]] = { r[0]: r[1] for r in results }
+    # Optimize the common cases of ampty or singleton results:
+    if len(results) <= 1:
+        return results
+
+    result_map: typing.MutableMapping[str, typing.List[str]] = dict()
+
+    # Determine the maximum number of digits per item name in the results:
+    maxdigits: int = 0
+    result: typing.List[str]
+    for result in results:
+        digits: str = result[0][1:]
+        if len(digits) > maxdigits:
+            maxdigits = len(digits)
+        
+    # Build a map from the zero-filled item name to each result pair:
+    for result in results:
+        item: str = result[0]
+        label: str = result[1]
+        key: str = item[0] + item[1:].zfill(maxdigits)
+        result_map[key] = result
+        
+    # Sort and return the results.
     sorted_results: typing.List[typing.List[str]] = list()
-    item: str
-    for item in sorted(result_map.keys()):
-        sorted_results.append([item, result_map[item]])
+    key: str
+    for key in sorted(result_map.keys()):
+        sorted_results.append(result_map[key])
     return sorted_results
     
 
