@@ -65,6 +65,10 @@ const useStyles = makeStyles(theme => ({
     color: '#fefefe',
     width: '100%',
   },
+  lang: {
+    color: '#d4d4d4',
+    marginLeft: theme.spacing(1),
+  },
   row: {
     paddingTop: theme.spacing(1),
     paddingBottom: theme.spacing(1),
@@ -142,6 +146,11 @@ const Data = ({ data }) => {
                         <Typography variant='body1'
                           className={classes.text}>
                           {value.text}
+                          {value.lang && (
+                            <span className={classes.lang}>
+                              [{value.lang}]
+                            </span>
+                          )}
                         </Typography>
                       )}
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
@@ -252,6 +261,11 @@ const Data = ({ data }) => {
                         <Typography variant='body1'
                           className={classes.text}>
                           {value.text}
+                          {value.lang && (
+                            <span className={classes.lang}>
+                              [{value.lang}]
+                            </span>
+                          )}
                         </Typography>
                       )}
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
