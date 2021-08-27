@@ -637,20 +637,30 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 
 
 # List the properties in the order that you want them to appear.  All unlisted
-# properties will appear after these.  The list may include 
+# properties will appear after these.
 rb_property_priority_list: typing.List[str] = [
     "P31", # instance of
     "P279", # subclass of
 ]
 
-rb_property_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_property_priority_list) }
+rb_property_priority_map: typing.Optional[typing.Mapping[str, int]] = None
 
-rb_qualifier_priority_list: typing.List[str] = [
-    "P580", # start time
-    "P582", # end time
-]
+def rb_build_property_priority_map(backend):
+    global rb_property_priority_map # Since we initialize it here.
+    if rb_property_priority_map is not None:
+        return
+    rb_property_priority_map = { val: idx for idx, val in enumerate(rb_property_priority_list) }
 
-rb_qualifier_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_qualifier_priority_list) }
+rb_property_priority_width = 5
+rb_default_property_priority = int("1" + "0".zfill(rb_property_priority_width)) - 1
+
+def rb_get_property_priority(relationship: str)->str:
+    priority: int 
+    if rb_property_priority_map is None:
+        priority = rb_default_property_priority
+    else:
+        priority = rb_property_priority_map.get(relationship, rb_default_property_priority)
+    return str(priority).zfill(rb_property_priority_width)
 
 def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing.MutableMapping[str, typing.List[str]]:
     # Sort the item edges
@@ -664,8 +674,8 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing
             relationship_label = ""
         if target_label is None:
             target_label = target_node
-        priority: int = rb_property_priority_map.get(relationship, 99999)
-        item_edge_key: str = (str(priority+100000) + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        priority: str = rb_get_property_priority(relationship)
+        item_edge_key: str = (priority + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
         keyed_item_edges[item_edge_key] = item_edge
     return keyed_item_edges
 
@@ -680,6 +690,13 @@ def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]])->typin
         sorted_item_edges.append(keyed_item_edges[item_edge_key])
 
     return sorted_item_edges
+
+rb_qualifier_priority_list: typing.List[str] = [
+    "P580", # start time
+    "P582", # end time
+]
+
+rb_qualifier_priority_map: typing.Mapping[str, int] = { val: idx for idx, val in enumerate(rb_qualifier_priority_list) }
 
 def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[str]])->typing.Mapping[str, typing.List[typing.List[str]]]:
     item_qual_map: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
@@ -929,6 +946,8 @@ def rb_send_kb_categories(backend,
 def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
     try:
         with get_backend(app) as backend:
+            rb_build_property_priority_map(backend) # Endure this has been initialized.
+
             if verbose or True:
                 print("Fetching item edges", file=sys.stderr, flush=True) # ***
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
