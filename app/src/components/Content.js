@@ -15,15 +15,18 @@ const Content = () => {
   useEffect(() => {
     const locationQuery = new URLSearchParams(window.location.search)
     if ( locationQuery.has('id') ) {
-      const id = locationQuery.get('id')
-      fetchData(id).then(data => setData(data))
+      getData(locationQuery.get('id'))
     }
   }, [])
+
+  const getData = id => {
+    fetchData(id).then(data => setData(data))
+  }
 
   return (
     <Container maxWidth="xl">
       <div id="top" />
-      <Header />
+      <Header getData={getData} />
       {!!data && <Data data={data} />}
       <ArrowUp/>
     </Container>

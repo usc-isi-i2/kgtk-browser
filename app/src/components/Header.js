@@ -116,7 +116,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const Header = () => {
+const Header = ({ getData }) => {
 
   const classes = useStyles()
 
@@ -131,7 +131,8 @@ const Header = () => {
   }
 
   const selectResult = item => {
-    console.log(item)
+    setAnchorElement()
+    getData(item.ref)
   }
 
   const handleOnChange = event => {
