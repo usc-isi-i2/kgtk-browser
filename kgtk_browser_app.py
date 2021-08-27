@@ -214,36 +214,35 @@ def rb_get_kb_query():
                 # query.  Should we?  The underlying code imposes a default
                 # limit, currently 1000.
 
-                # Labels are assumed to be encoded as language-qualified
-                # strings in the database.  We want to do an exact match, so
-                # we stringify.
-                #
-
                 # The simple approach, using stringify, will not work when
                 # "lang" is "any"!  We will have to do a prefix match
                 # including the initial and final "'" delimiters, but
                 # excluding the "@lang" suffix.
-                # l: str = KgtkFormat.stringify(q, language=lang)
-                # if verbose:
-                #     print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-                # results = backend.rb_get_nodes_with_label(l,
-                #                                           lang=lang,
-                #                                           ignore_case=match_label_ignore_case)
-
-                # Labels are assumed to be encoded as language-qualified
-                # strings in the database.  We want to do a match that excludes the
-                # language encoding, to support lang=="any", so
-                # we stringify to a plain string and replace the leading and trailing '"' with
-                # "'".
-                #
-                # TODO: create a KgtkFormat method for this this transformation.
-                prefix: str = "'" + KgtkFormat.stringify(q)[1:-1] + "'"
-                if verbose:
-                    print("Searching for label %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_with_labels_starting_with(prefix,
-                                                                         lang=lang,
-                                                                         ignore_case=match_label_ignore_case,
-                                                                         limit=match_label_prefixes_limit)
+                if lang == "any":
+                    # Labels are assumed to be encoded as language-qualified
+                    # strings in the database.  We want to do a match that excludes the
+                    # language encoding, to support lang=="any", so
+                    # we stringify to a plain string and replace the leading and trailing '"' with
+                    # "'".
+                    #
+                    # TODO: create a KgtkFormat method for this this transformation.
+                    prefix: str = "'" + KgtkFormat.stringify(q)[1:-1] + "'"
+                    if verbose:
+                        print("Searching for label %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                    results = backend.rb_get_nodes_with_labels_starting_with(prefix,
+                                                                             lang=lang,
+                                                                             ignore_case=match_label_ignore_case,
+                                                                             limit=match_label_prefixes_limit)
+                else:
+                    # Labels are assumed to be encoded as language-qualified
+                    # strings in the database.  We want to do an exact match, so
+                    # we stringify.
+                    l: str = KgtkFormat.stringify(q, language=lang)
+                    if verbose:
+                        print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                    results = backend.rb_get_nodes_with_label(l,
+                                                              lang=lang,
+                                                              ignore_case=match_label_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
 

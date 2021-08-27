@@ -344,7 +344,6 @@ class BrowserBackend(object):
         the search is always assumed to be case-insensitive.  We don't have
         seperate exact case/case-insensitive queries for this retreival.
 
-
         This search method supports rb_get_kb_query(), which generates a list of
         candidate nodes.  The search must be fast.
         """
@@ -362,7 +361,6 @@ class BrowserBackend(object):
         This search method supports rb_get_kb_query(), which generates a list
         of candidate nodes.  The label is searched for a complete match, which
         may or may not be case-insensitive.  The search must be fast.
-
         """
 
         if ignore_case:
