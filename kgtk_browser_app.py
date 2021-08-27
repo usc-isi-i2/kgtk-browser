@@ -76,19 +76,22 @@ with get_backend(app) as backend:
 def rb_get_kb():
     return flask.send_from_directory('web/static', 'kb.html')
 
+def rb_is_true(value: str)->bool:
+    return value.lower() == "true"
+
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
-    q = flask.request.args.get('q')
+    args = flask.request.args
+    q = args.get('q')
     print("rb_get_kb_query: " + q)
 
-    verbose: bool = False # Debugging control
-
-    lang: str = "en" # TODO: Make this an optional parameter for the search.
-    match_item_exactly: bool = True # TODO: Make this an optional parameter for the search.
-    match_label_exactly: bool = True # TODO: Make this an optional parameter for the search.
-    match_item_prefixes: bool = True # TODO: Make this an optional parameter for the search.
-    match_label_prefixes: bool = True # TODO: Make this an optional parameter for the search.
-    match_label_ignore_case: bool = True # TODO: Make this an optional parameter for the search.
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    lang: str = args.get("lang", default="en")
+    match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
+    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
+    match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
+    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
+    match_label_ignore_case: bool = args.get("ignore_case", default=True, type=rb_is_true)
 
     try:
         with get_backend(app) as backend:
@@ -728,10 +731,7 @@ def rb_send_kb_categories(backend,
         )
 
 
-def rb_send_kb_item(item: str):
-    lang: str = 'en'
-    verbose: bool = False
-    
+def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
     try:
         with get_backend(app) as backend:
             if verbose or True:
@@ -789,9 +789,11 @@ def rb_send_kb_item(item: str):
 
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
-    item = flask.request.args.get('id')
+    item: str  = flask.request.args.get('id')
+    lang: str = flask.request.args.get("lang", default="en")
+    verbose: str = flask.request.args.get("verbose", default=False, type=rb_is_true)
     print("rb_get_kb_item: " + item)
-    return rb_send_kb_item(item)
+    return rb_send_kb_item(item, lang=lang, verbose=verbose)
 
 
 @app.route('/kb/<string:item>', methods=['GET'])
