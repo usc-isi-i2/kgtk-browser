@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { alpha, makeStyles } from '@material-ui/core/styles'
+import Menu from '@material-ui/core/Menu'
+import MenuItem from '@material-ui/core/MenuItem'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import IconButton from '@material-ui/core/IconButton'
@@ -39,7 +41,7 @@ const useStyles = makeStyles(theme => ({
   },
   search: {
     position: 'relative',
-    borderRadius: theme.shape.borderRadius,
+    borderRadius: 0,
     backgroundColor: alpha(theme.palette.common.white, 0.15),
     '&:hover': {
       backgroundColor: alpha(theme.palette.common.white, 0.25),
@@ -84,6 +86,27 @@ const useStyles = makeStyles(theme => ({
       width: '20ch',
     },
   },
+  menu: {
+    '& .MuiMenu-paper': {
+      borderRadius: 0,
+      padding: 0,
+      '& > ul': {
+        padding: 0,
+        minWidth: '350px',
+        maxWidth: '500px',
+        maxHeight: '300px',
+        overflowY: 'auto',
+      },
+    },
+  },
+  menuItem: {
+    '& > p': {
+      width: '100%',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+    },
+  },
   sectionDesktop: {
     display: 'none',
     [theme.breakpoints.up('md')]: {
@@ -101,6 +124,15 @@ const Header = () => {
 
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
+  const [anchorElement, setAnchorElement] = useState()
+
+  const closeMenu = () => {
+    setAnchorElement()
+  }
+
+  const selectResult = item => {
+    console.log(item)
+  }
 
   const handleOnChange = event => {
     const value = event.target.value
@@ -108,14 +140,46 @@ const Header = () => {
     timeoutID.current = setTimeout(() => {
       if ( !value ) {
         setResults([])
+        closeMenu()
       } else {
         setLoading(true)
         search(value).then(results => {
-          setResults(results)
+          if ( !!results.length ) {
+            setAnchorElement(event.target)
+            setResults(results.slice(0, 10))
+          }
           setLoading(false)
         })
       }
     }, 500)
+  }
+
+  const renderSearchResults = () => {
+    return (
+      <Menu
+        keepMounted
+        id="search-results"
+        className={classes.menu}
+        anchorEl={anchorElement}
+        transformOrigin={{
+          vertical: -55,
+          horizontal: 0,
+        }}
+        open={!!anchorElement}
+        onClose={closeMenu}>
+        {results.map(item => (
+          <MenuItem key={item.ref}
+            className={classes.menuItem}
+            onClick={() => selectResult(item)}>
+            <Typography variant="body1">
+              <b>{item.ref}</b>
+              <br/>
+              {item.description}
+            </Typography>
+          </MenuItem>
+        ))}
+      </Menu>
+    )
   }
 
   return (
@@ -146,6 +210,7 @@ const Header = () => {
                 <CircularProgress size={16} />
               </div>
             )}
+            {renderSearchResults()}
           </div>
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
