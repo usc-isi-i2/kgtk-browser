@@ -26,21 +26,31 @@ const useStyles = makeStyles(theme => ({
   link: {
     display: 'inline-block',
     padding: theme.spacing(1),
+    textDecoration: 'underline',
     color: '#fefefe',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    width: '100%',
     transition: '0.2s background ease',
     '&:hover': {
-      textDecoration: 'underline',
-      cursor: 'pointer',
+      background: 'rgba(255, 255, 255, 0.1)',
     },
   },
   link2: {
     display: 'inline-block',
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(3),
     color: '#fefefe',
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    width: '100%',
     transition: '0.2s background ease',
     '&:hover': {
-      textDecoration: 'underline',
-      cursor: 'pointer',
+      background: 'rgba(255, 255, 255, 0.1)',
     },
   },
   text: {
@@ -56,7 +66,8 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
   },
   row: {
-    paddingTop: theme.spacing(3),
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
     borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
   },
   imageList: {
@@ -101,7 +112,7 @@ const Data = ({ data }) => {
         <Paper className={classes.paper}>
           <Typography variant="h4">Properties</Typography>
           {data.properties.map((property, index) => (
-            <Grid container spacing={3} key={index}
+            <Grid container key={index}
               className={classes.row}>
               <Grid item xs={3}>
                 {property.url || property.ref ? (
@@ -119,7 +130,7 @@ const Data = ({ data }) => {
               </Grid>
               <Grid item xs={9}>
                 {!!property.values && property.values.map((value, index) => (
-                  <Grid container spacing={3} key={index}>
+                  <Grid container key={index}>
                     <Grid item xs={12}>
                       {value.url || value.ref ? (
                         <Link variant='body1'
@@ -211,7 +222,7 @@ const Data = ({ data }) => {
         <Paper className={classes.paper}>
           <Typography variant="h4">Identifiers</Typography>
           {data.xrefs.map((property, index) => (
-            <Grid container spacing={3} key={index}
+            <Grid container key={index}
               className={classes.row}>
               <Grid item xs={6}>
                 {property.url || property.ref ? (
@@ -229,7 +240,7 @@ const Data = ({ data }) => {
               </Grid>
               <Grid item xs={6}>
                 {!!property.values && property.values.map((value, index) => (
-                  <Grid container spacing={3} key={index}>
+                  <Grid container key={index}>
                     <Grid item xs={12}>
                       {value.url || value.ref ? (
                         <Link variant='body1'
