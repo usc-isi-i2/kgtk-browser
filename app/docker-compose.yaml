@@ -1,0 +1,19 @@
+version: "3"
+services:
+  kgtk-browser-app:
+    image: docker-reg.ads.isi.edu:443/kgtk-browser-app
+    container_name: kgtk-browser-app
+    restart: always
+    expose:
+      - "80"
+    ports:
+      - "1776:80"
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  default:
+    external:
+      name: overlay
+
