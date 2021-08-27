@@ -369,7 +369,11 @@ class BrowserBackend(object):
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
         query = self.get_config('RB_NODES_WITH_LABELS_STARTING_WITH_QUERY')
-        return self.execute_query(query, LABEL=safe_label + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query,
+                                  LABEL=safe_label + '*',
+                                  LIMIT=limit,
+                                  LANG=self.get_lang(lang),
+                                  fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def rb_get_nodes_with_upper_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None):
@@ -380,7 +384,11 @@ class BrowserBackend(object):
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
         query = self.get_config('RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY')
-        return self.execute_query(query, LABEL=safe_label.upper() + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query,
+                                  ULABEL=safe_label.upper() + '*',
+                                  LIMIT=limit,
+                                  LANG=self.get_lang(lang),
+                                  fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node1.

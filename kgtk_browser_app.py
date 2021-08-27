@@ -108,21 +108,58 @@ def rb_get_kb_query():
     match_item_prefixes This controls whether or not to return item prefix matches.
                         Prefix matching is slower than exact matching.
 
+    match_item_prefixes_limit
+
+    match_item_ignore_case
+
     match_label_prefixes This controls whether or not to return label prefix matches.
                         Prefix matching is slower than exact matching.
 
+    match_label_prefixes_limit
+
+    match_label_ignore_case
+
+
+
+    The result returned is:
+
+    [
+        { 
+            "ref: "QNODE",
+            "text"; "QNODE",
+            "description": "LABEL"
+        } ,
+        ...
+    ]
+
+    where QNODE is the Q### or P### item identifier and LABEL is the
+    label value corresponding to that identifier.
+
+    "ref": "QNODE" This provides the identifier used to retrieve the
+                   full details of an item using:
+                   http://hostname/kb/item?q=QNODE
+
+    "text": "QNODE" This provides the identifier that is displayed to
+                    the user.
+
+    "description": "LABEL" This provides the descriptive text for the item.
+                           The KGTK browser server currently sends the items's
+                           label as a description.  This response should be short
+                           as it will probably be used to generate a pop-up/pull-down menu.
     """
     args = flask.request.args
     q = args.get('q')
     print("rb_get_kb_query: " + q)
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) or True # Debugging control
     lang: str = args.get("lang", default="en")
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
     match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
     match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
+    match_item_prefixes_limit: intl = args.get("match_item_prefixes_limit", default=20, type=int)
     match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
-    match_label_ignore_case: bool = args.get("ignore_case", default=True, type=rb_is_true)
+    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=20, type=int)
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
 
     try:
         with get_backend(app) as backend:
@@ -189,7 +226,7 @@ def rb_get_kb_query():
             if match_item_prefixes:
                 if verbose:
                     print("Searching for node prefix %s" % qupper, file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_starting_with(qupper, lang=lang)
+                results = backend.rb_get_nodes_starting_with(qupper, lang=lang, limit=match_item_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in results:
@@ -216,7 +253,7 @@ def rb_get_kb_query():
                 if verbose:
                     print("Searching for label prefix %s" % prefix, file=sys.stderr, flush=True)
                 if match_label_ignore_case:
-                    results = backend.rb_get_nodes_with_upper_labels_starting_with(prefix, lang=lang)
+                    results = backend.rb_get_nodes_with_upper_labels_starting_with(prefix, lang=lang, limit=match_label_prefixes_limit)
                 else:
                     results = backend.rb_get_nodes_with_labels_starting_with(prefix, lang=lang)
                 if verbose:

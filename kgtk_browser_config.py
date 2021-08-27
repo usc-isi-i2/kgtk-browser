@@ -225,7 +225,7 @@ RB_NODES_FOR_LABEL_QUERY = _api.get_query(
     the specified language (using 'any' for 'LANG' retrieves all labels).
     Return distinct 'node1', 'node_label' pairs as the result
     """,
-    name='rb_nodse_for_label_query',
+    name='rb_nodes_for_label_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
@@ -240,7 +240,7 @@ RB_NODES_FOR_UPPER_LABEL_QUERY = _api.get_query(
     the specified language (using 'any' for 'LANG' retrieves all labels).
     Return distinct 'node1', 'node_label' pairs as the result
     """,
-    name='rb_nodse_for_upper_label_query',
+    name='rb_nodes_for_upper_label_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
@@ -256,13 +256,13 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     Return 'node1', 'node_label' pairs as the result.
     Limit the number of return pairs to LIMIT.
     """,
-    name='browser_nodes_starting_with_query',
+    name='rb_nodes_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
-    order= "n, l",
+    order= "n, l", # Questionable
     limit= "$LIMIT"
 )
 
@@ -274,13 +274,13 @@ RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
     Return 'node1', 'node_label' pairs as the result.
     Limit the number of return pairs to LIMIT.
     """,
-    name='browser_nodes_with_labels_starting_with_query',
+    name='rb_nodes_with_labels_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($LABEL, l) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
-    order= "n, l",
+    order= "n, l", # Questionable
     limit= "$LIMIT"
 )
 
@@ -292,13 +292,13 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     Return 'node1', 'node_label' pairs as the result.
     Limit the number of return pairs to LIMIT.
     """,
-    name='browser_nodes_with_upper_labels_starting_with_query',
+    name='rb_nodes_with_upper_labels_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
-    where='glob($LABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    where='glob($ULABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
-    order= "n, l",
+    # order= "n, l", # This kills performance when there is a large number of matches
     limit= "$LIMIT"
 )
 
