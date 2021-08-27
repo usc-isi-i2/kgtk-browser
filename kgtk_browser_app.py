@@ -71,7 +71,7 @@ with get_backend(app) as backend:
     ...
 """
 
-# Ringgaard browser support:
+# revised browser support:
 @app.route('/kb', methods=['GET'])
 def rb_get_kb():
     """This is the basic entrypoint for starting the KGTK browser.
