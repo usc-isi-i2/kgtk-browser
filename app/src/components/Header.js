@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { alpha, makeStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
@@ -9,6 +9,7 @@ import SearchIcon from '@material-ui/icons/Search'
 import GitHubIcon from '@material-ui/icons/GitHub'
 
 import Logo from './Logo'
+import search from '../utils/search'
 
 
 const useStyles = makeStyles(theme => ({
@@ -86,6 +87,22 @@ const Header = () => {
 
   const classes = useStyles()
 
+  const timeoutID = useRef(null)
+
+  const [results, setResults] = useState([])
+
+  const handleOnChange = event => {
+    const value = event.target.value
+    clearTimeout(timeoutID.current)
+    timeoutID.current = setTimeout(() => {
+      if ( !value ) {
+        setResults([])
+      } else {
+        search(value).then(results => setResults(results))
+      }
+    }, 500)
+  }
+
   return (
     <div className={classes.grow}>
       <AppBar position="static" className={classes.appBar}>
@@ -107,6 +124,7 @@ const Header = () => {
                 input: classes.inputInput,
               }}
               inputProps={{ 'aria-label': 'search' }}
+              onChange={handleOnChange}
             />
           </div>
           <div className={classes.grow} />
