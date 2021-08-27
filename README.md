@@ -1047,3 +1047,47 @@ Repeating the same query resulted in one additional message:
 ```
 127.0.0.1 - - [20/Aug/2021 13:31:33] "GET /kgtk/browser/backend/get_all_node_data?node=Q100104271&lang=en&images=true&fanouts=true&inverse=false HTTP/1.1" 200 -
 ```
+
+## Running with the Revised Browser
+
+The revised browser currently requires two servers:
+
+1) an npm server to serve the browser client code
+
+2) a data server.
+
+
+### Installing the npm server
+
+0) Ensure that recent versions of "npm" and "node" are installed:
+
+npm --version
+7.20.3
+
+node --version
+v16.6.2
+
+1) Change to the "app/" folder.
+
+cd app/
+
+2) Install the latest npm repository
+
+npm install
+
+This will install files in "app/node_modules/" as directed by "app/package.json"
+
+3) Ensure that the HOST envar is not incorrecty set
+
+unsetenv HOST
+
+4) Edit the "proxy" value in "app/package.json" if necessary.
+   Since I have the data server running on port 5000:
+
+  "proxy": "http://localhost:5000"
+
+
+5) Start the browser client server.
+
+npm start
+
