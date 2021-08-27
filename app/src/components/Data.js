@@ -61,7 +61,7 @@ const useStyles = makeStyles(theme => ({
   },
   text2: {
     display: 'inline-block',
-    paddingLeft: theme.spacing(1),
+    paddingLeft: theme.spacing(3),
     color: '#fefefe',
     width: '100%',
   },
