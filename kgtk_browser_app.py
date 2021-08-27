@@ -74,13 +74,44 @@ with get_backend(app) as backend:
 # Ringgaard browser support:
 @app.route('/kb', methods=['GET'])
 def rb_get_kb():
+    """This is the basic entrypoint for starting the KGTK browser.
+       It sends the initial HTML file, "kb.html".
+    """
     return flask.send_from_directory('web/static', 'kb.html')
 
 def rb_is_true(value: str)->bool:
+    """String to bool conversion function for use with args.get(...).
+    """
     return value.lower() == "true"
 
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
+    """This API is used to generate lists of items (Qnodes od Pnodes) that
+    match a query string.  Depending upon the parameter settings, the search
+    string may make an exact and/or prefix match against an item name
+    (P#### or Q####) or an item label (e.g., "Douglas Adams").
+
+    Parameter Usage
+    ========= ==================================================================================
+    q         this is the search string, e.g. "Q42" or "Douglas Adams"
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+
+    lang      This controls the language code of matching labels.  The default is "en",
+
+    match_item_exactly This controls whether or not to perform an exact item match.  The default is True.
+                       Example: http://kgtk.isi.edu/kb/query/q=Q42&match_item_exactly=True
+
+    match_label_exactly This controls whether or not to perform an exact label match.  The default is True.
+                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
+
+    match_item_prefixes This controls whether or not to return item prefix matches.
+                        Prefix matching is slower than exact matching.
+
+    match_label_prefixes This controls whether or not to return label prefix matches.
+                        Prefix matching is slower than exact matching.
+
+    """
     args = flask.request.args
     q = args.get('q')
     print("rb_get_kb_query: " + q)
@@ -789,6 +820,16 @@ def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
 
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
+    """This is the API call to return the full information for an item.
+
+    Parameter Usage
+    ========= ==================================================================================
+    id        The is the node name (P### or Q###) to be retrieved.  Case is significant.
+
+    lang      The is the language code to use when selecting labels.  The default value is "en".
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+    """
     item: str  = flask.request.args.get('id')
     lang: str = flask.request.args.get("lang", default="en")
     verbose: str = flask.request.args.get("verbose", default=False, type=rb_is_true)
