@@ -11,12 +11,12 @@ import { makeStyles } from '@material-ui/core/styles'
 
 const useStyles = makeStyles(theme => ({
   paper: {
-    marginTop: theme.spacing(3),
     paddingTop: theme.spacing(3),
     paddingLeft: theme.spacing(4),
     paddingRight: theme.spacing(4),
     paddingBottom: theme.spacing(2),
     backgroundColor: 'rgba(254, 254, 254, 0.25)',
+    borderRadius: 0,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'start',
