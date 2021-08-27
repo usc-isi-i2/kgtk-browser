@@ -419,16 +419,100 @@ def get_image_formatter(backend, relationship: str)->typing.Optional[str]:
 
 rb_units_node_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
-def rb_build_current_value(backend,
-                           target_node: str,
-                           value: KgtkValue,
-                           rb_type: str,
-                           target_node_label: typing.Optional[str],
-                           target_node_description: typing.Optional[str],
-                           lang: str,
-                           relationship: str = "",
-                           wikidatatype: str = ""
-                           )->typing.Mapping[str, str]:
+def rb_format_number_or_quantity(
+        backend,
+        target_node: str,
+        value: KgtkValue,
+        datatype: str,
+        lang: str,
+)->str:
+    number_text: str
+    number_ref: typing.Optional[str] = None
+    
+    if datatype == KgtkFormat.DataType.NUMBER:
+        numberstr: str = target_node
+        if numberstr.startswith("+"): # Reamove any leading "+"
+            numberstr = numberstr[1:]
+        number_text = numberstr
+    else:
+        if value.parse_fields():
+            newnum: str = value.fields.numberstr
+            if newnum.startswith("+"): # Remove any leading "+"
+                newnum = newnum[1:]
+            if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
+                newnum += "["
+                if value.fields.low_tolerancestr is not None:
+                    newnum += value.fields.low_tolerancestr
+                newnum += ","
+                if value.fields.high_tolerancestr is not None:
+                    newnum += value.fields.high_tolerancestr
+                newnum += "]"
+            if value.fields.si_units is not None:
+                newnum += value.fields.si_units
+            if value.fields.units_node is not None:
+                # Here's where it gets fancy:
+                units_node: str = value.fields.units_node
+                if units_node not in rb_units_node_cache:
+                    units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
+                    if len(units_node_labels) > 0:
+                        units_node_label: str = units_node_labels[0][1]
+                        rb_units_node_cache[units_node] = rb_unstringify(units_node_label)
+                    else:
+                        rb_units_node_cache[units_node] = None # Remember the failure.
+                                       
+                if rb_units_node_cache[units_node] is not None:
+                    newnum += " " + rb_units_node_cache[units_node]
+                else:
+                    newnum += " " + units_node # We could not find a label for this node when we looked last time.
+                number_ref = units_node
+
+            number_text = newnum
+        else:
+            # Validation failed.
+            #
+            # TODO: Add a validation failure indicator?
+            number_text = target_node
+
+    return number_text, number_ref
+
+def rb_iso_format_time(
+        target_node: str,
+        value: KgtkValue,
+)->str:
+
+    if value.parse_fields() and value.fields.precision is not None:
+        f: KgtkValueFields = value.fields
+        precision: int = f.precision
+        if precision <= 9 and f.yearstr is not None:
+            return f.yearstr
+        elif precision == 10 and f.yearstr is not None and f.monthstr is not None:
+            return f.yearstr + "-" + f.monthstr
+        elif precision == 11 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None:
+            return f.yearstr + "-" + f.monthstr + "-" + f.daystr
+        elif precision == 12 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+            return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
+        elif precision == 13 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+            return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
+        else:
+            return target_node[1:]
+    else:
+        # Validation failed.
+        #
+        # TODO: Add a validation failure indicator?
+        return target_node[1:]
+
+def rb_build_current_value(
+        backend,
+        target_node: str,
+        value: KgtkValue,
+        rb_type: str,
+        target_node_label: typing.Optional[str],
+        target_node_description: typing.Optional[str],
+        lang: str,
+        relationship: str = "",
+        wikidatatype: str = ""
+)->typing.Mapping[str, str]:
+
     current_value: typing.MutableMapping[str, any] = dict()
     datatype: KgtkFormat.DataType = value.classify()
 
@@ -463,72 +547,15 @@ def rb_build_current_value(backend,
         rb_link_to_url(text_value, current_value)
 
     elif rb_type == "/w/quantity":
-        if datatype == KgtkFormat.DataType.NUMBER:
-            numberstr: str = target_node
-            if numberstr.startswith("+"): # Reamove any leading "+"
-                numberstr = numberstr[1:]
-            current_value["text"] = numberstr
-        else:
-            if value.parse_fields():
-                newnum: str = value.fields.numberstr
-                if newnum.startswith("+"): # Remove any leading "+"
-                    newnum = newnum[1:]
-                if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
-                    newnum += "["
-                    if value.fields.low_tolerancestr is not None:
-                        newnum += value.fields.low_tolerancestr
-                    newnum += ","
-                    if value.fields.high_tolerancestr is not None:
-                        newnum += value.fields.high_tolerancestr
-                    newnum += "]"
-                if value.fields.si_units is not None:
-                    newnum += value.fields.si_units
-                if value.fields.units_node is not None:
-                    # Here's where it gets fancy:
-                    units_node: str = value.fields.units_node
-                    if units_node not in rb_units_node_cache:
-                        units_node_labels: typing.List[typing.List[str]] = backend.get_node_labels(units_node, lang=lang)
-                        if len(units_node_labels) > 0:
-                            units_node_label: str = units_node_labels[0][1]
-                            rb_units_node_cache[units_node] = rb_unstringify(units_node_label)
-                        else:
-                            rb_units_node_cache[units_node] = None # Remember the failure.
-                                       
-                    if rb_units_node_cache[units_node] is not None:
-                        newnum += " " + rb_units_node_cache[units_node]
-                    else:
-                        newnum += " " + units_node # We could not find a label for this node when we looked last time.
-                    current_value["ref"] = units_node
-
-                current_value["text"] = newnum
-            else:
-                # Validation failed.
-                #
-                # TODO: Add a validation failure indicator?
-                current_value["text"] = target_node
+        number_text: str
+        number_ref: typing.Optional[str]
+        number_text, number_ref = rb_format_number_or_quantity(backend, target_node, value, datatype, lang)
+        current_value["text"] = number_text
+        if number_ref is not None:
+            current_value["ref"] = number_ref
 
     elif rb_type == "/w/time":
-        if value.parse_fields() and value.fields.precision is not None:
-            f: KgtkValueFields = value.fields
-            precision: int = f.precision
-            if precision <= 9 and f.yearstr is not None:
-                current_value["text"] = f.yearstr
-            elif precision == 10 and f.yearstr is not None and f.monthstr is not None:
-                 current_value["text"] = f.yearstr + "-" + f.monthstr
-            elif precision == 11 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None:
-                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr
-            elif precision == 12 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
-                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
-            elif precision == 13 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
-                 current_value["text"] = f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
-            else:
-                current_value["text"] = target_node[1:]
-        else:
-            # Validation failed.
-            #
-            # TODO: Add a validation failure indicator?
-            current_value["text"] = target_node[1:]
-            
+        current_value["text"] = rb_iso_format_time(target_node, value)
         
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]
