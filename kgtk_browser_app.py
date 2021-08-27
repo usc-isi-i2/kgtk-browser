@@ -84,6 +84,25 @@ def rb_is_true(value: str)->bool:
     """
     return value.lower() == "true"
 
+def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[typing.List[str]]:
+    """If the databse holds a large number of candidate matches and we want to
+    limit the number of returned matches, there may be a performance problem
+    because the database will first collect all candidate metches, then sort,
+    then limit.
+
+    Instead, we ask the database for unordered results.  We'll sort them ourselves.
+
+    Note: We assume that each item name appears at most once in the results.
+
+    """
+    result_map: typing.MutableMapping[str, typing.List[str]] = { r[0]: r[1] for r in results }
+    sorted_results: typing.List[typing.List[str]] = list()
+    item: str
+    for item in sorted(result_map.keys()):
+        sorted_results.append([item, result_map[item]])
+    return sorted_results
+    
+
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
     """This API is used to generate lists of items (Qnodes od Pnodes) that
@@ -191,7 +210,7 @@ def rb_get_kb_query():
                 results = backend.rb_get_node_labels(q, lang=lang)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in results:
+                for result in rb_sort_query_results(results):
                     item = result[0]
                     if item in items_seen:
                         continue
@@ -246,7 +265,7 @@ def rb_get_kb_query():
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
 
-                for result in results:
+                for result in rb_sort_query_results(results):
                     item = result[0]
                     if item in items_seen:
                         continue
@@ -266,7 +285,7 @@ def rb_get_kb_query():
                 results = backend.rb_get_nodes_starting_with(q, lang=lang, limit=match_item_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in results:
+                for result in rb_sort_query_results(results):
                     item = result[0]
                     if item in items_seen:
                         continue
@@ -300,7 +319,7 @@ def rb_get_kb_query():
                                                                          limit=match_label_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in results:
+                for result in rb_sort_query_results(results):
                     item = result[0]
                     if item in items_seen:
                         continue

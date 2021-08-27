@@ -296,7 +296,7 @@ RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
     The output from this query is unordered, due to poor perfromance when
     there are a large number of matches.
 
-    For proper performace, 'node2' in the label graph must be indexed:
+    For proper performace, the 'node2' column in the label graph must be indexed:
 
     CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
     ANALYZE "graph_2_node2_idx";
@@ -330,7 +330,7 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     alter table graph_2 add column "node2;upper" text;
     update graph_2 set "node2;upper" = upper(node2);
 
-    For proper performance, "node2;upper" must be indexed:
+    For proper performance, the "node2;upper" column in the label graph must be indexed:
 
     CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
     ANALYZE "graph_2_node2upper_idx";
