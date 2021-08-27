@@ -122,7 +122,8 @@ const Data = ({ data }) => {
                 {property.url || property.ref ? (
                   <Link variant='body1'
                     className={classes.link}
-                    href={property.url ? property.url : `/?id=${property.ref}`}>
+                    href={property.url ? property.url : `/?id=${property.ref}`}
+                    title={property.url ? property.url : `/?id=${property.ref}`}>
                     {property.property}
                   </Link>
                 ) : (
@@ -139,7 +140,8 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link variant='body1'
                           className={classes.link}
-                          href={value.url ? value.url : `/?id=${value.ref}`}>
+                          href={value.url ? value.url : `/?id=${value.ref}`}
+                          title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
                         </Link>
                       ) : (
@@ -159,7 +161,8 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link variant='body2'
                                 className={classes.link2}
-                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
+                                title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
                                 {qualifier.property}
                               </Link>
                             ) : (
@@ -175,7 +178,8 @@ const Data = ({ data }) => {
                                 {value.url || value.ref ? (
                                   <Link variant='body2'
                                     className={classes.link2}
-                                    href={value.url ? value.url : `/?id=${value.ref}`}>
+                                    href={value.url ? value.url : `/?id=${value.ref}`}
+                                    title={value.url ? value.url : `/?id=${value.ref}`}>
                                     {value.text}
                                   </Link>
                                 ) : (
@@ -237,7 +241,8 @@ const Data = ({ data }) => {
                 {property.url || property.ref ? (
                   <Link variant='body1'
                     className={classes.link}
-                    href={property.url ? property.url : `/?id=${property.ref}`}>
+                    href={property.url ? property.url : `/?id=${property.ref}`}
+                    title={property.url ? property.url : `/?id=${property.ref}`}>
                     {property.property}
                   </Link>
                 ) : (
@@ -254,7 +259,8 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link variant='body1'
                           className={classes.link}
-                          href={value.url ? value.url : `/?id=${value.ref}`}>
+                          href={value.url ? value.url : `/?id=${value.ref}`}
+                          title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
                         </Link>
                       ) : (
@@ -274,7 +280,8 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link variant='body2'
                                 className={classes.link2}
-                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
+                                title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
                                 {qualifier.property}
                               </Link>
                             ) : (
@@ -290,7 +297,8 @@ const Data = ({ data }) => {
                                 {value.url || value.ref ? (
                                   <Link variant='body2'
                                     className={classes.link2}
-                                    href={value.url ? value.url : `/?id=${value.ref}`}>
+                                    href={value.url ? value.url : `/?id=${value.ref}`}
+                                    title={value.url ? value.url : `/?id=${value.ref}`}>
                                     {value.text}
                                   </Link>
                                 ) : (
