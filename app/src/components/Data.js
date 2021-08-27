@@ -87,7 +87,7 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h2">{data.text}</Typography>
+          <Typography variant="h4">{data.text}</Typography>
           <Typography variant="h6">{data.ref}</Typography>
           <Typography variant="h6">{data.description}</Typography>
         </Paper>
