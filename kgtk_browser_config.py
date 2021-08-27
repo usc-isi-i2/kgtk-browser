@@ -246,10 +246,10 @@ RB_NODES_WITH_UPPER_LABEL_QUERY = _api.get_query(
     the specified language (using 'any' for 'LANG' retrieves all labels).
     Return distinct 'node1', 'node_label' pairs as the result
 
-    This query implements a case-insensitive search by matching against
-    the 'node2;upper' column, which has the 'label' column translated to
-    upper case.  'node2;upper' may be created with `kgtk calc` or `kgtk query`,
-    or with the following SQL:
+    This query implements a case-insensitive search by matching against the
+    'node2;upper' column, which has the 'node2' column in the label graph
+    ('graph_2') translated to upper case.  'node2;upper' may be created with
+    `kgtk calc` or `kgtk query`, or with the following SQL:
 
     alter table graph_2 add column "node2;upper" text;
     update graph_2 set "node2;upper" = upper(node2);
@@ -281,7 +281,7 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
-    order= "n, l", # Questionable
+    order= "n, l", # Questionable performance due to poor interaction with limit
     limit= "$LIMIT"
 )
 
@@ -292,6 +292,9 @@ RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
     the specified language (using 'any' for 'LANG' retrieves all labels).
     Return 'node1', 'node_label' pairs as the result.
     Limit the number of return pairs to LIMIT.
+
+    The output from this query is unordered, due to poor perfromance when
+    there are a large number of matches.
 
     For proper performace, 'node2' in the label graph must be indexed:
 
@@ -304,7 +307,7 @@ RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($LABEL, l) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
-    order= "n, l", # Questionable
+    # order= "n, l", # This kills performance when there is a large number of matches
     limit= "$LIMIT"
 )
 
@@ -316,10 +319,13 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     Return 'node1', 'node_label' pairs as the result.
     Limit the number of return pairs to LIMIT.
 
-    This query implements a case-insensitive search by matching against
-    the 'node2;upper' column, which has the 'label' column translated to
-    upper case.  'node2;upper' may be created with `kgtk calc` or `kgtk query`,
-    or with the following SQL:
+    The output from this query is unordered, due to poor perfromance when
+    there are a large number of matches.
+
+    This query implements a case-insensitive search by matching against the
+    'node2;upper' column, which has the 'node' column in the label graph
+    ('graph_2') translated to upper case.  'node2;upper' may be created with
+    `kgtk calc` or `kgtk query`, or with the following SQL:
 
     alter table graph_2 add column "node2;upper" text;
     update graph_2 set "node2;upper" = upper(node2);

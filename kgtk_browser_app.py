@@ -182,7 +182,9 @@ def rb_get_kb_query():
             items_seen: typing.Set[str] = set()
 
             if match_item_exactly:
-                # We don't limit the number of results from this query.  Should we?
+                # We don't explicitly limit the number of results from this
+                # query.  Should we?  The underlying code imposes a default
+                # limit, currently 1000.
                 if verbose:
                     print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
@@ -208,7 +210,9 @@ def rb_get_kb_query():
                 # search may be case-sensitive or case-insensitive, according
                 # to "match_label_ignore_case".
                 #
-                # We don't limit the number of results from this query.  Should we?
+                # We don't explicitly limit the number of results from this
+                # query.  Should we?  The underlying code imposes a default
+                # limit, currently 1000.
 
                 # Labels are assumed to be encoded as language-qualified
                 # strings in the database.  We want to do an exact match, so
