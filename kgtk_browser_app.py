@@ -162,7 +162,7 @@ def rb_get_kb_query():
     q = args.get('q')
     print("rb_get_kb_query: " + q)
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    verbose: bool = True or args.get("verbose", default=False, type=rb_is_true) # Debugging control
     lang: str = args.get("lang", default="en")
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
     match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
@@ -218,16 +218,32 @@ def rb_get_kb_query():
                 # strings in the database.  We want to do an exact match, so
                 # we stringify.
                 #
-                # TODO: This will not work when "lang" is "any"!  We would
-                # have to do a prefix match including the initial and final
-                # "'" delimiters, but excluding the "@lang" suffix.
-                l: str = KgtkFormat.stringify(q, language=lang)
 
+                # The simple approach, using stringify, will not work when
+                # "lang" is "any"!  We will have to do a prefix match
+                # including the initial and final "'" delimiters, but
+                # excluding the "@lang" suffix.
+                # l: str = KgtkFormat.stringify(q, language=lang)
+                # if verbose:
+                #     print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                # results = backend.rb_get_nodes_with_label(l,
+                #                                           lang=lang,
+                #                                           ignore_case=match_label_ignore_case)
+
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do a match that excludes the
+                # language encoding, to support lang=="any", so
+                # we stringify to a plain string and replace the leading and trailing '"' with
+                # "'".
+                #
+                # TODO: create a KgtkFormat method for this this transformation.
+                prefix: str = "'" + KgtkFormat.stringify(q)[1:-1] + "'"
                 if verbose:
-                    print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_with_label(l,
-                                                          lang=lang,
-                                                          ignore_case=match_label_ignore_case)
+                    print("Searching for label %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_labels_starting_with(prefix,
+                                                                         lang=lang,
+                                                                         ignore_case=match_label_ignore_case,
+                                                                         limit=match_label_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
 

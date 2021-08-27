@@ -339,7 +339,7 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
-    where='glob($ULABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    where='glob($LABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
     # order= "n, l", # This kills performance when there is a large number of matches
     limit= "$LIMIT"
