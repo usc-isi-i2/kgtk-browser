@@ -21,7 +21,7 @@ KG_ALIASES_GRAPH      = 'aliases'
 KG_DESCRIPTIONS_GRAPH = 'descriptions'
 KG_IMAGES_GRAPH       = 'claims'
 KG_FANOUTS_GRAPH      = 'metadata'
-KG_DATATYPE_GRAPH     = 'metadata'
+KG_DATATYPES_GRAPH     = 'metadata'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
@@ -29,7 +29,7 @@ KG_ALIASES_LABEL      = 'alias'
 KG_DESCRIPTIONS_LABEL = 'description'
 KG_IMAGES_LABEL       = 'P18'
 KG_FANOUTS_LABEL      = 'count_distinct_properties'
-KG_DATATYPE_LABEL     = 'datatype'
+KG_DATATYPES_LABEL     = 'datatype'
 
 
 ### Query configuration section:
@@ -66,6 +66,7 @@ _api.add_input(KG_ALIASES_GRAPH, name='aliases', handle=True)
 _api.add_input(KG_DESCRIPTIONS_GRAPH, name='descriptions', handle=True)
 _api.add_input(KG_IMAGES_GRAPH, name='images', handle=True)
 _api.add_input(KG_FANOUTS_GRAPH, name='fanouts', handle=True)
+_api.add_input(KG_DATATYPES_GRAPH, name='datatypes', handle=True)
 
 NODE_LABELS_QUERY = _api.get_query(
     doc="""
@@ -218,19 +219,130 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     order= 'r, qn2 desc',
 )
 
+RB_NODES_WITH_LABEL_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_label()'.
+    Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result
+
+    For proper performace, 'node2' in the label graph must be indexed:
+
+    CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
+    ANALYZE "graph_2_node2_idx";
+    """,
+    name='rb_nodes_with_label_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='l=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
+RB_NODES_WITH_UPPER_LABEL_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_upper_label()'.
+    Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result
+
+    This query implements a case-insensitive search by matching against the
+    'node2;upper' column, which has the 'node2' column in the label graph
+    ('graph_2') translated to upper case.  'node2;upper' may be created with
+    `kgtk calc` or `kgtk query`, or with the following SQL:
+
+    alter table graph_2 add column "node2;upper" text;
+    update graph_2 set "node2;upper" = upper(node2);
+
+    For proper performance, "node2;upper" must be indexed:
+
+    CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
+    ANALYZE "graph_2_node2upper_idx";
+    """,
+    name='rb_nodes_with_upper_label_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
+    where='ul=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
 RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()'.
-    Given parameters 'NODE' (which should end with '.*') and 'LANG' retrieve labels for 'NODE' in
+    Given parameters 'NODE' (which should end with '*') and 'LANG' retrieve labels for 'NODE' in
     the specified language (using 'any' for 'LANG' retrieves all labels).
-    Return distinct 'node1', 'node_label' pairs as the result.
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
     """,
-    name='browser_nodes_starting_with_query',
+    name='rb_nodes_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    ret=  'n as node1, l as node_label',
+    order= "n, l", # Questionable performance due to poor interaction with limit
+    limit= "$LIMIT"
+)
+
+RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
+    Given parameters 'LABEL' (which should end with '*') and 'LANG' retrieve labels for 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+
+    The output from this query is unordered, due to poor perfromance when
+    there are a large number of matches.
+
+    For proper performace, the 'node2' column in the label graph must be indexed:
+
+    CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
+    ANALYZE "graph_2_node2_idx";
+    """,
+    name='rb_nodes_with_labels_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='glob($LABEL, l) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    # order= "n, l", # This kills performance when there is a large number of matches
+    limit= "$LIMIT"
+)
+
+RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
+    Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+
+    The output from this query is unordered, due to poor perfromance when
+    there are a large number of matches.
+
+    This query implements a case-insensitive search by matching against the
+    'node2;upper' column, which has the 'node' column in the label graph
+    ('graph_2') translated to upper case.  'node2;upper' may be created with
+    `kgtk calc` or `kgtk query`, or with the following SQL:
+
+    alter table graph_2 add column "node2;upper" text;
+    update graph_2 set "node2;upper" = upper(node2);
+
+    For proper performance, the "node2;upper" column in the label graph must be indexed:
+
+    CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
+    ANALYZE "graph_2_node2upper_idx";
+    """,
+    name='rb_nodes_with_upper_labels_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
+    where='glob($LABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    # order= "n, l", # This kills performance when there is a large number of matches
+    limit= "$LIMIT"
 )
 
 RB_NODE_EDGES_QUERY = _api.get_query(
@@ -238,15 +350,14 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1.
     Additionally retrieve descriptive information for all relationship labels.
-    Additionally retrieve descriptive information for all node2's such as their
-    label, and optionally any images and fanouts.  Parameter 'LANG' controls
-    the language for retrieved labels.
+    Additionally retrieve the node2 descriptions.
+    Parameter 'LANG' controls the language for retrieved labels.
     Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
     and label's 'label_label'.
 
     """,
     name='rb_node_edges_query',
-    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH, KG_DATATYPE_GRAPH),
+    inputs=('edges', 'labels', 'descriptions', 'datatypes'),
     match= '$edges: (n1)-[r {label: rl}]->(n2)',
     where= 'n1=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
@@ -255,7 +366,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
     opt3=   '$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
-    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPE_LABEL,
+    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
@@ -277,7 +388,7 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     for base edges.
     """,
     name='rb_node_edge_qualifiers_query',
-    inputs=(KG_EDGES_GRAPH, KG_QUALIFIERS_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
+    inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
     match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
     where= 'n1=$NODE',
     opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
@@ -310,7 +421,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
 
     """,
     name='rb_node_inverse_edges_query',
-    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH, KG_DATATYPE_GRAPH),
+    inputs=('edges', 'labels', 'descriptions', 'datatypes'),
     match= '$edges: (n1)-[r {label: rl}]->(n2)',
     where= 'n2=$NODE',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
@@ -319,7 +430,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     opt3=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
-    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPE_LABEL,
+    opt4=   '$metadata: (rl)-[`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
@@ -341,7 +452,7 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     for base edges.
     """,
     name='rb_node_inverse_edge_qualifiers_query',
-    inputs=(KG_EDGES_GRAPH, KG_QUALIFIERS_GRAPH, KG_LABELS_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
+    inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
     match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
     where= 'n2=$NODE',
     opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,

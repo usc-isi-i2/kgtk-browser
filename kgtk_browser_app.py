@@ -74,28 +74,295 @@ with get_backend(app) as backend:
 # Ringgaard browser support:
 @app.route('/kb', methods=['GET'])
 def rb_get_kb():
+    """This is the basic entrypoint for starting the KGTK browser.
+       It sends the initial HTML file, "kb.html".
+    """
     return flask.send_from_directory('web/static', 'kb.html')
+
+def rb_is_true(value: str)->bool:
+    """String to bool conversion function for use with args.get(...).
+    """
+    return value.lower() == "true"
+
+def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[typing.List[str]]:
+    """If the databse holds a large number of candidate matches and we want to
+    limit the number of returned matches, there may be a performance problem
+    because the database will first collect all candidate metches, then sort,
+    then limit.
+
+    Instead, we ask the database for unordered results.  We'll sort them ourselves.
+
+    Since we're sorting the results ourselves, let's assume that item names
+    take the form "[PQ]\d+".  We'd like to sort Q42 before Q102.  This also
+    has the beneficial side-effect of putting most-wanted search results
+    first, assuming that most-wanted results have a lower Q or P number.
+
+    Note: We assume that each item name appears at most once in the results.
+
+    """
+    # Optimize the common cases of ampty or singleton results:
+    if len(results) <= 1:
+        return results
+
+    result_map: typing.MutableMapping[str, typing.List[str]] = dict()
+
+    # Determine the maximum number of digits per item name in the results:
+    maxdigits: int = 0
+    result: typing.List[str]
+    for result in results:
+        digits: str = result[0][1:]
+        if len(digits) > maxdigits:
+            maxdigits = len(digits)
+        
+    # Build a map from the zero-filled item name to each result pair:
+    for result in results:
+        item: str = result[0]
+        label: str = result[1]
+        key: str = item[0] + item[1:].zfill(maxdigits)
+        result_map[key] = result
+        
+    # Sort and return the results.
+    sorted_results: typing.List[typing.List[str]] = list()
+    key: str
+    for key in sorted(result_map.keys()):
+        sorted_results.append(result_map[key])
+    return sorted_results
+    
 
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
-    q = flask.request.args.get('q')
+    """This API is used to generate lists of items (Qnodes od Pnodes) that
+    match a query string.  Depending upon the parameter settings, the search
+    string may make an exact and/or prefix match against an item name
+    (P#### or Q####) or an item label (e.g., "Douglas Adams").
+
+    Parameter Usage
+    ========= ==================================================================================
+    q         this is the search string, e.g. "Q42" or "Douglas Adams"
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+
+    lang      This controls the language code of matching labels.  The default is "en",
+
+    match_item_exactly This controls whether or not to perform an exact-length item match.
+                       Item names are assumed to be stored in upper-case in the database.
+                       The default is True.
+                       Example: http://kgtk.isi.edu/kb/query/q=Q42&match_item_exactly=True
+
+    match_label_exactly This controls whether or not to perform an exact-length label match.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
+                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
+
+    match_item_prefixes This controls whether or not to return item prefix matches.
+                        Item names are assumed to be stored in upper-case in the database.
+                        Prefix matching is slower than exact matching.
+                       The default is True.
+
+    match_item_prefixes_limit Limit the number of item prefix match results that will
+                              be presented.
+
+    match_label_prefixes This controls whether or not to return label prefix matches.
+                        Prefix matching is slower than exact matching.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
+
+    match_label_prefixes_limit Limit the number of label prefix match results that will
+                               be presented.
+
+    match_label_ignore_case When true, ignore case when matching labels.  This applies
+                            to both exact-length label searches and label prefix searches.
+
+    The result returned is:
+
+    [
+        { 
+            "ref: "QNODE",
+            "text"; "QNODE",
+            "description": "LABEL"
+        } ,
+        ...
+    ]
+
+    where QNODE is the Q### or P### item identifier and LABEL is the
+    label value corresponding to that identifier.
+
+    "ref": "QNODE" This provides the identifier used to retrieve the
+                   full details of an item using:
+                   http://hostname/kb/item?q=QNODE
+
+    "text": "QNODE" This provides the identifier that is displayed to
+                    the user.
+
+    "description": "LABEL" This provides the descriptive text for the item.
+                           The KGTK browser server currently sends the items's
+                           label as a description.  This response should be short
+                           as it will probably be used to generate a pop-up/pull-down menu.
+    """
+    args = flask.request.args
+    q = args.get('q')
     print("rb_get_kb_query: " + q)
+
+    verbose: bool = True or args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    lang: str = args.get("lang", default="en")
+    match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
+    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
+    match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
+    match_item_prefixes_limit: intl = args.get("match_item_prefixes_limit", default=20, type=int)
+    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
+    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=20, type=int)
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
 
     try:
         with get_backend(app) as backend:
             matches = [ ]
 
-            results = backend.rb_get_nodes_starting_with(q, lang="en")
-            for result in results:
-                item = result[0]
-                label = KgtkFormat.unstringify(result[1])
-                matches.append(
-                    {
-                        "ref": item,
-                        "text": item,
-                        "description": label
-                    }
-                )
+            # We will look for exact matches first on the node name and label,
+            # then prefix matches.  We keep track of the matches we've seen and
+            # produce only one match per node.
+            items_seen: typing.Set[str] = set()
+
+            if match_item_exactly:
+                # We don't explicitly limit the number of results from this
+                # query.  Should we?  The underlying code imposes a default
+                # limit, currently 1000.
+                if verbose:
+                    print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
+                # Look for an exact match for the node name:
+                results = backend.rb_get_node_labels(q, lang=lang)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in rb_sort_query_results(results):
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_label_exactly:
+                # Query the labels, looking for an exact length match. The
+                # search may be case-sensitive or case-insensitive, according
+                # to "match_label_ignore_case".
+                #
+                # We don't explicitly limit the number of results from this
+                # query.  Should we?  The underlying code imposes a default
+                # limit, currently 1000.
+
+                # The simple approach, using stringify, will not work when
+                # "lang" is "any"!  We will have to do a prefix match
+                # including the initial and final "'" delimiters, but
+                # excluding the "@lang" suffix.
+                if lang == "any":
+                    # Labels are assumed to be encoded as language-qualified
+                    # strings in the database.  We want to do a match that excludes the
+                    # language encoding, to support lang=="any", so
+                    # we stringify to a plain string and replace the leading and trailing '"' with
+                    # "'".
+                    #
+                    # TODO: create a KgtkFormat method for this this transformation.
+                    prefix: str = "'" + KgtkFormat.stringify(q)[1:-1] + "'"
+                    if verbose:
+                        print("Searching for label %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                    results = backend.rb_get_nodes_with_labels_starting_with(prefix,
+                                                                             lang=lang,
+                                                                             ignore_case=match_label_ignore_case,
+                                                                             limit=match_label_prefixes_limit)
+                else:
+                    # Labels are assumed to be encoded as language-qualified
+                    # strings in the database.  We want to do an exact match, so
+                    # we stringify.
+                    l: str = KgtkFormat.stringify(q, language=lang)
+                    if verbose:
+                        print("Searching for label %s (ignore_case=%s)" % (repr(l), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                    results = backend.rb_get_nodes_with_label(l,
+                                                              lang=lang,
+                                                              ignore_case=match_label_ignore_case)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+
+                for result in rb_sort_query_results(results):
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_item_prefixes:
+                if verbose:
+                    print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_starting_with(q, lang=lang, limit=match_item_prefixes_limit)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in rb_sort_query_results(results):
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if match_label_prefixes:
+                # Query the labels, looking for a prefix match. The search may
+                # be case-sensitive or case-insensitive, according to
+                # "match_label_ignore_case".
+                #
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do a prefix match, so
+                # we stringify to a plain string, replace the leading '"' with
+                # "'", and remove the trailing '"'
+                #
+                # TODO: create a KgtkFormat method for this this transformation.
+                prefix: str = "'" + KgtkFormat.stringify(q)[1:-1]
+                if verbose:
+                    print("Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_labels_starting_with(prefix,
+                                                                         lang=lang,
+                                                                         ignore_case=match_label_ignore_case,
+                                                                         limit=match_label_prefixes_limit)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in rb_sort_query_results(results):
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label
+                        }
+                    )
+    
+            if verbose:
+                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+
+            # Build the final response:
             response_data = {
                 "matches": matches
             }
@@ -619,10 +886,7 @@ def rb_send_kb_categories(backend,
         )
 
 
-def rb_send_kb_item(item: str):
-    lang: str = 'en'
-    verbose: bool = False
-    
+def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
     try:
         with get_backend(app) as backend:
             if verbose or True:
@@ -680,9 +944,21 @@ def rb_send_kb_item(item: str):
 
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
-    item = flask.request.args.get('id')
+    """This is the API call to return the full information for an item.
+
+    Parameter Usage
+    ========= ==================================================================================
+    id        The is the node name (P### or Q###) to be retrieved.  Case is significant.
+
+    lang      The is the language code to use when selecting labels.  The default value is "en".
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+    """
+    item: str  = flask.request.args.get('id')
+    lang: str = flask.request.args.get("lang", default="en")
+    verbose: str = flask.request.args.get("verbose", default=False, type=rb_is_true)
     print("rb_get_kb_item: " + item)
-    return rb_send_kb_item(item)
+    return rb_send_kb_item(item, lang=lang, verbose=verbose)
 
 
 @app.route('/kb/<string:item>', methods=['GET'])
