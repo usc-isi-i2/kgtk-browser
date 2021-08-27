@@ -100,7 +100,7 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
     Note: We assume that each item name appears at most once in the results.
 
     """
-    # Optimize the common cases of ampty or singleton results:
+    # Optimize the common cases of empty or singleton results:
     if len(results) <= 1:
         return results
 
@@ -221,10 +221,23 @@ def rb_get_kb_query():
         with get_backend(app) as backend:
             matches = [ ]
 
-            # We will look for exact matches first on the node name and label,
-            # then prefix matches.  We keep track of the matches we've seen and
-            # produce only one match per node.
+            # We keep track of the matches we've seen and produce only one match per node.
             items_seen: typing.Set[str] = set()
+
+            # We will look for matches in the following order.  Each
+            # match category may be discabled by a parameter.
+            #
+            # 1) exact length match on the node name
+            # 2) exact length match on the label
+            # 3) prefix match (startswith) on the node name
+            # 4) prefix match on the label
+            #
+            # node name matches are always case-insensitive, because we know that
+            # node names in the database are upper-case, and we raise the case
+            # of the q parameter in the search routine.
+            #
+            # Label matches may be case-sensitive or case-insensitive,
+            # according to "match_label_ignore_case".
 
             if match_item_exactly:
                 # We don't explicitly limit the number of results from this
