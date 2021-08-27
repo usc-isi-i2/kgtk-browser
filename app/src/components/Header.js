@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography'
 import InputBase from '@material-ui/core/InputBase'
 import SearchIcon from '@material-ui/icons/Search'
 import GitHubIcon from '@material-ui/icons/GitHub'
+import CircularProgress from '@material-ui/core/CircularProgress'
 
 import Logo from './Logo'
 import search from '../utils/search'
@@ -61,6 +62,15 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  loadingIcon: {
+    top: theme.spacing(1.2),
+    right: theme.spacing(2),
+    position: 'absolute',
+    pointerEvents: 'none',
+    '& .MuiCircularProgress-root': {
+      color: '#fefefe',
+    },
+  },
   inputRoot: {
     color: 'inherit',
   },
@@ -90,6 +100,7 @@ const Header = () => {
   const timeoutID = useRef(null)
 
   const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
 
   const handleOnChange = event => {
     const value = event.target.value
@@ -98,7 +109,11 @@ const Header = () => {
       if ( !value ) {
         setResults([])
       } else {
-        search(value).then(results => setResults(results))
+        setLoading(true)
+        search(value).then(results => {
+          setResults(results)
+          setLoading(false)
+        })
       }
     }, 500)
   }
@@ -126,6 +141,11 @@ const Header = () => {
               inputProps={{ 'aria-label': 'search' }}
               onChange={handleOnChange}
             />
+            {loading && (
+              <div className={classes.loadingIcon}>
+                <CircularProgress size={16} />
+              </div>
+            )}
           </div>
           <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
