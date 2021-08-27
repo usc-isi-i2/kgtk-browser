@@ -2,8 +2,8 @@ import React from 'react'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import {
   withStyles,
+  createTheme,
   ThemeProvider,
-  createMuiTheme,
   responsiveFontSizes,
 } from '@material-ui/core/styles'
 
@@ -11,7 +11,7 @@ import {
 import Content from './components/Content'
 
 
-let theme = createMuiTheme()
+let theme = createTheme()
 theme = responsiveFontSizes(theme)
 
 
