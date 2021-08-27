@@ -169,6 +169,11 @@ const Data = ({ data }) => {
                               <Typography variant='body2'
                                 className={classes.text2}>
                                 {qualifier.text}
+                                {qualifier.lang && (
+                                  <span className={classes.lang}>
+                                    [{qualifier.lang}]
+                                  </span>
+                                )}
                               </Typography>
                             )}
                           </Grid>
@@ -186,6 +191,11 @@ const Data = ({ data }) => {
                                   <Typography variant='body2'
                                     className={classes.text2}>
                                     {value.text}
+                                    {value.lang && (
+                                      <span className={classes.lang}>
+                                        [{value.lang}]
+                                      </span>
+                                    )}
                                   </Typography>
                                 )}
                               </Grid>
@@ -288,6 +298,11 @@ const Data = ({ data }) => {
                               <Typography variant='body2'
                                 className={classes.text2}>
                                 {qualifier.text}
+                                {qualifier.lang && (
+                                  <span className={classes.lang}>
+                                    [{qualifier.lang}]
+                                  </span>
+                                )}
                               </Typography>
                             )}
                           </Grid>
@@ -305,6 +320,11 @@ const Data = ({ data }) => {
                                   <Typography variant='body2'
                                     className={classes.text2}>
                                     {value.text}
+                                    {value.lang && (
+                                      <span className={classes.lang}>
+                                        [{value.lang}]
+                                      </span>
+                                    )}
                                   </Typography>
                                 )}
                               </Grid>
