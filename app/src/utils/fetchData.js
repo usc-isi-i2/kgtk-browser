@@ -1,6 +1,9 @@
 const fetchData = id => {
 
-  const url = `/kb/item?fmt=cjson&id=${id}`
+  let url = `/kb/item?fmt=cjson&id=${id}`
+  if ( process.env.REACT_APP_BACKEND_URL ) {
+    url = `${process.env.REACT_APP_BACKEND_URL}${url}`
+  }
 
   return new Promise((resolve, reject) => {
     fetch(url, {method: 'GET'})

@@ -1,6 +1,9 @@
 const search = q => {
 
-  const url = `/kb/query?q=${q}`
+  let url = `/kb/query?q=${q}`
+  if ( process.env.REACT_APP_BACKEND_URL ) {
+    url = `${process.env.REACT_APP_BACKEND_URL}${url}`
+  }
 
   return new Promise((resolve, reject) => {
     fetch(url, {method: 'GET'})
