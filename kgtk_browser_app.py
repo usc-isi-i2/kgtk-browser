@@ -641,15 +641,95 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 rb_property_priority_list: typing.List[str] = [
     "P31", # instance of
     "P279", # subclass of
+    "P21", # sex or gender
+    "P2561*", # name
+    "P138", # named after
+    "P580*", # start time
+    "P582*", # end time
+    "P509", # cause of death
+    "P1196", # manner of death
+    "P20", # place of death
+    "P1038*", # relative
+    "P3342*", # significant person
 ]
 
 rb_property_priority_map: typing.Optional[typing.Mapping[str, int]] = None
 
+def rb_scan_property_list(initial_priority_map: typing.Mapping[str, int],
+                          revised_priority_map: typing.MutableMapping[str, int],
+                          properties_seen: typing.Set[str],
+                          prop_list: typing.List[str],
+                          forest: typing.Mapping[str, typing.List[str]],
+                          labels: typing.Mapping[str, str]):
+    prop_sort_map: typing.MutableMapping[str, str] = dict()
+    key: str
+    prop: str
+    idx: int
+    for idx, prop in enumerate(prop_list):
+        if prop in properties_seen:
+            continue
+        properties_seen.add(prop)
+        priority: str = str(initial_priority_map.get(prop, 99999)).zfill(5)
+        label: str = labels.get(prop, prop)
+        key = priority + "|" + label + "|" + str(idx).zfill(5)
+        prop_sort_map[key] = prop
+
+    for key in sorted(prop_sort_map.keys()):
+        prop = prop_sort_map[key]
+        revised_priority_map[prop] = len(revised_priority_map)
+        if prop in forest:
+            rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
+
 def rb_build_property_priority_map(backend):
     global rb_property_priority_map # Since we initialize it here.
     if rb_property_priority_map is not None:
-        return
-    rb_property_priority_map = { val: idx for idx, val in enumerate(rb_property_priority_list) }
+        return # Already built.
+
+    initial_priority_map: typing.MutableMapping[str, int] = dict()
+    val: str
+    for val in rb_property_priority_list:
+        if val.endswith("*"):
+            val = val[:-1]
+        initial_priority_map[val] = len(initial_priority_map)
+    print("%d entries in the initial priority map" % len(initial_priority_map), file=sys.stderr, flush=True) # ***
+
+    subproperty_relationships = backend.rb_get_subproperty_relationships()
+    print("%d subproperty relationships" % len(subproperty_relationships), file=sys.stderr, flush=True) # ***
+
+    labels: typing.MutableMapping[str, str] = dict()
+    forest: typing.MutableMapping[str, typing.List[str]] = dict()
+    node1: str
+    node2: str
+    label: str
+    rel: typing.List[str]
+    for rel in subproperty_relationships:
+        node1, node2, label = rel
+        # print("%s (%s) is a subproperty of %s" % (repr(node1), repr(label), repr(node2)), file=sys.stderr, flush=True) # ***
+        if node2 not in forest:
+            forest[node2] = list()
+        forest[node2].append(node1)
+        labels[node1] = label
+    print("%d subproperty forest branches" % len(forest), file=sys.stderr, flush=True) # ***
+
+    revised_priority_map: typing.MutableMapping[str, int] = dict()
+    properties_seen: typing.Set[str] = set()
+
+    prop: str
+    for prop in rb_property_priority_list:
+        if prop in properties_seen:
+            continue
+        properties_seen.add(prop)
+        if prop.endswith("*"):
+            prop = prop[:-1]
+            revised_priority_map[prop] = len(revised_priority_map)
+            if prop in forest:
+                rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
+        else:
+            revised_priority_map[prop] = len(revised_priority_map)
+    
+    rb_property_priority_map = revised_priority_map
+    print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
+
 
 rb_property_priority_width = 5
 rb_default_property_priority = int("1" + "0".zfill(rb_property_priority_width)) - 1

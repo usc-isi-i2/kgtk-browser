@@ -472,3 +472,10 @@ class BrowserBackend(object):
         query = self.get_config('RB_IMAGE_FORMATTER_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
+    def rb_get_subproperty_relationships(self, lang=None, fmt=None):
+        """Retrieve all subproperty relationships.
+        """
+        query = self.get_config('RB_SUBPROPERTY_RELATIONSHIPS_QUERY')
+        return self.execute_query(query, LANG=self.get_lang(lang), fmt=fmt)
+
+    

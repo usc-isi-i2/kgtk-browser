@@ -487,7 +487,7 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
 
     """,
     name='rb_node_categories_query',
-    inputs=(KG_EDGES_GRAPH, KG_LABELS_GRAPH, KG_DESCRIPTIONS_GRAPH),
+    inputs=('edges', 'labels', 'descriptions'),
     match= '$edges: (n1)-[:P301]->(n2)',
     where= 'n2=$NODE',
     opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
@@ -509,10 +509,23 @@ RB_IMAGE_FORMATTER_QUERY = _api.get_query(
     Return node2.
     """,
     name='rb_image_formatter_query',
-    inputs=(KG_EDGES_GRAPH),
+    inputs=('edges'),
     match= '$edges: (n1)-[:P1630]->(n2)',
     where= 'n1=$NODE',
     ret=   'n2 as node2 ',
     limit= 1
+)
+
+RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_subproperty_relationships()'.
+    Return node1 and node2.
+    """,
+    name='rb_subproperty_relationships_query',
+    inputs=('edges', 'labels'),
+    match= '$edges: (n1)-[:P1647]->(n2)',
+    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
+    ret=   'n1 as node1, n2 as node2, n1label as node1_label',
 )
 
