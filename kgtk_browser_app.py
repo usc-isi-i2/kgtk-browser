@@ -885,17 +885,14 @@ def rb_render_item_qualifiers(backend,
 
     return current_qualifiers
 
-def rb_render_kb_items_and_qualifiers(backend,
-                                      item: str,
-                                      item_edges: typing.List[typing.List[str]],
-                                      proplist_max_len: int = 0,
-                                      valuelist_max_len: int = 0,
-                                      qual_proplist_max_len: int = 0,
-                                      qual_valuelist_max_len: int = 0,
-                                      qual_query_limit: int = 0,
-                                      lang: str = 'en',
-                                      verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
-                                                                           typing.List[typing.MutableMapping[str, any]]]:
+def rb_render_kb_items(backend,
+                       item: str,
+                       item_edges: typing.List[typing.List[str]],
+                       proplist_max_len: int = 0,
+                       valuelist_max_len: int = 0,
+                       lang: str = 'en',
+                       verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                                            typing.List[typing.MutableMapping[str, any]]]:
 
     response_properties: typing.List[typing.MutableMapping[str, any]] = list()
     response_xrefs: typing.List[typing.MutableMapping[str, any]] = list()
@@ -968,7 +965,16 @@ def rb_render_kb_items_and_qualifiers(backend,
 
     downsample_properties(response_properties, proplist_max_len, valuelist_max_len, repr(item), verbose)
 
-    # Now that we've downsampled the properties, build the qualifiers.
+    return response_properties, response_xrefs
+
+def rb_fetch_and_render_qualifiers(backend,
+                                   item: str,
+                                   response_properties: typing.List[typing.MutableMapping[str, any]],
+                                   qual_proplist_max_len: int = 0,
+                                   qual_valuelist_max_len: int = 0,
+                                   qual_query_limit: int = 0,
+                                   lang: str = 'en',
+                                   verbose: bool = False):
     scanned_property_map: typing.MutableMapping[str, any]
     scanned_value: typing.MutableMapping[str, any]
     scanned_edge_id: str
@@ -1032,6 +1038,36 @@ def rb_render_kb_items_and_qualifiers(backend,
             if "edge_id" in scanned_value:
                 del scanned_value["edge_id"]
 
+def rb_render_kb_items_and_qualifiers(backend,
+                                      item: str,
+                                      item_edges: typing.List[typing.List[str]],
+                                      proplist_max_len: int = 0,
+                                      valuelist_max_len: int = 0,
+                                      qual_proplist_max_len: int = 0,
+                                      qual_valuelist_max_len: int = 0,
+                                      qual_query_limit: int = 0,
+                                      lang: str = 'en',
+                                      verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                                                           typing.List[typing.MutableMapping[str, any]]]:
+
+    response_properties: typing.List[typing.MutableMapping[str, any]] = list()
+    response_xrefs: typing.List[typing.MutableMapping[str, any]] = list()
+    response_properties, response_xrefs = rb_render_kb_items(backend,
+                                                             item,
+                                                             item_edges,
+                                                             proplist_max_len=proplist_max_len,
+                                                             valuelist_max_len=valuelist_max_len,
+                                                             lang=lang,
+                                                             verbose=verbose)
+
+    rb_fetch_and_render_qualifiers(backend,
+                                   item,
+                                   response_properties,
+                                   qual_proplist_max_len=qual_proplist_max_len,
+                                   qual_valuelist_max_len=qual_valuelist_max_len,
+                                   qual_query_limit=qual_query_limit,
+                                   lang=lang,
+                                   verbose=verbose)
     return response_properties, response_xrefs
 
 def downsample_properties(property_list: typing.MutableMapping[str, any],
