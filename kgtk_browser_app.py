@@ -967,26 +967,22 @@ def rb_render_kb_items(backend,
 
     return response_properties, response_xrefs
 
-def rb_fetch_and_render_qualifiers(backend,
-                                   item: str,
-                                   response_properties: typing.List[typing.MutableMapping[str, any]],
-                                   qual_proplist_max_len: int = 0,
-                                   qual_valuelist_max_len: int = 0,
-                                   qual_query_limit: int = 0,
-                                   lang: str = 'en',
-                                   verbose: bool = False):
-    scanned_property_map: typing.MutableMapping[str, any]
-    scanned_value: typing.MutableMapping[str, any]
-    scanned_edge_id: str
-
-    verbose2: bool = verbose or True
+def rb_build_edge_id_tuple(response_properties: typing.List[typing.MutableMapping[str, any]]):
     edge_set: typing.Set[str] = set()
     for scanned_property_map in response_properties:
         for scanned_value in scanned_property_map["values"]:
             scanned_edge_id = scanned_value["edge_id"]
             if scanned_edge_id not in edge_set:
                 edge_set.add(scanned_edge_id)
-    edge_id_tuple = tuple(list(edge_set))
+    return tuple(list(edge_set))
+
+def rb_fetch_qualifiers(backend,
+                        item: str,
+                        edge_id_tuple,
+                        qual_query_limit: int = 0,
+                        lang: str = 'en',
+                        verbose: bool = False)->typing.List[typing.List[str]]:
+    verbose2: bool = verbose or True
 
     item_qualifier_edges: typing.List[typing.List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
@@ -1005,6 +1001,28 @@ def rb_fetch_and_render_qualifiers(backend,
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
     if verbose2:
         print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
+
+    return item_qualifier_edges
+
+def rb_fetch_and_render_qualifiers(backend,
+                                   item: str,
+                                   response_properties: typing.List[typing.MutableMapping[str, any]],
+                                   qual_proplist_max_len: int = 0,
+                                   qual_valuelist_max_len: int = 0,
+                                   qual_query_limit: int = 0,
+                                   lang: str = 'en',
+                                   verbose: bool = False):
+    scanned_property_map: typing.MutableMapping[str, any]
+    scanned_value: typing.MutableMapping[str, any]
+    scanned_edge_id: str
+
+    edge_id_tuple = rb_build_edge_id_tuple(response_properties)
+    item_qualifier_edges: typing.List[typing.List[str]] = rb_fetch_qualifiers(backend,
+                                                                              item,
+                                                                              edge_id_tuple,
+                                                                              qual_query_limit=qual_query_limit,
+                                                                              lang=lang,
+                                                                              verbose=verbose)
 
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
