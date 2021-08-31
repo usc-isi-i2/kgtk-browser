@@ -52,6 +52,7 @@ app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
+EARLY_QUALIFIER_FETCH: bool = False
 
 app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
 app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
@@ -887,11 +888,12 @@ def rb_render_item_qualifiers(backend,
 def rb_render_kb_items_and_qualifiers(backend,
                                       item: str,
                                       item_edges: typing.List[typing.List[str]],
-                                      item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]],
+                                      item_qualifier_edges: typing.List[typing.List[str]],
                                       proplist_max_len: int = 0,
                                       valuelist_max_len: int = 0,
                                       qual_proplist_max_len: int = 0,
                                       qual_valuelist_max_len: int = 0,
+                                      qual_query_limit: int = 0,
                                       lang: str = 'en',
                                       verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                            typing.List[typing.MutableMapping[str, any]]]:
@@ -969,11 +971,32 @@ def rb_render_kb_items_and_qualifiers(backend,
 
     # Now that we've downsampled the properties, build the qualifiers.
     scanned_property_map: typing.MutableMapping[str, any]
+    scanned_value: typing.MutableMapping[str, any]
+    scanned_edge_id: str
+
+    if not EARLY_QUALIFIER_FETCH:
+        verbose2: bool = verbose or True
+        edge_set: typing.Set[str] = set()
+        for scanned_property_map in response_properties:
+            for scanned_value in current_property_map["values"]:
+                scanned_edge_id = scanned_value["edge_id"]
+                if scanned_edge_id not in edge_set:
+                    edge_set.add(scanned_edge_id)
+        edge_id_tuple = tuple(list(edge_set))
+        if verbose2:
+            print("Fetching qualifier edges for %s (lang=%s, limit=%d)" % (repr(edge_id_tuple), repr(lang), qual_query_limit), file=sys.stderr, flush=True) # ***
+        item_qualifier_edges = backend.rb_get_node_edge_qualifiers_in(edge_id_tuple, lang=lang, limit=qual_query_limit)
+        if verbose2:
+            print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
+    # Group the qualifiers by the item they qualify, identified by the item's
+    # edge_id (which should be unique):
+    item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
+    print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
+
     for scanned_property_map in response_properties:
-        scanned_value: typing.MutableMapping[str, any]
         for scanned_value in current_property_map["values"]:
             # Retrieve the associated edge_id and remove it from the property map.
-            scanned_edge_id: str = scanned_value.pop("edge_id")
+            scanned_edge_id = scanned_value.pop("edge_id")
             if scanned_edge_id not in item_qual_map:
                 continue # There are no associated qualifiers.
 
@@ -1040,6 +1063,7 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     valuelist_max_len: int = 0,
                                     qual_proplist_max_len: int = 0,
                                     qual_valuelist_max_len: int = 0,
+                                    qual_query_limit: int = 0,
                                     lang: str = 'en',
                                     verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                          typing.List[typing.MutableMapping[str, any]]]:
@@ -1048,19 +1072,15 @@ def rb_send_kb_items_and_qualifiers(backend,
     sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
     print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
 
-    # Group the qualifiers by the item they qualify, identified by the item's
-    # edge_id (which should be unique):
-    item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
-    print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
-
     return rb_render_kb_items_and_qualifiers(backend,
                                              item,
                                              sorted_item_edges,
-                                             item_qual_map,
+                                             item_qualifier_edges,
                                              proplist_max_len=proplist_max_len,
                                              valuelist_max_len=valuelist_max_len,
                                              qual_proplist_max_len=qual_proplist_max_len,
                                              qual_valuelist_max_len=qual_valuelist_max_len,
+                                             qual_query_limit=qual_query_limit,
                                              lang=lang,
                                              verbose=verbose)
 
@@ -1116,9 +1136,10 @@ def rb_send_kb_item(item: str,
                     lang: str = "en",
                     proplist_max_len: int = 0,
                     valuelist_max_len: int = 0,
+                    query_limit: int = 10000,
                     qual_proplist_max_len: int = 0,
                     qual_valuelist_max_len: int = 0,
-                    limit: int = 10000,
+                    qual_query_limit: int = 10000,
                     verbose: bool = False):
     try:
         with get_backend(app) as backend:
@@ -1127,17 +1148,21 @@ def rb_send_kb_item(item: str,
             verbose2: bool = verbose or True # ***
 
             if verbose2:
-                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), limit), file=sys.stderr, flush=True) # ***
-            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=limit)
-            if len(item_edges) > limit: # Forcibly truncate!
-                item_edges = item_edges[:limit]
+                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit), file=sys.stderr, flush=True) # ***
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=query_limit)
+            if len(item_edges) > query_limit: # Forcibly truncate!
+                item_edges = item_edges[:query_limit]
             if verbose2:
                 print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True) # ***
-            if verbose2:
-                print("Fetching qualifier edges", file=sys.stderr, flush=True) # ***
-            item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=limit)
-            if verbose2:
-                print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
+
+            item_qualifier_edges: typing.List[typing.List[str]] = list()
+            if EARLY_QUALIFIER_FETCH:
+                if verbose2:
+                    print("Fetching qualifier edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), qual_query_limit), file=sys.stderr, flush=True) # ***
+                item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
+                if verbose2:
+                    print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
+
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
             # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
             # if verbose:
@@ -1165,6 +1190,7 @@ def rb_send_kb_item(item: str,
                                                                                   valuelist_max_len=valuelist_max_len,
                                                                                   qual_proplist_max_len=qual_proplist_max_len,
                                                                                   qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                                  qual_query_limit=qual_query_limit,
                                                                                   lang=lang,
                                                                                   verbose=verbose)
             response["properties"] = response_properties
@@ -1209,15 +1235,17 @@ def rb_get_kb_item():
     qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=20, type=int)
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     query_limit: int = args.get('query_limit', default=300000, type=int)
+    qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
     verbose: str = args.get("verbose", default=False, type=rb_is_true)
     print("rb_get_kb_item: " + item)
     return rb_send_kb_item(item,
                            lang=lang,
                            proplist_max_len=proplist_max_len,
                            valuelist_max_len=valuelist_max_len,
+                           query_limit=query_limit,
                            qual_proplist_max_len=qual_proplist_max_len,
                            qual_valuelist_max_len=qual_valuelist_max_len,
-                           limit=query_limit,
+                           qual_query_limit=qual_query_limit,
                            verbose=verbose)
 
 

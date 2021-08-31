@@ -447,6 +447,47 @@ class BrowserBackend(object):
         return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
 
+    RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter: int = 0
+    def get_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
+        self.RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter += 1
+
+        return self.api.get_query(
+            doc="""
+            Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers_in()'.
+            Given parameter 'ID_LIST' retrieve all edges that have their ID in 'ID_LIST'
+            and then all qualifier edges for all such base edges found.  For each 
+            qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
+            for base edges.
+            """,
+            name='rb_node_edge_qualifiers_in_query_' + str(self.RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter),
+            inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
+            match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+            where= 'r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
+            opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % self.get_config('KG_LABELS_LABEL'),
+            owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
+            opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % self.get_config('KG_LABELS_LABEL'),
+            owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
+            opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % self.get_config('KG_DESCRIPTIONS_LABEL'),
+            owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
+            ret=   'r as id, ' +
+            'n1 as node1, ' +
+            'q as qual_id, ' +
+            'q.label as qual_relationship, ' +
+            'qn2 as qual_node2, ' +
+            'qllabel as qual_relationship_label, ' +
+            'qn2label as qual_node2_label, ' +
+            'qd as qual_node2_description',
+            order= 'r, q.label, qn2, q, qllabel, qn2label, qd',
+            limit= "$LIMIT"
+        )
+
+    def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
+        """Retrieve all edge qualifiers for edges that have their id in ID_LIST.
+        """
+        query = self.get_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list)
+        return self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
+
     def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node2.
         """
