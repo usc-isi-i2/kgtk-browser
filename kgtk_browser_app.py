@@ -5,6 +5,7 @@ Kypher backend support for the KGTK browser.
 import hashlib
 from http import HTTPStatus
 import os.path
+import random
 import sys
 import traceback
 import typing
@@ -824,7 +825,11 @@ def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[st
     return item_qual_map
 
 def rb_render_item_qualifiers(backend,
+                              item: str,
+                              edge_id: str,
                               item_qualifier_edges: typing.List[typing.List[str]],
+                              qual_proplist_max_len: int,
+                              qual_valuelist_max_len: int,
                               lang: str,
                               verbose: bool)->typing.List[typing.MutableMapping[str, any]]:
     current_qual_edge_id: typing.Optional[str] = None
@@ -875,12 +880,18 @@ def rb_render_item_qualifiers(backend,
                                                                                      lang)
         current_qual_values.append(current_qual_value)
 
+    downsample_properties(current_qualifiers, qual_proplist_max_len, qual_valuelist_max_len, repr(item) + " edge " + repr(edge_id), verbose)
+
     return current_qualifiers
 
 def rb_render_kb_items_and_qualifiers(backend,
                                       item: str,
                                       item_edges: typing.List[typing.List[str]],
                                       item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]],
+                                      proplist_max_len: int = 0,
+                                      valuelist_max_len: int = 0,
+                                      qual_proplist_max_len: int = 0,
+                                      qual_valuelist_max_len: int = 0,
                                       lang: str = 'en',
                                       verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                            typing.List[typing.MutableMapping[str, any]]]:
@@ -891,6 +902,8 @@ def rb_render_kb_items_and_qualifiers(backend,
     current_edge_id: typing.Optional[str] = None
     current_relationship: typing.Optional[str] = None
     current_values: typing.List[typing.MutableMapping[str, any]] = list()
+
+    value_drop_count: int = 0
 
     item_edge: typing.List[str]
     for item_edge in item_edges:
@@ -924,9 +937,10 @@ def rb_render_kb_items_and_qualifiers(backend,
             # We are starting a new relationship.
             current_relationship = relationship
             current_values = list()
+            relationship_label: str = rb_unstringify(relationship_label, default=relationship)
             current_property_map: typing.MutableMapping[str, any] = {
                 "ref": relationship,
-                "property": rb_unstringify(relationship_label, default=relationship),
+                "property": relationship_label,
                 "type": rb_type, # TODO: check for consistency
                 "values": current_values
             }
@@ -934,6 +948,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                 response_xrefs.append(current_property_map)
             else:
                 response_properties.append(current_property_map)
+
             # TODO: check that the wikidatatype is the same for all edges with
             # the same relationship.
 
@@ -947,31 +962,92 @@ def rb_render_kb_items_and_qualifiers(backend,
                                                                                 relationship,
                                                                                 wikidatatype)
         if edge_id in item_qual_map:
-            current_value["qualifiers"] = rb_render_item_qualifiers(backend, item_qual_map[edge_id], lang, verbose)
+            current_value["qualifiers"] = rb_render_item_qualifiers(backend,
+                                                                    item,
+                                                                    edge_id,
+                                                                    item_qual_map[edge_id],
+                                                                    qual_proplist_max_len,
+                                                                    qual_valuelist_max_len,
+                                                                    lang,
+                                                                    verbose)
         current_values.append(current_value)
 
+    downsample_properties(response_properties, proplist_max_len, valuelist_max_len, repr(item), verbose)
 
     return response_properties, response_xrefs
+
+def downsample_properties(property_list: typing.MutableMapping[str, any],
+                          proplist_max_len: int,
+                          valuelist_max_len: int,
+                          who: str,
+                          verbose: bool):
+                          
+    if proplist_max_len > 0 and len(property_list) > proplist_max_len:
+        if verbose:
+            print("Downsampling the properties for %s" % who, file=sys.stderr, flush=True)
+        property_drop_count: int = 0
+        while len(property_list) > proplist_max_len:
+            property_drop_count += 1
+            dropped_property_map: typing.Mapping[str, any] = property_list.pop(random.randrange(len(property_list)))
+            if verbose:
+                print("Dropping property %s (%s)" % (repr(dropped_property_map["property"]), repr(dropped_property_map["ref"])), file=sys.stderr, flush=True)
+        if verbose:
+            print("Dropped %d properties" % property_drop_count, file=sys.stderr, flush=True)
+
+    if valuelist_max_len > 0:
+        if verbose:
+            print("Scanning for value lists to downsample for %s" % who, file=sys.stderr, flush=True)
+        total_value_drop_count: int = 0
+        downsampled_prop_count: int = 0
+        scanned_property_map: typing.Mapping[str, any]
+        for scanned_property_map in property_list:
+            scanned_values: typing.List[any] = scanned_property_map["values"]
+            if len(scanned_values) > valuelist_max_len:
+                downsampled_prop_count += 1
+                if verbose:
+                    print("Downsampling values for property %s (%s)" % (repr(scanned_property_map["property"]),
+                                                                        repr(scanned_property_map["ref"])), file=sys.stderr, flush=True)
+                value_drop_count: int = 0
+                while len(scanned_values) > valuelist_max_len:
+                    value_drop_count += 1
+                    dropped_value: typing.Mapping[str, str] = scanned_values.pop(random.randrange(len(scanned_values)))
+                    if verbose:
+                        print("dropping value %s (%s)" % (repr(dropped_value["text"]), repr(dropped_value.get("ref", ""))), file=sys.stderr, flush=True)
+                total_value_drop_count += value_drop_count
+                if verbose:
+                    print("Dropped %d values" % value_drop_count, file=sys.stderr, flush=True)
+        if verbose:
+            print("Dropped %d values from %d properties" % (total_value_drop_count, downsampled_prop_count), file=sys.stderr, flush=True)
 
 def rb_send_kb_items_and_qualifiers(backend,
                                     item: str,
                                     item_edges: typing.List[typing.List[str]],
                                     item_qualifier_edges: typing.List[typing.List[str]],
+                                    proplist_max_len: int = 0,
+                                    valuelist_max_len: int = 0,
+                                    qual_proplist_max_len: int = 0,
+                                    qual_valuelist_max_len: int = 0,
                                     lang: str = 'en',
                                     verbose: bool = False)->typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                          typing.List[typing.MutableMapping[str, any]]]:
 
     # Sort the item edges:
     sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
+    print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
 
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
     item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
+    print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
 
     return rb_render_kb_items_and_qualifiers(backend,
                                              item,
                                              sorted_item_edges,
                                              item_qual_map,
+                                             proplist_max_len=proplist_max_len,
+                                             valuelist_max_len=valuelist_max_len,
+                                             qual_proplist_max_len=qual_proplist_max_len,
+                                             qual_valuelist_max_len=qual_valuelist_max_len,
                                              lang=lang,
                                              verbose=verbose)
 
@@ -1023,23 +1099,38 @@ def rb_send_kb_categories(backend,
         )
 
 
-def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
+def rb_send_kb_item(item: str,
+                    lang: str = "en",
+                    proplist_max_len: int = 0,
+                    valuelist_max_len: int = 0,
+                    qual_proplist_max_len: int = 0,
+                    qual_valuelist_max_len: int = 0,
+                    limit: int = 50000,
+                    verbose: bool = False):
     try:
         with get_backend(app) as backend:
             rb_build_property_priority_map(backend) # Endure this has been initialized.
 
-            if verbose or True:
+            verbose2: bool = verbose or True # ***
+
+            if verbose2:
                 print("Fetching item edges", file=sys.stderr, flush=True) # ***
-            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang)
-            if verbose or True:
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=limit)
+            if len(item_edges) > limit: # Forcibly truncate!
+                item_edges = item_edges[:limit]
+            if verbose2:
+                print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True) # ***
+            if verbose2:
                 print("Fetching qualifier edges", file=sys.stderr, flush=True) # ***
             item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
+            if verbose2:
+                print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
             # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
             # if verbose:
             #     print("Fetching category edges", file=sys.stderr, flush=True) # ***
             # item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
-            if verbose or True:
+            if verbose2:
                 print("Done fetching edges", file=sys.stderr, flush=True) # ***
 
             response: typing.MutableMapping[str, any] = dict()
@@ -1057,6 +1148,10 @@ def rb_send_kb_item(item: str, lang: str = "en", verbose: bool = False):
                                                                                   item,
                                                                                   item_edges,
                                                                                   item_qualifier_edges,
+                                                                                  proplist_max_len=proplist_max_len,
+                                                                                  valuelist_max_len=valuelist_max_len,
+                                                                                  qual_proplist_max_len=qual_proplist_max_len,
+                                                                                  qual_valuelist_max_len=qual_valuelist_max_len,
                                                                                   lang=lang,
                                                                                   verbose=verbose)
             response["properties"] = response_properties
@@ -1097,7 +1192,13 @@ def rb_get_kb_item():
     lang: str = flask.request.args.get("lang", default="en")
     verbose: str = flask.request.args.get("verbose", default=False, type=rb_is_true)
     print("rb_get_kb_item: " + item)
-    return rb_send_kb_item(item, lang=lang, verbose=verbose)
+    return rb_send_kb_item(item,
+                           lang=lang,
+                           proplist_max_len=20,
+                           valuelist_max_len=20,
+                           qual_proplist_max_len=20,
+                           qual_valuelist_max_len=20,
+                           verbose=verbose)
 
 
 @app.route('/kb/<string:item>', methods=['GET'])

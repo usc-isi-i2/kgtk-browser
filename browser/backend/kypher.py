@@ -432,11 +432,11 @@ class BrowserBackend(object):
                                   LANG=self.get_lang(lang),
                                   fmt=fmt)
 
-    def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+    def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edges that have 'node' as their node1.
         """
         query = self.get_config('RB_NODE_EDGES_QUERY')
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
 
     def rb_get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):

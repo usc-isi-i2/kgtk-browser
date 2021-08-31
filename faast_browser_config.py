@@ -5,7 +5,7 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
-GRAPH_CACHE           = './wikidata.sqlite3.db'
+GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm_data_for_browser.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -354,7 +354,6 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     Parameter 'LANG' controls the language for retrieved labels.
     Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
     and label's 'label_label'.
-    Limit the number of return edges to LIMIT.
 
     """,
     name='rb_node_edges_query',
@@ -377,8 +376,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
            'n2label as target_label, ' +
            'n2desc as target_description, ' +
            'rlwdt as wikidatatype',
-    order= 'r.label, n2, r, llabel, n2label, n2desc', # For better performance with LIMIT, sort in caller.
-    limit="$LIMIT",
+    order= 'r.label, n2, r, llabel, n2label, n2desc'
 )
 
 RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
