@@ -976,6 +976,8 @@ def rb_build_edge_id_tuple(response_properties: typing.List[typing.MutableMappin
                 edge_set.add(scanned_edge_id)
     return tuple(list(edge_set))
 
+
+edge_id_tuple_results_cache: typing.MutableMapping[str, typing.List[typing.List[str]]] = dict()
 def rb_fetch_qualifiers(backend,
                         item: str,
                         edge_id_tuple,
@@ -986,12 +988,24 @@ def rb_fetch_qualifiers(backend,
 
     item_qualifier_edges: typing.List[typing.List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
+        edge_id_tuple_key = "|".join(sorted(edge_id_tuple)) + "|" + lang + "}" + str(qual_query_limit)
+        if edge_id_tuple_key in edge_id_tuple_results_cache:
+            if verbose2:
+                print("Fetching qualifier edges for ID in %s (lang=%s, limit=%d) from cache" % (repr(edge_id_tuple),
+                                                                                                repr(lang),
+                                                                                                qual_query_limit),
+                      file=sys.stderr, flush=True) # ***
+            return edge_id_tuple_results_cache[edge_id_tuple_key]
+
         if verbose2:
             print("Fetching qualifier edges for ID in %s (lang=%s, limit=%d)" % (repr(edge_id_tuple),
                                                                                  repr(lang),
                                                                                  qual_query_limit),
                   file=sys.stderr, flush=True) # ***
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers_in(edge_id_tuple, lang=lang, limit=qual_query_limit)
+
+        # TODO: limit the size of the cache or apply LRU discipline.
+        edge_id_tuple_results_cache[edge_id_tuple_key] = item_qualifier_edges # Cache the results.
     else:
         if verbose2:
             print("Fetching qualifier edges for item %s (lang=%s, limit=%d)" % (repr(item),
