@@ -411,6 +411,36 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     limit="$LIMIT"
 )
 
+RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
+    Given parameter 'NODE' retrieve all edges that have 'EDGE_ID' as their edge ID
+    and then all qualifier edges for all such base edges found.  For each 
+    qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
+    for base edges.
+    """,
+    name='rb_node_edge_qualifiers_by_edge_id_query',
+    inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
+    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    where= 'r=$EDGE_ID',
+    opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
+    opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
+    opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+    owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
+    ret=   'r as id, ' +
+           'n1 as node1, ' +
+           'q as qual_id, ' +
+           'q.label as qual_relationship, ' +
+           'qn2 as qual_node2, ' +
+           'qllabel as qual_relationship_label, ' +
+           'qn2label as qual_node2_label, ' +
+           'qd as qual_node2_description',
+    order= 'r, q.label, qn2, q, qllabel, qn2label, qd', # For better performance with LIMIT, sort in caller.
+    limit="$LIMIT"
+)
+
 RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter: int = 0
 def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
     """This code generates a new name for each query, thus

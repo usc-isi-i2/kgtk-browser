@@ -446,6 +446,12 @@ class BrowserBackend(object):
         query = self.get_config('RB_NODE_EDGE_QUALIFIERS_QUERY')
         return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
+    def rb_get_node_edge_qualifiers_by_edge_id(self, edge_id, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
+        """Retrieve all edge qualifiers for the edge with edge ID edge_id..
+        """
+        query = self.get_config('RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY')
+        return self.execute_query(query, EDGE_ID=edge_id, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
     def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have their id in ID_LIST.
         """
