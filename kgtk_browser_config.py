@@ -441,7 +441,6 @@ RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY = _api.get_query(
     limit="$LIMIT"
 )
 
-RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter: int = 0
 def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
     """This code generates a new name for each query, thus
     rendering the query cache ineffective and filled with junk.
@@ -452,9 +451,6 @@ def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
     Fortunately, we do not expect embedded quotes in the
     id_list.
     """
-    global RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter
-    RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter += 1
-
     return _api.get_query(
         doc="""
         Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers_in()'.
@@ -462,8 +458,9 @@ def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
         and then all qualifier edges for all such base edges found.  For each 
         qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
         for base edges.
+
+        Do not supply a name for these queries.
         """,
-        name='rb_node_edge_qualifiers_in_query_' + str(RB_NODE_EDGE_QUALIFIERS_IN_QUERY_counter),
         inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
         match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
         where= 'r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
