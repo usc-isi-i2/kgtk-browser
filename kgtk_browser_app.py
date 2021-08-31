@@ -942,7 +942,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                 "ref": relationship,
                 "property": relationship_label,
                 "type": rb_type, # TODO: check for consistency
-                "values": current_values
+                "values": current_values,
             }
             if wikidatatype is not None and wikidatatype == "external-id":
                 response_xrefs.append(current_property_map)
@@ -960,19 +960,32 @@ def rb_render_kb_items_and_qualifiers(backend,
                                                                                 target_description,
                                                                                 lang,
                                                                                 relationship,
-                                                                                wikidatatype)
-        if edge_id in item_qual_map:
-            current_value["qualifiers"] = rb_render_item_qualifiers(backend,
-                                                                    item,
-                                                                    edge_id,
-                                                                    item_qual_map[edge_id],
-                                                                    qual_proplist_max_len,
-                                                                    qual_valuelist_max_len,
-                                                                    lang,
-                                                                    verbose)
+                                                                                wikidatatype) 
+
+        current_value["edge_id"] = edge_id # temporarily save the current edge ID.
         current_values.append(current_value)
 
     downsample_properties(response_properties, proplist_max_len, valuelist_max_len, repr(item), verbose)
+
+    # Now that we've downsampled the properties, build the qualifiers.
+    scanned_property_map: typing.MutableMapping[str, any]
+    for scanned_property_map in response_properties:
+        scanned_value: typing.MutableMapping[str, any]
+        for scanned_value in current_property_map["values"]:
+            # Retrieve the associated edge_id and remove it from the property map.
+            scanned_edge_id: str = scanned_value.pop("edge_id")
+            if scanned_edge_id not in item_qual_map:
+                continue # There are no associated qualifiers.
+
+            scanned_value["qualifiers"] = \
+                rb_render_item_qualifiers(backend,
+                                          item,
+                                          scanned_edge_id,
+                                          item_qual_map[scanned_edge_id],
+                                          qual_proplist_max_len,
+                                          qual_valuelist_max_len,
+                                          lang,
+                                          verbose)
 
     return response_properties, response_xrefs
 
