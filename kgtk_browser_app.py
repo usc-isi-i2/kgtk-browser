@@ -978,7 +978,7 @@ def rb_render_kb_items_and_qualifiers(backend,
         verbose2: bool = verbose or True
         edge_set: typing.Set[str] = set()
         for scanned_property_map in response_properties:
-            for scanned_value in current_property_map["values"]:
+            for scanned_value in scanned_property_map["values"]:
                 scanned_edge_id = scanned_value["edge_id"]
                 if scanned_edge_id not in edge_set:
                     edge_set.add(scanned_edge_id)
@@ -988,16 +988,19 @@ def rb_render_kb_items_and_qualifiers(backend,
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers_in(edge_id_tuple, lang=lang, limit=qual_query_limit)
         if verbose2:
             print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
+
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
     item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
     print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
 
+    edges_without_qualifiers: int = 0
     for scanned_property_map in response_properties:
-        for scanned_value in current_property_map["values"]:
-            # Retrieve the associated edge_id and remove it from the property map.
-            scanned_edge_id = scanned_value.pop("edge_id")
+        for scanned_value in scanned_property_map["values"]:
+            # Retrieve the associated edge_id
+            scanned_edge_id = scanned_value["edge_id"]
             if scanned_edge_id not in item_qual_map:
+                edges_without_qualifiers += 1
                 continue # There are no associated qualifiers.
 
             scanned_value["qualifiers"] = \
@@ -1009,6 +1012,14 @@ def rb_render_kb_items_and_qualifiers(backend,
                                           qual_valuelist_max_len,
                                           lang,
                                           verbose)
+
+    print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True) # ***
+
+    for scanned_property_map in response_properties:
+        for scanned_value in scanned_property_map["values"]:
+            # Remove the edge_id
+            if "edge_id" in scanned_value:
+                del scanned_value["edge_id"]
 
     return response_properties, response_xrefs
 
@@ -1230,8 +1241,8 @@ def rb_get_kb_item():
     args = flask.request.args
     item: str  = args.get('id')
     lang: str = args.get("lang", default="en")
-    proplist_max_len: int = args.get('proplist_max_len', default=400, type=int)
-    valuelist_max_len: int = args.get('valiuelist_max_len', default=20, type=int)
+    proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
+    valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
     qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=20, type=int)
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     query_limit: int = args.get('query_limit', default=300000, type=int)
