@@ -53,6 +53,7 @@ app.config.from_envvar('KGTK_BROWSER_CONFIG')
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
 EARLY_QUALIFIER_FETCH: bool = False
+ID_SEARCH_THRESHOLD: int = 20
 
 app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
 app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
@@ -983,9 +984,20 @@ def rb_render_kb_items_and_qualifiers(backend,
                 if scanned_edge_id not in edge_set:
                     edge_set.add(scanned_edge_id)
         edge_id_tuple = tuple(list(edge_set))
-        if verbose2:
-            print("Fetching qualifier edges for %s (lang=%s, limit=%d)" % (repr(edge_id_tuple), repr(lang), qual_query_limit), file=sys.stderr, flush=True) # ***
-        item_qualifier_edges = backend.rb_get_node_edge_qualifiers_in(edge_id_tuple, lang=lang, limit=qual_query_limit)
+        if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
+            if verbose2:
+                print("Fetching qualifier edges for ID in %s (lang=%s, limit=%d)" % (repr(edge_id_tuple),
+                                                                                     repr(lang),
+                                                                                     qual_query_limit),
+                      file=sys.stderr, flush=True) # ***
+            item_qualifier_edges = backend.rb_get_node_edge_qualifiers_in(edge_id_tuple, lang=lang, limit=qual_query_limit)
+        else:
+            if verbose2:
+                print("Fetching qualifier edges for item %s (lang=%s, limit=%d)" % (repr(item),
+                                                                                    repr(lang),
+                                                                                    qual_query_limit),
+                      file=sys.stderr, flush=True) # ***
+            item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
         if verbose2:
             print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
 
