@@ -435,7 +435,7 @@ def rb_format_number_or_quantity(
             numberstr = numberstr[1:]
         number_text = numberstr
     else:
-        if value.parse_fields():
+        if value.do_parse_fields():
             newnum: str = value.fields.numberstr
             if newnum.startswith("+"): # Remove any leading "+"
                 newnum = newnum[1:]
@@ -480,7 +480,7 @@ def rb_iso_format_time(
         value: KgtkValue,
 )->str:
 
-    if value.parse_fields() and value.fields.precision is not None:
+    if value.do_parse_fields() and value.fields.precision is not None:
         f: KgtkValueFields = value.fields
         precision: int = f.precision
         if precision <= 9 and f.yearstr is not None:
