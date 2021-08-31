@@ -1105,7 +1105,7 @@ def rb_send_kb_item(item: str,
                     valuelist_max_len: int = 0,
                     qual_proplist_max_len: int = 0,
                     qual_valuelist_max_len: int = 0,
-                    limit: int = 50000,
+                    limit: int = 10000,
                     verbose: bool = False):
     try:
         with get_backend(app) as backend:
@@ -1114,7 +1114,7 @@ def rb_send_kb_item(item: str,
             verbose2: bool = verbose or True # ***
 
             if verbose2:
-                print("Fetching item edges", file=sys.stderr, flush=True) # ***
+                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), limit), file=sys.stderr, flush=True) # ***
             item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=limit)
             if len(item_edges) > limit: # Forcibly truncate!
                 item_edges = item_edges[:limit]
@@ -1122,7 +1122,7 @@ def rb_send_kb_item(item: str,
                 print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True) # ***
             if verbose2:
                 print("Fetching qualifier edges", file=sys.stderr, flush=True) # ***
-            item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang)
+            item_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=limit)
             if verbose2:
                 print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True) # ***
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
@@ -1188,16 +1188,23 @@ def rb_get_kb_item():
 
     verbose   This debugging parameter controls debugging output on the server.  The default is False.
     """
-    item: str  = flask.request.args.get('id')
-    lang: str = flask.request.args.get("lang", default="en")
-    verbose: str = flask.request.args.get("verbose", default=False, type=rb_is_true)
+    args = flask.request.args
+    item: str  = args.get('id')
+    lang: str = args.get("lang", default="en")
+    proplist_max_len: int = args.get('proplist_max_len', default=400, type=int)
+    valuelist_max_len: int = args.get('valiuelist_max_len', default=20, type=int)
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=20, type=int)
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
+    query_limit: int = args.get('query_limit', default=300000, type=int)
+    verbose: str = args.get("verbose", default=False, type=rb_is_true)
     print("rb_get_kb_item: " + item)
     return rb_send_kb_item(item,
                            lang=lang,
-                           proplist_max_len=400,
-                           valuelist_max_len=20,
-                           qual_proplist_max_len=20,
-                           qual_valuelist_max_len=20,
+                           proplist_max_len=proplist_max_len,
+                           valuelist_max_len=valuelist_max_len,
+                           qual_proplist_max_len=qual_proplist_max_len,
+                           qual_valuelist_max_len=qual_valuelist_max_len,
+                           limit=query_limit,
                            verbose=verbose)
 
 

@@ -378,7 +378,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
            'n2desc as target_description, ' +
            'rlwdt as wikidatatype',
     order= 'r.label, n2, r, llabel, n2label, n2desc', # For better performance with LIMIT, sort in caller.
-    limit="$LIMIT",
+    limit="$LIMIT"
 )
 
 RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
@@ -407,7 +407,8 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
            'qllabel as qual_relationship_label, ' +
            'qn2label as qual_node2_label, ' +
            'qd as qual_node2_description',
-    order= 'r, q.label, qn2, q, qllabel, qn2label, qd'
+    order= 'r, q.label, qn2, q, qllabel, qn2label, qd', # For better performance with LIMIT, sort in caller.
+    limit="$LIMIT"
 )
 
 RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
