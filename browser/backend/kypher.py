@@ -450,7 +450,9 @@ class BrowserBackend(object):
         """Retrieve all edge qualifiers for edges that have their id in ID_LIST.
         """
         query = self.get_config('GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY')(id_list)
-        return self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        results = self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        query.clear() # Since we don't plan to re-issue this query, release its resources.
+        return results
 
 
     def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
