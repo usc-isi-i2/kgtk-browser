@@ -1194,7 +1194,7 @@ def rb_get_kb_item():
     print("rb_get_kb_item: " + item)
     return rb_send_kb_item(item,
                            lang=lang,
-                           proplist_max_len=20,
+                           proplist_max_len=400,
                            valuelist_max_len=20,
                            qual_proplist_max_len=20,
                            qual_valuelist_max_len=20,
