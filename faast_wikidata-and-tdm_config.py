@@ -367,7 +367,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
     opt3=   '$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
-    opt4=   '$metadata: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
+    opt4=   '$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
@@ -504,7 +504,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     opt3=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
-    opt4=   '$metadata: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
+    opt4=   '$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
     ret=   'r as id, ' +
            'n1 as node1, ' +
            'r.label as relationship, ' +
