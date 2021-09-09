@@ -102,6 +102,12 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
 
     Note: We assume that each item name appears at most once in the results.
 
+    TODO: Generalize this to allow any alpha+ digit+ sequence, and fallback to
+    an alpha sort when the pattern fails.
+
+    TODO: Add a parameter to the query that controls whether or not the
+    results are sorted in this fancy way.
+
     """
     # Optimize the common cases of empty or singleton results:
     if len(results) <= 1:
