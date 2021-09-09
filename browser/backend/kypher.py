@@ -334,7 +334,7 @@ class BrowserBackend(object):
             return None
         else:
             if formatter is None:
-                formatter == self.formatter
+                formatter = self.formatter
             return formatter.format_node_data(node_data)
 
     ### Support for the revised browser:
