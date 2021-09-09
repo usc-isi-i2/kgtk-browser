@@ -102,6 +102,12 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
 
     Note: We assume that each item name appears at most once in the results.
 
+    TODO: Generalize this to allow any alpha+ digit+ sequence, and fallback to
+    an alpha sort when the pattern fails.
+
+    TODO: Add a parameter to the query that controls whether or not the
+    results are sorted in this fancy way.
+
     """
     # Optimize the common cases of empty or singleton results:
     if len(results) <= 1:
@@ -898,7 +904,7 @@ def rb_render_kb_items(backend,
     response_properties: typing.List[typing.MutableMapping[str, any]] = list()
     response_xrefs: typing.List[typing.MutableMapping[str, any]] = list()
 
-    current_edge_id: typing.Optional[str] = None
+    # current_edge_id: typing.Optional[str] = None
     current_relationship: typing.Optional[str] = None
     current_values: typing.List[typing.MutableMapping[str, any]] = list()
 
@@ -920,12 +926,12 @@ def rb_render_kb_items(backend,
         wikidatatype: typing.Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
 
-        if current_edge_id is not None and current_edge_id == edge_id:
-            if verbose:
-                print("*** skipping duplicate %s" % repr(current_edge_id), file=sys.stderr, flush=True)
-            # Skip duplicates (say, multiple labels or descriptions).
-            continue
-        current_edge_id = edge_id
+        # if current_edge_id is not None and current_edge_id == edge_id:
+        #     if verbose:
+        #         print("*** skipping duplicate %s" % repr(current_edge_id), file=sys.stderr, flush=True)
+        #     # Skip duplicates (say, multiple labels or descriptions).
+        #     continue
+        # current_edge_id = edge_id
 
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
@@ -966,6 +972,11 @@ def rb_render_kb_items(backend,
 
     downsample_properties(response_properties, proplist_max_len, valuelist_max_len, repr(item), verbose)
 
+    if verbose:
+        print("rb_render_kb_items returns %d response_properties and %d response_xrefs)" % (len(response_properties),
+                                                                                            len(response_xrefs)),
+              file=sys.stderr, flush=True) # ***
+        
     return response_properties, response_xrefs
 
 def rb_build_edge_id_tuple(response_properties: typing.List[typing.MutableMapping[str, any]]):
@@ -1346,7 +1357,7 @@ def rb_get_kb_item():
     lang: str = args.get("lang", default="en")
     proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
     valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
-    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=20, type=int)
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     query_limit: int = args.get('query_limit', default=300000, type=int)
     qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
