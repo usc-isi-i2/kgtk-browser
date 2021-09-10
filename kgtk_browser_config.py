@@ -372,9 +372,13 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     name='rb_nodes_with_p585_starting_with_query',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
-    match='$labels: (datetime)<-[:P585]-(node)-[r:`%s`]->(label)' % KG_LABELS_LABEL,
-    where='glob($PREFIX, node)',
-    ret=  'node as node1, label as node_label, datetime as datetime',
+    match='''$labels:
+      (node)-[r:`%s`]->(label),
+      (node)-[:P585]->(datetime),
+      (node)-[:P00_Venice_EventType]->()-[rel]->(event_type)
+    ''' % KG_LABELS_LABEL,
+    where='glob($PREFIX, node) and rel.label = "label"',
+    ret=  'node as node1, label as node_label, datetime as datetime, event_type',
     # order= "node, l", # This kills performance when there is a large number of matches
     limit= "$LIMIT"
 )

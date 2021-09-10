@@ -1610,12 +1610,15 @@ def get_all_event_nodes():
                     datetime_pattern = re.compile('\^(\d+-\d+-\d+T\d+:\d+:\d+Z)\/11')
                     datetime_match = re.match(datetime_pattern, result[2])[1]
 
+                    event_type = KgtkFormat.unstringify(result[3])
+
                     matches.append(
                         {
                             "ref": item,
                             "text": item,
                             "description": label,
                             "datetime": datetime_match,
+                            "event_type": event_type,
                         }
                     )
 
