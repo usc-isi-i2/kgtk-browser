@@ -1600,51 +1600,35 @@ def get_all_event_nodes():
                 if verbose:
                     print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
-                    item = result[0]
-                    if item in items_seen:
+                    event_id = result[0]
+                    if event_id in items_seen:
                         continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
+                    items_seen.add(event_id)
 
-                    datetime_str = result[2]
+                    datetime_str = result[1]
                     datetime_pattern = re.compile('\^(\d+-\d+-\d+T\d+:\d+:\d+Z)\/11')
-                    datetime_match = re.match(datetime_pattern, result[2])[1]
-
-                    event_type = KgtkFormat.unstringify(result[3])
-
-                    moral_foundations = {
-                        "authorityvirtue": result[4],
-                        "authorityvice": result[5],
-                        "fairnessvirtue": result[6],
-                        "fairnessvice": result[7],
-                        "harmvirtue": result[8],
-                        "harmvice": result[9],
-                        "ingroupvirtue": result[10],
-                        "ingroupvice": result[11],
-                        "purityvirtue": result[12],
-                        "purityvice": result[13],
-                    }
+                    datetime_match = re.match(datetime_pattern, result[1])[1]
 
                     matches.append(
                         {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
+                            "id": event_id,
                             "datetime": datetime_match,
-                            "event_type": event_type,
-                            "moral_foundations": moral_foundations,
+                            "authorityvirtue": float(result[2]),
+                            "authorityvice": float(result[3]),
+                            "fairnessvirtue": float(result[4]),
+                            "fairnessvice": float(result[5]),
+                            "harmvirtue": float(result[6]),
+                            "harmvice": float(result[7]),
+                            "ingroupvirtue": float(result[8]),
+                            "ingroupvice": float(result[9]),
+                            "purityvirtue": float(result[10]),
+                            "purityvice": float(result[11]),
                         }
                     )
-
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
-            # Build the final response:
-            response_data = {
-                "matches": matches
-            }
-
-            return flask.jsonify(response_data), 200
+            return flask.jsonify(matches), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)

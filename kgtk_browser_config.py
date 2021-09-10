@@ -375,7 +375,6 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     match='''$labels:
       (node)-[r:`%s`]->(label),
       (node)-[:P585]->(datetime),
-      (node)-[:P00_Venice_EventType]->()-[rel]->(event_type),
       (node)-[msf1:P1552]->(:Q00_authorityvirtue),
       (msf1)-[]->(msf1_score),
       (node)-[msf2:P1552]->(:Q00_authorityvice),
@@ -399,13 +398,10 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     ''' % KG_LABELS_LABEL,
     where='''
         glob($PREFIX, node)
-        and rel.label = "label"
     ''',
     ret='''
-        node as node1,
-        label as node_label,
-        datetime as datetime,
-        event_type,
+        node,
+        datetime,
         msf1_score,
         msf2_score,
         msf3_score,
