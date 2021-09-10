@@ -375,11 +375,48 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     match='''$labels:
       (node)-[r:`%s`]->(label),
       (node)-[:P585]->(datetime),
-      (node)-[:P00_Venice_EventType]->()-[rel]->(event_type)
+      (node)-[:P00_Venice_EventType]->()-[rel]->(event_type),
+      (node)-[msf1:P1552]->(:Q00_authorityvirtue),
+      (msf1)-[]->(msf1_score),
+      (node)-[msf2:P1552]->(:Q00_authorityvice),
+      (msf2)-[]->(msf2_score),
+      (node)-[msf3:P1552]->(:Q00_fairnessvirtue),
+      (msf3)-[]->(msf3_score),
+      (node)-[msf4:P1552]->(:Q00_fairnessvice),
+      (msf4)-[]->(msf4_score),
+      (node)-[msf5:P1552]->(:Q00_harmvirtue),
+      (msf5)-[]->(msf5_score),
+      (node)-[msf6:P1552]->(:Q00_harmvice),
+      (msf6)-[]->(msf6_score),
+      (node)-[msf7:P1552]->(:Q00_ingroupvirtue),
+      (msf7)-[]->(msf7_score),
+      (node)-[msf8:P1552]->(:Q00_ingroupvice),
+      (msf8)-[]->(msf8_score),
+      (node)-[msf9:P1552]->(:Q00_purityvirtue),
+      (msf9)-[]->(msf9_score),
+      (node)-[msf10:P1552]->(:Q00_purityvice),
+      (msf10)-[]->(msf10_score)
     ''' % KG_LABELS_LABEL,
-    where='glob($PREFIX, node) and rel.label = "label"',
-    ret=  'node as node1, label as node_label, datetime as datetime, event_type',
-    # order= "node, l", # This kills performance when there is a large number of matches
+    where='''
+        glob($PREFIX, node)
+        and rel.label = "label"
+    ''',
+    ret='''
+        node as node1,
+        label as node_label,
+        datetime as datetime,
+        event_type,
+        msf1_score,
+        msf2_score,
+        msf3_score,
+        msf4_score,
+        msf5_score,
+        msf6_score,
+        msf7_score,
+        msf8_score,
+        msf9_score,
+        msf10_score
+    ''',
     limit= "$LIMIT"
 )
 

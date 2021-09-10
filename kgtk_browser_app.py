@@ -1612,6 +1612,19 @@ def get_all_event_nodes():
 
                     event_type = KgtkFormat.unstringify(result[3])
 
+                    moral_foundations = {
+                        "authorityvirtue": result[4],
+                        "authorityvice": result[5],
+                        "fairnessvirtue": result[6],
+                        "fairnessvice": result[7],
+                        "harmvirtue": result[8],
+                        "harmvice": result[9],
+                        "ingroupvirtue": result[10],
+                        "ingroupvice": result[11],
+                        "purityvirtue": result[12],
+                        "purityvice": result[13],
+                    }
+
                     matches.append(
                         {
                             "ref": item,
@@ -1619,6 +1632,7 @@ def get_all_event_nodes():
                             "description": label,
                             "datetime": datetime_match,
                             "event_type": event_type,
+                            "moral_foundations": moral_foundations,
                         }
                     )
 
