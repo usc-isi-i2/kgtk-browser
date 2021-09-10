@@ -11,6 +11,7 @@ import traceback
 import typing
 import urllib.parse
 
+import re
 import flask
 import browser.backend.kypher as kybe
 
@@ -1566,6 +1567,67 @@ def get_all_node_data():
             data = backend.get_all_node_data(
                 args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], inverse=args['inverse'])
             return data or {}
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_event_nodes'), methods=['GET'])
+def get_all_event_nodes():
+
+    q = 'event_id'
+    args = flask.request.args
+    lang = args.get("lang", default="en")
+
+    verbose = args.get("verbose", default=False, type=rb_is_true)
+    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
+    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=100000, type=int)
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
+
+    try:
+        with get_backend(app) as backend:
+            matches = []
+            items_seen: typing.Set[str] = set()
+
+            if match_label_prefixes:
+                prefix = q
+                if verbose:
+                    print("match_label_prefixes: Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_p585_starting_with(prefix,
+                                                                       lang=lang,
+                                                                       ignore_case=match_label_ignore_case,
+                                                                       limit=match_label_prefixes_limit)
+                if verbose:
+                    print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in rb_sort_query_results(results):
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+
+                    datetime_str = result[2]
+                    datetime_pattern = re.compile('\^(\d+-\d+-\d+T\d+:\d+:\d+Z)\/11')
+                    datetime_match = re.match(datetime_pattern, result[2])[1]
+
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label,
+                            "datetime": datetime_match,
+                        }
+                    )
+
+            if verbose:
+                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+
+            # Build the final response:
+            response_data = {
+                "matches": matches
+            }
+
+            return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
