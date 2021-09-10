@@ -13,6 +13,7 @@ import urllib.parse
 
 import re
 import flask
+import pandas as pd
 import browser.backend.kypher as kybe
 
 from kgtk.kgtkformat import KgtkFormat
@@ -1625,10 +1626,14 @@ def get_all_event_nodes():
                             "purityvice": float(result[11]),
                         }
                     )
+
+            df = pd.DataFrame(matches)
+            df = df.groupby('datetime').mean()
+
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
-            return flask.jsonify(matches), 200
+            return flask.jsonify(df.to_dict()), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
