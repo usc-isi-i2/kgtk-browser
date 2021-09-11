@@ -5,7 +5,7 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
-GRAPH_CACHE           = './wikidata.sqlite3.db'
+GRAPH_CACHE           = './venice-browser-v7.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -14,14 +14,14 @@ MAX_CACHE_SIZE        = 1000
 DEFAULT_LANGUAGE      = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
-KG_EDGES_GRAPH        = 'claims'
-KG_QUALIFIERS_GRAPH   = 'qualifiers'
-KG_LABELS_GRAPH       = 'labels'
-KG_ALIASES_GRAPH      = 'aliases'
-KG_DESCRIPTIONS_GRAPH = 'descriptions'
-KG_IMAGES_GRAPH       = 'claims'
-KG_FANOUTS_GRAPH      = 'metadata'
-KG_DATATYPES_GRAPH     = 'metadata'
+KG_EDGES_GRAPH        = 'venice_kgtk_file_with_geo.tsv'
+KG_QUALIFIERS_GRAPH   = 'venice_kgtk_file_with_geo.tsv'
+KG_LABELS_GRAPH       = 'venice_kgtk_file_with_geo.tsv'
+KG_ALIASES_GRAPH      = 'venice_kgtk_file_with_geo.tsv'
+KG_DESCRIPTIONS_GRAPH = 'venice_kgtk_file_with_geo.tsv'
+KG_IMAGES_GRAPH       = 'venice_kgtk_file_with_geo.tsv'
+KG_FANOUTS_GRAPH      = 'venice_kgtk_file_counts.tsv.gz'
+KG_DATATYPES_GRAPH     = 'venice_kgtk_file_with_geo.tsv'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
