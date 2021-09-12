@@ -360,7 +360,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     name='rb_node_edges_query',
     inputs=('edges', 'labels', 'descriptions', 'datatypes'),
     match= '$edges: (n1)-[r {label: rl}]->(n2)',
-    where= 'n1=$NODE',
+    where= 'n1=$NODE and rl <> "label" and rl <> "alias" and rl <> "description" and rl <> "P18" and rl <> "count_distinct_properties" and rl <> "datatype"',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
     opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,

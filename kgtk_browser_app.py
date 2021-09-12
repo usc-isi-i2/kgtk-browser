@@ -214,9 +214,11 @@ def rb_get_kb_query():
     """
     args = flask.request.args
     q = args.get('q')
-    print("rb_get_kb_query: " + q)
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    if verbose:
+        print("rb_get_kb_query: " + q)
 
-    verbose: bool = True or args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
     lang: str = args.get("lang", default="en")
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
     match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
@@ -689,7 +691,7 @@ def rb_scan_property_list(initial_priority_map: typing.Mapping[str, int],
         if prop in forest:
             rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
 
-def rb_build_property_priority_map(backend):
+def rb_build_property_priority_map(backend, verbose: bool = False):
     global rb_property_priority_map # Since we initialize it here.
     if rb_property_priority_map is not None:
         return # Already built.
@@ -700,10 +702,12 @@ def rb_build_property_priority_map(backend):
         if val.endswith("*"):
             val = val[:-1]
         initial_priority_map[val] = len(initial_priority_map)
-    print("%d entries in the initial priority map" % len(initial_priority_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d entries in the initial priority map" % len(initial_priority_map), file=sys.stderr, flush=True) # ***
 
     subproperty_relationships = backend.rb_get_subproperty_relationships()
-    print("%d subproperty relationships" % len(subproperty_relationships), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d subproperty relationships" % len(subproperty_relationships), file=sys.stderr, flush=True) # ***
 
     labels: typing.MutableMapping[str, str] = dict()
     forest: typing.MutableMapping[str, typing.List[str]] = dict()
@@ -718,7 +722,8 @@ def rb_build_property_priority_map(backend):
             forest[node2] = list()
         forest[node2].append(node1)
         labels[node1] = label
-    print("%d subproperty forest branches" % len(forest), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d subproperty forest branches" % len(forest), file=sys.stderr, flush=True) # ***
 
     revised_priority_map: typing.MutableMapping[str, int] = dict()
     properties_seen: typing.Set[str] = set()
@@ -737,7 +742,8 @@ def rb_build_property_priority_map(backend):
             revised_priority_map[prop] = len(revised_priority_map)
     
     rb_property_priority_map = revised_priority_map
-    print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
 
 
 rb_property_priority_width = 5
@@ -1044,7 +1050,7 @@ def rb_fetch_qualifiers(backend,
                         qual_query_limit: int = 0,
                         lang: str = 'en',
                         verbose: bool = False)->typing.List[typing.List[str]]:
-    verbose2: bool = verbose or True
+    verbose2: bool = verbose
 
     item_qualifier_edges: typing.List[typing.List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
@@ -1087,7 +1093,8 @@ def rb_fetch_and_render_qualifiers(backend,
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
     item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
-    print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
 
     edges_without_qualifiers: int = 0
     for scanned_property_map in response_properties:
@@ -1108,7 +1115,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                           lang,
                                           verbose)
 
-    print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True) # ***
 
     for scanned_property_map in response_properties:
         for scanned_value in scanned_property_map["values"]:
@@ -1152,7 +1160,7 @@ def downsample_properties(property_list: typing.MutableMapping[str, any],
                           proplist_max_len: int,
                           valuelist_max_len: int,
                           who: str,
-                          verbose: bool):
+                          verbose: bool = False):
                           
     if proplist_max_len > 0 and len(property_list) > proplist_max_len:
         if verbose:
@@ -1205,7 +1213,8 @@ def rb_send_kb_items_and_qualifiers(backend,
 
     # Sort the item edges:
     sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
-    print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
 
     return rb_render_kb_items_and_qualifiers(backend,
                                              item,
@@ -1277,9 +1286,9 @@ def rb_send_kb_item(item: str,
                     verbose: bool = False):
     try:
         with get_backend(app) as backend:
-            rb_build_property_priority_map(backend) # Endure this has been initialized.
+            rb_build_property_priority_map(backend, verbose=verbose) # Endure this has been initialized.
 
-            verbose2: bool = verbose or True # ***
+            verbose2: bool = verbose # ***
 
             if verbose2:
                 print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit), file=sys.stderr, flush=True) # ***
@@ -1361,8 +1370,9 @@ def rb_get_kb_item():
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     query_limit: int = args.get('query_limit', default=300000, type=int)
     qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
-    verbose: str = args.get("verbose", default=False, type=rb_is_true)
-    print("rb_get_kb_item: " + item)
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    if verbose:
+        print("rb_get_kb_item: " + item)
     return rb_send_kb_item(item,
                            lang=lang,
                            proplist_max_len=proplist_max_len,
@@ -1376,7 +1386,11 @@ def rb_get_kb_item():
 
 @app.route('/kb/<string:item>', methods=['GET'])
 def rb_get_kb_named_item(item):
-    print("get_kb_named_item: " + item)
+    args = flask.request.args
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    
+    if verbose:
+        print("get_kb_named_item: " + item)
     if item is None or len(item) == 0:
         try:
             return flask.send_from_directory('web/static', "kb.html")
