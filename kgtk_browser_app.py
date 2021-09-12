@@ -1614,16 +1614,16 @@ def get_all_event_nodes():
                         {
                             "id": event_id,
                             "datetime": datetime_match,
-                            "authorityvirtue": round(float(result[2]), 3),
-                            "authorityvice": round(float(result[3]), 3),
-                            "fairnessvirtue": round(float(result[4]), 3),
-                            "fairnessvice": round(float(result[5]), 3),
-                            "harmvirtue": round(float(result[6]), 3),
-                            "harmvice": round(float(result[7]), 3),
-                            "ingroupvirtue": round(float(result[8]), 3),
-                            "ingroupvice": round(float(result[9]), 3),
-                            "purityvirtue": round(float(result[10]), 3),
-                            "purityvice": round(float(result[11]), 3),
+                            "authority/virtue": round(float(result[2]), 3),
+                            "authority/vice": round(float(result[3]), 3),
+                            "fairness/virtue": round(float(result[4]), 3),
+                            "fairness/vice": round(float(result[5]), 3),
+                            "harm/virtue": round(float(result[6]), 3),
+                            "harm/vice": round(float(result[7]), 3),
+                            "ingroup/virtue": round(float(result[8]), 3),
+                            "ingroup/vice": round(float(result[9]), 3),
+                            "purity/virtue": round(float(result[10]), 3),
+                            "purity/vice": round(float(result[11]), 3),
                         }
                     )
 
