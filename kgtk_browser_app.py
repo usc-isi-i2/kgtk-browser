@@ -1573,8 +1573,8 @@ def get_all_node_data():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_event_nodes'), methods=['GET'])
-def get_all_event_nodes():
+@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_events_and_scores'), methods=['GET'])
+def get_all_events_and_scores():
 
     q = 'event_id'
     args = flask.request.args
