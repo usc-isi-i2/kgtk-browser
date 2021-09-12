@@ -52,7 +52,7 @@ app = flask.Flask(__name__,
                   template_folder='web/templates')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
-DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
+DEFAULT_SERVICE_PREFIX = '/kgtk/'
 DEFAULT_LANGUAGE = 'en'
 ID_SEARCH_THRESHOLD: int = 40
 ID_SEARCH_USING_IN: bool = False
