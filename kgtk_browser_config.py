@@ -14,14 +14,14 @@ MAX_CACHE_SIZE        = 1000
 DEFAULT_LANGUAGE      = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
-KG_EDGES_GRAPH         = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_QUALIFIERS_GRAPH    = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_LABELS_GRAPH        = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_ALIASES_GRAPH       = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_DESCRIPTIONS_GRAPH  = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_IMAGES_GRAPH        = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
-KG_FANOUTS_GRAPH       = '/data/kg_files/venice_kgtk_file_counts.tsv.gz'
-KG_DATATYPES_GRAPH     = '/data/kg_files/venice_kgtk_file_with_geo.tsv'
+KG_EDGES_GRAPH         = '/data/kg_files/venice.tsv'
+KG_QUALIFIERS_GRAPH    = '/data/kg_files/venice.tsv'
+KG_LABELS_GRAPH        = '/data/kg_files/venice.tsv'
+KG_ALIASES_GRAPH       = '/data/kg_files/venice.tsv'
+KG_DESCRIPTIONS_GRAPH  = '/data/kg_files/venice.tsv'
+KG_IMAGES_GRAPH        = '/data/kg_files/venice.tsv'
+KG_FANOUTS_GRAPH       = '/data/kg_files/venice.tsv'
+KG_DATATYPES_GRAPH     = '/data/kg_files/venice.tsv'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
