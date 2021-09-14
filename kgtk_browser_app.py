@@ -158,13 +158,6 @@ def rb_get_kb_query():
                        The default is True.
                        Example: http://kgtk.isi.edu/kb/query/q=Q42&match_item_exactly=True
 
-    match_label_exactly This controls whether or not to perform an exact-length label match.
-                        Labels are assumed to be stored in mixed case in the database. The
-                        "match_label_ignore_case" parameter(see below) determines whether
-                        the match is case sensitive or case insensitive.
-                        The default is True.
-                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
-
     match_item_prefixes This controls whether or not to return item prefix matches.
                         Item names are assumed to be stored in upper-case in the database.
                         Prefix matching is slower than exact matching.
@@ -172,6 +165,17 @@ def rb_get_kb_query():
 
     match_item_prefixes_limit Limit the number of item prefix match results that will
                               be presented.
+
+    match_item_ignore_case When true, ignore case when matching labels.  This applies
+                           to both exact-length item searches and item prefix searches.
+                           The default is True.
+
+    match_label_exactly This controls whether or not to perform an exact-length label match.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
+                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
 
     match_label_prefixes This controls whether or not to return label prefix matches.
                         Prefix matching is slower than exact matching.
@@ -185,6 +189,7 @@ def rb_get_kb_query():
 
     match_label_ignore_case When true, ignore case when matching labels.  This applies
                             to both exact-length label searches and label prefix searches.
+                            The default is True.
 
     The result returned is:
 
@@ -214,18 +219,21 @@ def rb_get_kb_query():
     """
     args = flask.request.args
     q = args.get('q')
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) or True # ***
     if verbose:
         print("rb_get_kb_query: " + q)
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true) # Debugging control
     lang: str = args.get("lang", default="en")
+
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
-    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
     match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
-    match_item_prefixes_limit: intl = args.get("match_item_prefixes_limit", default=20, type=int)
+    match_item_prefixes_limit: int = args.get("match_item_prefixes_limit", default=20, type=int)
+    match_item_ignore_case: bool = args.get("match_item_ignore_case", default=True, type=rb_is_true)
+
+    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
     match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
-    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=20, type=int)
+    match_label_prefixes_limit: int = args.get("match_label_prefixes_limit", default=20, type=int)
     match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
 
     try:
@@ -257,7 +265,9 @@ def rb_get_kb_query():
                 if verbose:
                     print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
-                results = backend.rb_get_node_labels(q, lang=lang)
+                results = backend.rb_get_node_labels(q,
+                                                     lang=lang,
+                                                     ignore_case=match_item_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
@@ -332,7 +342,10 @@ def rb_get_kb_query():
             if match_item_prefixes:
                 if verbose:
                     print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_starting_with(q, lang=lang, limit=match_item_prefixes_limit)
+                results = backend.rb_get_nodes_starting_with(q,
+                                                             lang=lang,
+                                                             limit=match_item_prefixes_limit,
+                                                             ignore_case=match_item_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
