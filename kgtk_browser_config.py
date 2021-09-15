@@ -373,7 +373,7 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='''$labels:
-      (node)-[r:`%s`]->(label),
+      (node)-[:P31]->(:`venice:Sentence`),
       (node)-[:P585]->(datetime),
       (node)-[msf1:P1552]->(:Q00_authorityvirtue),
       (msf1)-[]->(msf1_score),
@@ -395,9 +395,6 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
       (msf9)-[]->(msf9_score),
       (node)-[msf10:P1552]->(:Q00_purityvice),
       (msf10)-[]->(msf10_score)
-    ''' % KG_LABELS_LABEL,
-    where='''
-        glob($PREFIX, node)
     ''',
     ret='''
         node,
