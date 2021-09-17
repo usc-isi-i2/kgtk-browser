@@ -388,9 +388,6 @@ class BrowserBackend(object):
         candidate nodes.  The search must be fast.
         """
 
-        # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
-        safe_node: str = node.translate({ord(i): None for i in '*[?'})
-        
         if ignore_case:
             # Raise the case of the label to implement a case-insensitive search.
             node = node.upper()
@@ -398,6 +395,9 @@ class BrowserBackend(object):
         else:
             query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
 
+        # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
+        safe_node: str = node.translate({ord(i): None for i in '*[?'})
+        
         # We have to append the wildcard "*" here because kypher currently
         # does not accept the SQL concatenation operator ('||') in the query definition.
         #
