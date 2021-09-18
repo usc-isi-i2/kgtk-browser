@@ -779,7 +779,7 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing
     for idx, item_edge in enumerate(item_edges):
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if relationship_label is None:
-            relationship_label = ""
+            relationship_label = relationship
         if target_label is None:
             target_label = target_node
         priority: str = rb_get_property_priority(relationship)
