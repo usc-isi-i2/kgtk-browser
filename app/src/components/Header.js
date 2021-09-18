@@ -147,7 +147,7 @@ const Header = ({ getData }) => {
         search(value).then(results => {
           if ( !!results.length ) {
             setAnchorElement(event.target)
-            setResults(results.slice(0, 10))
+            setResults(results.slice(0, 10)) // Limit the results to 10 values.
           }
           setLoading(false)
         })
@@ -162,6 +162,9 @@ const Header = ({ getData }) => {
         id="search-results"
         className={classes.menu}
         anchorEl={anchorElement}
+	autoFocus={false}
+	disableAutoFocus={true}
+	disableEnforceFocus={true}
         transformOrigin={{
           vertical: -55,
           horizontal: 0,
