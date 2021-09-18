@@ -800,6 +800,7 @@ def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]])->typin
     return sorted_item_edges
 
 rb_qualifier_priority_list: typing.List[str] = [
+    "P585", # point in time
     "P580", # start time
     "P582", # end time
 ]
