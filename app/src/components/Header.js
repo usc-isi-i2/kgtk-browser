@@ -142,7 +142,7 @@ const Header = ({ getData }) => {
       if ( !value ) {
         setResults([])
         closeMenu()
-      } else {
+      } else if (value.length > 1)  {
         setLoading(true)
         search(value).then(results => {
           if ( !!results.length ) {
