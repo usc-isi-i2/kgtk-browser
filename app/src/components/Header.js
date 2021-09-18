@@ -157,7 +157,7 @@ const Header = ({ getData }) => {
 
     const handleOnKeyUp = event => {
 	const value = event.target.value
-	if (event.key == 'Enter') {
+	if (event.key === 'Enter') {
             if ( !!results.length ) {
 		const item = results[0]
 		setResults([])
