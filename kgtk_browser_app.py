@@ -1573,8 +1573,8 @@ def get_all_node_data():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_events_and_scores'), methods=['GET'])
-def get_all_events_and_scores():
+@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_mf_scores_by_date'), methods=['GET'])
+def get_mf_scores_by_date():
 
     args = flask.request.args
     lang = args.get("lang", default="en")
