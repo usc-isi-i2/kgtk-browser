@@ -1623,10 +1623,31 @@ def get_all_events_and_scores():
                     )
 
             df = pd.DataFrame(matches)
-            df = df.groupby('datetime').mean()
 
-            if verbose:
-                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+            mf_rows = [
+                'authority/virtue',
+                'authority/vice',
+                'fairness/virtue',
+                'fairness/vice',
+                'harm/virtue',
+                'harm/vice',
+                'ingroup/virtue',
+                'ingroup/vice',
+                'purity/virtue',
+                'purity/vice',
+            ]
+
+            # figure out the max expression for each event (not the same as sentence)
+            for ridx, row in df.iterrows():
+                vals = [(i, row[i]) for i in mf_rows]
+                vals = sorted(vals, key=lambda x:x[1], reverse=True)
+
+                # set the max to 1, the rest to 0
+                df.iloc[ridx, df.columns.get_loc(vals[0][0])] = 1
+                for v in vals[1:]:
+                    df.iloc[ridx, df.columns.get_loc(v[0])] = 0
+
+            df = df.groupby('datetime').sum()
 
             return flask.jsonify(df.to_dict()), 200
     except Exception as e:
