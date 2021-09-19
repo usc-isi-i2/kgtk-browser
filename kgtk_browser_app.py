@@ -14,6 +14,7 @@ import urllib.parse
 import re
 import flask
 import pandas as pd
+from collections import defaultdict
 import browser.backend.kypher as kybe
 
 from kgtk.kgtkformat import KgtkFormat
@@ -1638,18 +1639,21 @@ def get_mf_scores_by_date():
             ]
 
             # figure out the max expression for each event (not the same as sentence)
+            day2mf2ct = defaultdict(lambda: defaultdict(int))
             for ridx, row in df.iterrows():
                 vals = [(i, row[i]) for i in mf_rows]
                 vals = sorted(vals, key=lambda x:x[1], reverse=True)
+                day2mf2ct[row['datetime']][vals[0][0]] += 1
 
-                # set the max to 1, the rest to 0
-                df.iloc[ridx, df.columns.get_loc(vals[0][0])] = 1
-                for v in vals[1:]:
-                    df.iloc[ridx, df.columns.get_loc(v[0])] = 0
+            # now, make a dataset
+            out_df = defaultdict(dict)
+            for r in mf_rows:
+                for k, v in day2mf2ct.items():
+                    out_df[r][k] = day2mf2ct[k][r]
 
-            df = df.groupby('datetime').sum()
+            out_df = pd.DataFrame(out_df)
 
-            return flask.jsonify(df.to_dict()), 200
+            return flask.jsonify(out_df.to_dict()), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
