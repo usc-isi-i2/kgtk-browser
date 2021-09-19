@@ -345,7 +345,7 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     limit= "$LIMIT"
 )
 
-RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
+RB_GET_MORAL_FOUNDATIONSWITH_P585 = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
     Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
@@ -369,7 +369,7 @@ RB_NODES_WITH_P585_STARTING_WITH_QUERY = _api.get_query(
     CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
     ANALYZE "graph_2_node2upper_idx";
     """,
-    name='rb_nodes_with_p585_starting_with_query',
+    name='RB_GET_MORAL_FOUNDATIONSWITH_P585',
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='''$labels:

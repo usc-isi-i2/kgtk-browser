@@ -1594,7 +1594,7 @@ def get_all_events_and_scores():
                 prefix = q
                 if verbose:
                     print("match_label_prefixes: Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_with_p585_starting_with(prefix,
+                results = backend.rb_get_moral_foundationswith_p585(prefix,
                                                                        lang=lang,
                                                                        ignore_case=match_label_ignore_case,
                                                                        limit=match_label_prefixes_limit)
