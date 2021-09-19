@@ -1576,7 +1576,6 @@ def get_all_node_data():
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_events_and_scores'), methods=['GET'])
 def get_all_events_and_scores():
 
-    q = 'event_id'
     args = flask.request.args
     lang = args.get("lang", default="en")
 
@@ -1591,13 +1590,9 @@ def get_all_events_and_scores():
             items_seen: typing.Set[str] = set()
 
             if match_label_prefixes:
-                prefix = q
-                if verbose:
-                    print("match_label_prefixes: Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-                results = backend.rb_get_moral_foundationswith_p585(prefix,
-                                                                       lang=lang,
-                                                                       ignore_case=match_label_ignore_case,
-                                                                       limit=match_label_prefixes_limit)
+                results = backend.rb_get_moral_foundationswith_p585(lang=lang,
+                                                                    ignore_case=match_label_ignore_case,
+                                                                    limit=match_label_prefixes_limit)
                 if verbose:
                     print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):

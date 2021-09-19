@@ -434,7 +434,7 @@ class BrowserBackend(object):
                                   fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_moral_foundationswith_p585(self, prefix, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
+    def rb_get_moral_foundationswith_p585(self, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
         """Retrieve nodes and labels for all nodes with labels starting with 'prefix'.
 
         This search method supports rb_get_kb_query(), which generates a list of
@@ -444,19 +444,7 @@ class BrowserBackend(object):
 
         query = self.get_config('RB_GET_MORAL_FOUNDATIONSWITH_P585')
 
-        # Protect against glob metacharacters in `prefix` (`*`, `[...]`, `?`]
-        safe_prefix: str = prefix.translate({ord(i): None for i in '*[?'})
-
-        safe_prefix = '*{}*'.format(prefix)
-
-        # We have to append the wildcard "*" here because kypher currently
-        # does not accept SQL concatenation operator ('||') in the query definition.
-        #
-        # TODO: migrate the "*" to the query definition.
-        return self.execute_query(query,
-                                  PREFIX='*' + safe_prefix + '*',
-                                  LIMIT=limit,
-                                  fmt=fmt)
+        return self.execute_query(query, LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edges that have 'node' as their node1.
