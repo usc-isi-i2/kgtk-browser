@@ -1365,14 +1365,31 @@ def rb_send_kb_item(item: str,
 
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
-    """This is the API call to return the full information for an item.
-    The result is a JSON structure.
+    """This is the API call to return JSON-encoded full information for an item.
 
     Parameter Usage
     ========= ==================================================================================
     id        The is the node name (P### or Q###) to be retrieved.  Case is significant.
 
     lang      The is the language code to use when selecting labels.  The default value is "en".
+
+    proplist_max_len
+              The maximum number of top-level properties (claims) to return.
+
+    query_limit
+              A limit on SQL query return list length.
+
+    qual_proplist_max_len
+              The maximum number of properties per qualifier.
+
+    qual_valuelist_max_len
+              The maximum numbers oer property per qualifier.
+
+    qual_query_limit
+              The maximum number of qualifiers per claim.
+
+    valuelist_max_len
+              The maximum number of values per rop-level property.
 
     verbose   This debugging parameter controls debugging output on the server.  The default is False.
     """
@@ -1404,8 +1421,7 @@ def rb_get_kb_named_item(item):
     """This is the API call to return the full information for an item wrapped in a browser
     client (HTML).  The item ID is passed in the URL directly.
 
-    The only constraint imposed in this code on item ID is that it must not be "kb.js".
-    Other code may still expect Pxxx or Qxxx.
+    This code does not place constraints on the item name, but other code may still expect Pxxx or Qxxx.
 
     Parameter Usage
     ========= ==================================================================================
@@ -1431,6 +1447,10 @@ def rb_get_kb_named_item(item):
 
     verbose   This debugging parameter controls debugging output on the server.  The default is False.
 
+    TODO: encode the argument to the "lang" parameter to avoid a URL vulnerability.
+
+    TODO: It might be useful to be able to pass each parameter individually through the HTML file,
+    rather than concatenating them into a single string here.
     """
     # Parse some optional parameters.
     args = flask.request.args
@@ -1465,19 +1485,11 @@ def rb_get_kb_named_item(item):
     if verbose:
         print("rb_get_kb_named_item: " + item + params)
 
-    if item in [ "kb.js" ]:
-        try:
-            return flask.send_from_directory('web/static', item)
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-    else:
-        try:
-            return flask.render_template("kb.html", ITEMID=item, PARAMS=params)
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+    try:
+        return flask.render_template("kb.html", ITEMID=item, PARAMS=params, SCRIPT="/kb/kb.js")
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 @app.route('/kb/<string:item>', methods=['GET'])
 def rb_get_kb_named_item2(item):
