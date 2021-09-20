@@ -8,7 +8,9 @@ import {
 } from '@material-ui/core/styles'
 
 
-import Content from './components/Content'
+import ContentRouter from './components/ContentRouter'
+// import ContentRewrite from './components/ContentRewrite'
+// import Content from './components/Content'
 
 
 let theme = createTheme()
@@ -32,7 +34,7 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Content />
+      <ContentRouter />
     </ThemeProvider>
   )
 }
