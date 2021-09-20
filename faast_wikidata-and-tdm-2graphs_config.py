@@ -6,8 +6,7 @@ import kgtk.kypher.api as kapi
 ### Basic configuration section:
 
 # GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm_data_for_browser.sqlite3.db'
-# GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/TDM_Wikidata.all.sqlite3.db'
-GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm/TDM.sqlite3.db'
+GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/wikidata-and-tdm-2graphs/TDM_Wikidata.all.2graphs.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -17,13 +16,13 @@ DEFAULT_LANGUAGE      = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
 KG_EDGES_GRAPH        = 'claims'
-KG_QUALIFIERS_GRAPH   = 'qualifiers'
+KG_QUALIFIERS_GRAPH   = 'claims'
 KG_LABELS_GRAPH       = 'labels'
-KG_ALIASES_GRAPH      = 'aliases'
-KG_DESCRIPTIONS_GRAPH = 'descriptions'
+KG_ALIASES_GRAPH      = 'claims'
+KG_DESCRIPTIONS_GRAPH = 'claims'
 KG_IMAGES_GRAPH       = 'claims'
-KG_FANOUTS_GRAPH      = 'metadata'
-KG_DATATYPES_GRAPH     = 'metadata'
+KG_FANOUTS_GRAPH      = 'claims'
+KG_DATATYPES_GRAPH     = 'claims'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
@@ -396,7 +395,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     name='rb_node_edges_query',
     inputs=('edges', 'labels', 'descriptions', 'datatypes'),
     match= '$edges: (n1)-[r {label: rl}]->(n2)',
-    where= 'n1=$NODE',
+    where= 'n1=$NODE and rl <> "label" and rl <> "alias" and rl <> "description" and rl <> "P18" and rl <> "count_distinct_properties" and rl <> "datatype"',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
     opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,

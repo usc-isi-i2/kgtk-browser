@@ -142,18 +142,35 @@ const Header = ({ getData }) => {
       if ( !value ) {
         setResults([])
         closeMenu()
-      } else {
+      } else if (value.length > 1)  {
         setLoading(true)
         search(value).then(results => {
           if ( !!results.length ) {
             setAnchorElement(event.target)
-            setResults(results.slice(0, 10))
+            setResults(results.slice(0, 10)) // Limit the results to 10 values.
           }
           setLoading(false)
         })
       }
     }, 500)
   }
+
+    const handleOnKeyUp = event => {
+	const value = event.target.value
+	if (event.key === 'Enter') {
+            if ( !!results.length ) {
+		const item = results[0]
+		setResults([])
+		closeMenu()
+		selectResult(item)
+	    } else if (value.length > 0) {
+		setResults([])
+		closeMenu()
+		setAnchorElement()
+		getData(value)
+	    }
+	}
+    }
 
   const renderSearchResults = () => {
     return (
@@ -162,6 +179,9 @@ const Header = ({ getData }) => {
         id="search-results"
         className={classes.menu}
         anchorEl={anchorElement}
+	autoFocus={false}
+	disableAutoFocus={true}
+	disableEnforceFocus={true}
         transformOrigin={{
           vertical: -55,
           horizontal: 0,
@@ -204,7 +224,8 @@ const Header = ({ getData }) => {
                 input: classes.inputInput,
               }}
               inputProps={{ 'aria-label': 'search' }}
-              onChange={handleOnChange}
+		onChange={handleOnChange}
+		onKeyUp={handleOnKeyUp}
             />
             {loading && (
               <div className={classes.loadingIcon}>

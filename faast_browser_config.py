@@ -220,6 +220,23 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     order= 'r, qn2 desc',
 )
 
+RB_UPPER_NODE_LABELS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_node_labels()'
+    for case_independent searches.
+    Given parameters 'NODE' and 'LANG' retrieve labels for 'NODE' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result (we include
+    'NODE' as an output to make it easier to union result frames).
+    """,
+    name='rb_upper_node_labels_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='un=$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
 RB_NODES_WITH_LABEL_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_label()'.
@@ -281,6 +298,24 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    order= "n, l", # Questionable performance due to poor interaction with limit
+    limit= "$LIMIT"
+)
+
+RB_UPPER_NODES_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()' for case-insensitive searches.
+    Given parameters 'NODE' (which should end with '*') and 'LANG' retrieve labels for 'NODE' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+    """,
+    name='rb_upper_nodes_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='glob($NODE, un) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
     order= "n, l", # Questionable performance due to poor interaction with limit
     limit= "$LIMIT"

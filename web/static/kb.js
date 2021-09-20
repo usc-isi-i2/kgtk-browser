@@ -98,14 +98,20 @@ class KbApp extends Component {
     if (state) {
       let item = state.item;
       state.pos = this.find("md-content").scrollTop;
-      history.replaceState(state, item.text, "/kb/" + item.ref);
+      history.replaceState(state, item.text, "/kb/item/" + item.ref);
     }
 
-    fetch("/kb/item?fmt=cjson&id=" + encodeURIComponent(id))
+    var target = "/kb/item?fmt=cjson&id=" + encodeURIComponent(id)
+    let params = document.head.querySelector('meta[property="params"]');
+      if (params) {
+	  let pcontent = params.content
+	  if (pcontent.length > 0) target = target + params.content
+    }
+    fetch(target)
       .then(response => response.json())
       .then((item) => {
         let state = {item: item, pos: 0};
-        history.pushState(state, item.text, "/kb/" + item.ref);
+        history.pushState(state, item.text, "/kb/item/" + item.ref);
         this.display(item);
         this.find("md-content").scrollTop = 0;
       })

@@ -158,13 +158,6 @@ def rb_get_kb_query():
                        The default is True.
                        Example: http://kgtk.isi.edu/kb/query/q=Q42&match_item_exactly=True
 
-    match_label_exactly This controls whether or not to perform an exact-length label match.
-                        Labels are assumed to be stored in mixed case in the database. The
-                        "match_label_ignore_case" parameter(see below) determines whether
-                        the match is case sensitive or case insensitive.
-                        The default is True.
-                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
-
     match_item_prefixes This controls whether or not to return item prefix matches.
                         Item names are assumed to be stored in upper-case in the database.
                         Prefix matching is slower than exact matching.
@@ -172,6 +165,17 @@ def rb_get_kb_query():
 
     match_item_prefixes_limit Limit the number of item prefix match results that will
                               be presented.
+
+    match_item_ignore_case When true, ignore case when matching labels.  This applies
+                           to both exact-length item searches and item prefix searches.
+                           The default is True.
+
+    match_label_exactly This controls whether or not to perform an exact-length label match.
+                        Labels are assumed to be stored in mixed case in the database. The
+                        "match_label_ignore_case" parameter(see below) determines whether
+                        the match is case sensitive or case insensitive.
+                        The default is True.
+                        Example: kttp:/kgtk.isi.edu//kb/query/q=Douglas Adams&match_label_exactly=True
 
     match_label_prefixes This controls whether or not to return label prefix matches.
                         Prefix matching is slower than exact matching.
@@ -185,6 +189,7 @@ def rb_get_kb_query():
 
     match_label_ignore_case When true, ignore case when matching labels.  This applies
                             to both exact-length label searches and label prefix searches.
+                            The default is True.
 
     The result returned is:
 
@@ -214,16 +219,21 @@ def rb_get_kb_query():
     """
     args = flask.request.args
     q = args.get('q')
-    print("rb_get_kb_query: " + q)
 
-    verbose: bool = True or args.get("verbose", default=False, type=rb_is_true) # Debugging control
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true) or True # ***
+    if verbose:
+        print("rb_get_kb_query: " + q)
+
     lang: str = args.get("lang", default="en")
+
     match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
-    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
     match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
-    match_item_prefixes_limit: intl = args.get("match_item_prefixes_limit", default=20, type=int)
+    match_item_prefixes_limit: int = args.get("match_item_prefixes_limit", default=20, type=int)
+    match_item_ignore_case: bool = args.get("match_item_ignore_case", default=True, type=rb_is_true)
+
+    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
     match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
-    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=20, type=int)
+    match_label_prefixes_limit: int = args.get("match_label_prefixes_limit", default=20, type=int)
     match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
 
     try:
@@ -255,7 +265,9 @@ def rb_get_kb_query():
                 if verbose:
                     print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
-                results = backend.rb_get_node_labels(q, lang=lang)
+                results = backend.rb_get_node_labels(q,
+                                                     lang=lang,
+                                                     ignore_case=match_item_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
@@ -330,7 +342,10 @@ def rb_get_kb_query():
             if match_item_prefixes:
                 if verbose:
                     print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
-                results = backend.rb_get_nodes_starting_with(q, lang=lang, limit=match_item_prefixes_limit)
+                results = backend.rb_get_nodes_starting_with(q,
+                                                             lang=lang,
+                                                             limit=match_item_prefixes_limit,
+                                                             ignore_case=match_item_ignore_case)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
@@ -689,7 +704,7 @@ def rb_scan_property_list(initial_priority_map: typing.Mapping[str, int],
         if prop in forest:
             rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
 
-def rb_build_property_priority_map(backend):
+def rb_build_property_priority_map(backend, verbose: bool = False):
     global rb_property_priority_map # Since we initialize it here.
     if rb_property_priority_map is not None:
         return # Already built.
@@ -700,10 +715,12 @@ def rb_build_property_priority_map(backend):
         if val.endswith("*"):
             val = val[:-1]
         initial_priority_map[val] = len(initial_priority_map)
-    print("%d entries in the initial priority map" % len(initial_priority_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d entries in the initial priority map" % len(initial_priority_map), file=sys.stderr, flush=True) # ***
 
     subproperty_relationships = backend.rb_get_subproperty_relationships()
-    print("%d subproperty relationships" % len(subproperty_relationships), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d subproperty relationships" % len(subproperty_relationships), file=sys.stderr, flush=True) # ***
 
     labels: typing.MutableMapping[str, str] = dict()
     forest: typing.MutableMapping[str, typing.List[str]] = dict()
@@ -718,7 +735,8 @@ def rb_build_property_priority_map(backend):
             forest[node2] = list()
         forest[node2].append(node1)
         labels[node1] = label
-    print("%d subproperty forest branches" % len(forest), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d subproperty forest branches" % len(forest), file=sys.stderr, flush=True) # ***
 
     revised_priority_map: typing.MutableMapping[str, int] = dict()
     properties_seen: typing.Set[str] = set()
@@ -737,7 +755,8 @@ def rb_build_property_priority_map(backend):
             revised_priority_map[prop] = len(revised_priority_map)
     
     rb_property_priority_map = revised_priority_map
-    print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
 
 
 rb_property_priority_width = 5
@@ -760,7 +779,7 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]])->typing
     for idx, item_edge in enumerate(item_edges):
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if relationship_label is None:
-            relationship_label = ""
+            relationship_label = relationship
         if target_label is None:
             target_label = target_node
         priority: str = rb_get_property_priority(relationship)
@@ -781,6 +800,7 @@ def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]])->typin
     return sorted_item_edges
 
 rb_qualifier_priority_list: typing.List[str] = [
+    "P585", # point in time
     "P580", # start time
     "P582", # end time
 ]
@@ -1044,7 +1064,7 @@ def rb_fetch_qualifiers(backend,
                         qual_query_limit: int = 0,
                         lang: str = 'en',
                         verbose: bool = False)->typing.List[typing.List[str]]:
-    verbose2: bool = verbose or True
+    verbose2: bool = verbose
 
     item_qualifier_edges: typing.List[typing.List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
@@ -1087,7 +1107,8 @@ def rb_fetch_and_render_qualifiers(backend,
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
     item_qual_map: typing.Mapping[str, typing.List[typing.List[str]]] = rb_build_item_qualifier_map(item_qualifier_edges)
-    print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True) # ***
 
     edges_without_qualifiers: int = 0
     for scanned_property_map in response_properties:
@@ -1108,7 +1129,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                           lang,
                                           verbose)
 
-    print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True) # ***
 
     for scanned_property_map in response_properties:
         for scanned_value in scanned_property_map["values"]:
@@ -1152,7 +1174,7 @@ def downsample_properties(property_list: typing.MutableMapping[str, any],
                           proplist_max_len: int,
                           valuelist_max_len: int,
                           who: str,
-                          verbose: bool):
+                          verbose: bool = False):
                           
     if proplist_max_len > 0 and len(property_list) > proplist_max_len:
         if verbose:
@@ -1205,7 +1227,8 @@ def rb_send_kb_items_and_qualifiers(backend,
 
     # Sort the item edges:
     sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
-    print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
+    if verbose:
+        print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True) # ***
 
     return rb_render_kb_items_and_qualifiers(backend,
                                              item,
@@ -1277,9 +1300,9 @@ def rb_send_kb_item(item: str,
                     verbose: bool = False):
     try:
         with get_backend(app) as backend:
-            rb_build_property_priority_map(backend) # Endure this has been initialized.
+            rb_build_property_priority_map(backend, verbose=verbose) # Endure this has been initialized.
 
-            verbose2: bool = verbose or True # ***
+            verbose2: bool = verbose # ***
 
             if verbose2:
                 print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit), file=sys.stderr, flush=True) # ***
@@ -1343,6 +1366,7 @@ def rb_send_kb_item(item: str,
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
     """This is the API call to return the full information for an item.
+    The result is a JSON structure.
 
     Parameter Usage
     ========= ==================================================================================
@@ -1361,8 +1385,9 @@ def rb_get_kb_item():
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     query_limit: int = args.get('query_limit', default=300000, type=int)
     qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
-    verbose: str = args.get("verbose", default=False, type=rb_is_true)
-    print("rb_get_kb_item: " + item)
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    if verbose:
+        print("rb_get_kb_item: " + item)
     return rb_send_kb_item(item,
                            lang=lang,
                            proplist_max_len=proplist_max_len,
@@ -1374,9 +1399,94 @@ def rb_get_kb_item():
                            verbose=verbose)
 
 
-@app.route('/kb/<string:item>', methods=['GET'])
+@app.route('/kb/item/<string:item>', methods=['GET'])
 def rb_get_kb_named_item(item):
-    print("get_kb_named_item: " + item)
+    """This is the API call to return the full information for an item wrapped in a browser
+    client (HTML).  The item ID is passed in the URL directly.
+
+    The only constraint imposed in this code on item ID is that it must not be "kb.js".
+    Other code may still expect Pxxx or Qxxx.
+
+    Parameter Usage
+    ========= ==================================================================================
+    lang      The is the language code to use when selecting labels.  The default value is "en".
+
+    proplist_max_len
+              The maximum number of top-level properties (claims) to return.
+
+    query_limit
+              A limit on SQL query return list length.
+
+    qual_proplist_max_len
+              The maximum number of properties per qualifier.
+
+    qual_valuelist_max_len
+              The maximum numbers oer property per qualifier.
+
+    qual_query_limit
+              The maximum number of qualifiers per claim.
+
+    valuelist_max_len
+              The maximum number of values per rop-level property.
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+
+    """
+    # Parse some optional parameters.
+    args = flask.request.args
+    params: str = ""
+    
+    lang: str = args.get("lang", default="en")
+    # TODO: encode the language properly, else this is a vulnerability.
+    params += "&lang=%s" % lang
+
+    proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
+    params += "&proplist_max_len=%d" % proplist_max_len
+
+    valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
+    params += "&valuelist_max_len=%d" % valuelist_max_len
+
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
+    params += "&qual_proplist_max_len=%d" % qual_proplist_max_len
+    
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
+    params += "&qual_valuelist_max_len=%d" % qual_valuelist_max_len
+    
+    query_limit: int = args.get('query_limit', default=300000, type=int)
+    params += "&query_limit=%d" % query_limit
+    
+    qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
+    params += "&qual_query_limit=%d" % qual_query_limit
+    
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    if verbose:
+        params += "&verbose"
+
+    if verbose:
+        print("rb_get_kb_named_item: " + item + params)
+
+    if item in [ "kb.js" ]:
+        try:
+            return flask.send_from_directory('web/static', item)
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+    else:
+        try:
+            return flask.render_template("kb.html", ITEMID=item, PARAMS=params)
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+@app.route('/kb/<string:item>', methods=['GET'])
+def rb_get_kb_named_item2(item):
+    args = flask.request.args
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    
+    if verbose:
+        print("get_kb_named_item2: " + item)
+
     if item is None or len(item) == 0:
         try:
             return flask.send_from_directory('web/static', "kb.html")
