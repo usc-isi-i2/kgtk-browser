@@ -1402,7 +1402,7 @@ def rb_get_kb_item():
 @app.route('/kb/item/<string:item>', methods=['GET'])
 def rb_get_kb_named_item(item):
     """This is the API call to return the full information for an item wrapped in a browser
-    client (HTML).  The item ID is passed in the URL.
+    client (HTML).  The item ID is passed in the URL directly.
 
     The only constraint imposed in this code on item ID is that it must not be "kb.js".
     Other code may still expect Pxxx or Qxxx.
