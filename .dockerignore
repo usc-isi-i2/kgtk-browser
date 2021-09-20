@@ -1,0 +1,4 @@
+*.tsv
+*.tsv.gz
+*.json
+*.sqlite3.db
