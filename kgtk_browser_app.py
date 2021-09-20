@@ -1624,34 +1624,7 @@ def get_mf_scores_by_date():
                     )
 
             df = pd.DataFrame(matches)
-
-            mf_rows = [
-                'authority/virtue',
-                'authority/vice',
-                'fairness/virtue',
-                'fairness/vice',
-                'harm/virtue',
-                'harm/vice',
-                'ingroup/virtue',
-                'ingroup/vice',
-                'purity/virtue',
-                'purity/vice',
-            ]
-
-            # figure out the max expression for each event (not the same as sentence)
-            day2mf2ct = defaultdict(lambda: defaultdict(int))
-            for ridx, row in df.iterrows():
-                vals = [(i, row[i]) for i in mf_rows]
-                vals = sorted(vals, key=lambda x:x[1], reverse=True)
-                day2mf2ct[row['datetime']][vals[0][0]] += 1
-
-            # now, make a dataset
-            out_df = defaultdict(dict)
-            for r in mf_rows:
-                for k, v in day2mf2ct.items():
-                    out_df[r][k] = day2mf2ct[k][r]
-
-            out_df = pd.DataFrame(out_df)
+            out_df = df.groupby('datetime').sum()
 
             return flask.jsonify(out_df.to_dict()), 200
     except Exception as e:
