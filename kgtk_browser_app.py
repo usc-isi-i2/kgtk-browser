@@ -1366,6 +1366,7 @@ def rb_send_kb_item(item: str,
 @app.route('/kb/item', methods=['GET'])
 def rb_get_kb_item():
     """This is the API call to return the full information for an item.
+    The result is a JSON structure.
 
     Parameter Usage
     ========= ==================================================================================
@@ -1398,13 +1399,94 @@ def rb_get_kb_item():
                            verbose=verbose)
 
 
-@app.route('/kb/<string:item>', methods=['GET'])
+@app.route('/kb/item/<string:item>', methods=['GET'])
 def rb_get_kb_named_item(item):
+    """This is the API call to return the full information for an item wrapped in a browser
+    client (HTML).  The item ID is passed in the URL.
+
+    The only constraint imposed in this code on item ID is that it must not be "kb.js".
+    Other code may still expect Pxxx or Qxxx.
+
+    Parameter Usage
+    ========= ==================================================================================
+    lang      The is the language code to use when selecting labels.  The default value is "en".
+
+    proplist_max_len
+              The maximum number of top-level properties (claims) to return.
+
+    query_limit
+              A limit on SQL query return list length.
+
+    qual_proplist_max_len
+              The maximum number of properties per qualifier.
+
+    qual_valuelist_max_len
+              The maximum numbers oer property per qualifier.
+
+    qual_query_limit
+              The maximum number of qualifiers per claim.
+
+    valuelist_max_len
+              The maximum number of values per rop-level property.
+
+    verbose   This debugging parameter controls debugging output on the server.  The default is False.
+
+    """
+    # Parse some optional parameters.
+    args = flask.request.args
+    params: str = ""
+    
+    lang: str = args.get("lang", default="en")
+    # TODO: encode the language properly, else this is a vulnerability.
+    params += "&lang=%s" % lang
+
+    proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
+    params += "&proplist_max_len=%d" % proplist_max_len
+
+    valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
+    params += "&valuelist_max_len=%d" % valuelist_max_len
+
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
+    params += "&qual_proplist_max_len=%d" % qual_proplist_max_len
+    
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
+    params += "&qual_valuelist_max_len=%d" % qual_valuelist_max_len
+    
+    query_limit: int = args.get('query_limit', default=300000, type=int)
+    params += "&query_limit=%d" % query_limit
+    
+    qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
+    params += "&qual_query_limit=%d" % qual_query_limit
+    
+    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    if verbose:
+        params += "&verbose"
+
+    if verbose:
+        print("rb_get_kb_named_item: " + item + params)
+
+    if item in [ "kb.js" ]:
+        try:
+            return flask.send_from_directory('web/static', item)
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+    else:
+        try:
+            return flask.render_template("kb.html", ITEMID=item, PARAMS=params)
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+@app.route('/kb/<string:item>', methods=['GET'])
+def rb_get_kb_named_item2(item):
     args = flask.request.args
     verbose: bool = args.get("verbose", default=False, type=rb_is_true)
     
     if verbose:
-        print("get_kb_named_item: " + item)
+        print("get_kb_named_item2: " + item)
+
     if item is None or len(item) == 0:
         try:
             return flask.send_from_directory('web/static', "kb.html")
