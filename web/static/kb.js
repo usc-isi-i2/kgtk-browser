@@ -601,7 +601,9 @@ class KbItemCard extends MdCard {
       text: item.ref,
       external: true,
     });
-    this.find("#aliases").update(item.aliases);
+      if (item.aliases && item.aliases.length > 0) {
+	this.find("#aliases").update(item.aliases.join(' | '));
+    }
     this.find("#description").update(item.description);
     this.find("#datatype").update(item.type ? "Datatype: " + item.type : "");
   }
