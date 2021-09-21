@@ -6,3 +6,13 @@ conda install flask
 
 # To install nodejs (thus, npm):
 conda install -c conda-forge nodejs
+
+# Install all the useful npm stuff:
+cd ~
+./kgtkb
+cd app
+
+(Same as: cd /nas/home/rogers/kgtk/github/kgtk-browser/app)
+
+npm install
+
