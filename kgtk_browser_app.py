@@ -88,7 +88,7 @@ def rb_is_true(value: str)->bool:
     return value.lower() == "true"
 
 def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[typing.List[str]]:
-    """If the databse holds a large number of candidate matches and we want to
+    """If the database holds a large number of candidate matches and we want to
     limit the number of returned matches, there may be a performance problem
     because the database will first collect all candidate metches, then sort,
     then limit.
@@ -555,7 +555,8 @@ def rb_build_current_value(
     elif rb_type == "/w/item":
         current_value["ref"] = target_node
         current_value["text"] = rb_unstringify(target_node_label, default=target_node)
-        current_value["description"] = rb_unstringify(target_node_description, default=target_node)
+        if target_node_description is not None and len(target_node_description) > 0:
+            current_value["description"] = rb_unstringify(target_node_description, default=target_node)
 
     elif rb_type == "/w/text":
         language: str
@@ -1280,13 +1281,13 @@ def rb_send_kb_categories(backend,
             print(repr(category_edge), file=sys.stderr, flush=True)
         node1, node1_label, node1_description = category_edge
 
-        response_categories.append(
-            {
-                "ref": node1,
-                "text": rb_unstringify(node1_label, default=node1),
-                "description": rb_unstringify(node1_description, default=node1)
-            }
-        )
+        response: typing.MutableMapping[str, str] = {
+            "ref": node1,
+            "text": rb_unstringify(node1_label, default=node1),
+        }
+        if node1_description is not None and len(node1_description) > 0:
+            response["description"] = rb_unstringify(node1_description, default=node1)
+        response_categories.append(response)
 
 
 def rb_send_kb_item(item: str,
@@ -1508,7 +1509,7 @@ def rb_get_kb_named_item2(item):
         
     elif item.startswith(("Q", "P")):
         try:
-            return flask.render_template("kb.html", ITEMID=item)
+            return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
         except Exception as e:
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
