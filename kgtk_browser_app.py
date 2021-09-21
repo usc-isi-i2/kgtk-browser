@@ -555,8 +555,7 @@ def rb_build_current_value(
     elif rb_type == "/w/item":
         current_value["ref"] = target_node
         current_value["text"] = rb_unstringify(target_node_label, default=target_node)
-        if target_node_description is not None and len(target_node_description) > 0:
-            current_value["description"] = rb_unstringify(target_node_description, default=target_node)
+        current_value["description"] = rb_unstringify(target_node_description)
 
     elif rb_type == "/w/text":
         language: str
@@ -1281,12 +1280,11 @@ def rb_send_kb_categories(backend,
             print(repr(category_edge), file=sys.stderr, flush=True)
         node1, node1_label, node1_description = category_edge
 
-        response: typing.MutableMapping[str, str] = {
+        response: typing.Mapping[str, str] = {
             "ref": node1,
             "text": rb_unstringify(node1_label, default=node1),
+            "description": rb_unstringify(node1_description)
         }
-        if node1_description is not None and len(node1_description) > 0:
-            response["description"] = rb_unstringify(node1_description, default=node1)
         response_categories.append(response)
 
 
@@ -1328,7 +1326,7 @@ def rb_send_kb_item(item: str,
             response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
 
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
-            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else item
+            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
 
             response_properties: typing.List[typing.MutableMapping[str, any]]
             response_xrefs: typing.List[typing.MutableMapping[str, any]]
