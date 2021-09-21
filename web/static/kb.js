@@ -601,6 +601,7 @@ class KbItemCard extends MdCard {
       text: item.ref,
       external: true,
     });
+    this.find("#aliases").update(item.aliases);
     this.find("#description").update(item.description);
     this.find("#datatype").update(item.type ? "Datatype: " + item.type : "");
   }
@@ -636,6 +637,10 @@ class KbItemCard extends MdCard {
         text-decoration: none;
         width: fit-content;
         outline: none;
+      }
+
+      $ #aliases {
+        font-size: 16px;
       }
 
       $ #description {
@@ -1302,6 +1307,7 @@ const desktop_template = `
                 <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
               </div>
             </md-card-toolbar>
+            <div><md-text id="aliases"></md-text></div>
             <div><md-text id="description"></md-text></div>
             <div><md-text id="datatype"></md-text></div>
           </kb-item-card>
@@ -1376,6 +1382,7 @@ const mobile_template = `
               <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
             </div>
           </md-card-toolbar>
+          <div><md-text id="aliases"></md-text></div>
           <div><md-text id="description"></md-text></div>
           <div><md-text id="datatype"></md-text></div>
         </kb-item-card>

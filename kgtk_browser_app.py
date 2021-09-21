@@ -1325,6 +1325,9 @@ def rb_send_kb_item(item: str,
             item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item, lang=lang)
             response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
 
+            item_aliases: typing.List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
+            response["aliases"] = " | ".join([rb_unstringify(x) for x in item_aliases])
+
             item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
             response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
 
