@@ -1,0 +1,8 @@
+							Craig Milo Rogers
+							20-Sep-2021
+
+# To install flask:
+conda install flask
+
+# To install nodejs (thus, npm):
+conda install -c conda-forge nodejs
