@@ -104,6 +104,7 @@ const Data = ({ data }) => {
         <Paper className={classes.paper}>
           <Typography variant="h4">{data.text}</Typography>
           <Typography variant="h6">{data.ref}</Typography>
+          <Typography variant="h6">{data.aliases.join(' | ')}</Typography>
           <Typography variant="h6">{data.description}</Typography>
         </Paper>
       </Grid>
