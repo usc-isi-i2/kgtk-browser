@@ -18,15 +18,15 @@ import search from '../utils/search'
 const useStyles = makeStyles(theme => ({
   header: {
     color: '#fefefe',
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(0),
   },
   grow: {
     flexGrow: 1,
   },
   appBar: {
     backgroundColor: 'rgba(254, 254, 254, 0.25)',
-    marginBottom: theme.spacing(3),
-    padding: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+    padding: theme.spacing(0),
   },
   menuIcon: {
     width: theme.spacing(8),
