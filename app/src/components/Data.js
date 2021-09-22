@@ -103,6 +103,11 @@ const useStyles = makeStyles(theme => ({
 	width: '100%',
 	fontSize: 10,
     },
+    text4: {
+	display: 'inline-block',
+	padding: theme.spacing(0),
+	color: '#fefefe',
+    },
     lang: {
 	color: '#d4d4d4',
 	marginLeft: theme.spacing(1),
@@ -238,7 +243,7 @@ const Data = ({ data }) => {
 								{value.units ? (
 								    <Typography variant='body2'
 										component="span"
-										className={classes.text2}>
+										className={classes.text}>
 									{value.text}&nbsp;
 									<Link variant='body2'
 									      className={classes.link4}
@@ -256,7 +261,7 @@ const Data = ({ data }) => {
 								    </Link>
 								) : (
 								    <Typography variant='body2'
-										className={classes.text2}>
+										className={classes.text}>
 									{value.text}
 									{value.lang && (
 									    <span className={classes.lang}>
