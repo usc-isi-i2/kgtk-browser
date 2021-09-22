@@ -640,7 +640,8 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
     Given parameter 'CODE' retrieve all edges that have 'CODE' as their node2
-    under relationship P424. Additionally labels for the node1's.
+    under relationship P424, mimited by P31->Q34770 (instance_of language).
+    Returns the labels for the node1's.
     Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1` and 'node1_label'.
     """,
@@ -653,5 +654,3 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     ret=   'n1 as node1, n1label as node1_label',
     order= 'n1, n1label'
 )
-
-
