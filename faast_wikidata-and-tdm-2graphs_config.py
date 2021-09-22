@@ -642,17 +642,35 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
     Given parameter 'CODE' retrieve all edges that have 'CODE' as their node2
-    under relationship P424, mimited by P31->Q34770 (instance_of language).
+    under relationship P424, validated by P31->Q34770 (instance_of language).
+
+    The validation is needed because P424 (Wikimedia language code) also
+    appears in in other contexts (e.g., Q15156406 (English Wikisource)).
+
+    However, some languages (Esperanto (Q143) and Armenian (Q8785), for
+    example) are not marked as instance of (P31) language (Q34770).
+
+    So, we accept instance of modern language (Q1288568) or natural
+    language (Q33742) as alternatives.
+
+    Alternative approaches include:
+    1) Excluding the items we don't want. e.g. exclude items that
+       are instances of (P31) Wikisource language edition (Q15156455).
+    2) Looking for entries with aliases equal to the language code.
+    3) Looking for entries with matching Identifiers.
+    4) Encouraging Wikidata to consistantly mark languages.    
+    
     Returns the labels for the node1's.
     Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1` and 'node1_label'.
     """,
     name='rb_language_labels_query',
     inputs=('edges', 'labels'),
-    match= '$edges: (:Q34770)<-[:P31]-(n1)-[:P424]->(n2)',
-    where= 'n2=$CODE',
+    match= '$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
+    where= 'n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]',
     opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     ret=   'n1 as node1, n1label as node1_label',
     order= 'n1, n1label'
 )
+
