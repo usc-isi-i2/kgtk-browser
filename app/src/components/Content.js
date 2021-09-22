@@ -24,7 +24,7 @@ const Content = () => {
   }
 
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" disableGutters="true">
       <div id="top" />
       <Header getData={getData} />
       {!!data && <Data data={data} />}
