@@ -320,7 +320,28 @@ class KbPropertyTable extends Component {
       }
     }
 
-    function propval(val) {
+    function propval_with_units(val) {
+      if (val.text) {
+        out.push(Component.escape(val.text));
+      } else {
+        out.push('&#x1f6ab;');
+      }
+      out.push('&nbsp;')
+      if (val.ref) {
+        out.push('<kb-link ref="');
+        out.push(val.ref);
+        out.push('">');
+      }
+      out.push(Component.escape(val.units))
+      if (val.ref) {
+        out.push('</kb-link>');
+      }
+    }
+
+     function propval(val) {
+      if (val.units) {
+        return propval_with_units(val)
+      }
       if (val.ref) {
         out.push('<kb-link ref="');
         out.push(val.ref);

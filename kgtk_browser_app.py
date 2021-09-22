@@ -450,15 +450,17 @@ def rb_format_number_or_quantity(
         value: KgtkValue,
         datatype: str,
         lang: str,
-)->str:
-    number_text: str
+)->typing.Tuple[str, str, str]:
+    number_value: str
+    number_units: typing.Optional[str] = None
     number_ref: typing.Optional[str] = None
     
     if datatype == KgtkFormat.DataType.NUMBER:
         numberstr: str = target_node
         if numberstr.startswith("+"): # Remove any leading "+"
-            numberstr = numberstr[1:]
-        number_text = numberstr
+            number_value = numberstr[1:]
+        else:
+            number_value = numberstr
     else:
         if value.do_parse_fields():
             newnum: str = value.fields.numberstr
@@ -472,9 +474,12 @@ def rb_format_number_or_quantity(
                 if value.fields.high_tolerancestr is not None:
                     newnum += value.fields.high_tolerancestr
                 newnum += "]"
+
             if value.fields.si_units is not None:
-                newnum += value.fields.si_units
-            if value.fields.units_node is not None:
+                # TODO: supply a node reference for each SI unit.
+                number_units = value.fields.si_units
+
+            elif value.fields.units_node is not None:
                 # Here's where it gets fancy:
                 units_node: str = value.fields.units_node
                 if units_node not in rb_units_node_cache:
@@ -486,19 +491,19 @@ def rb_format_number_or_quantity(
                         rb_units_node_cache[units_node] = None # Remember the failure.
                                        
                 if rb_units_node_cache[units_node] is not None:
-                    newnum += " " + rb_units_node_cache[units_node]
+                    number_units = rb_units_node_cache[units_node]
                 else:
-                    newnum += " " + units_node # We could not find a label for this node when we looked last time.
+                    number_units = units_node # We could not find a label for this node when we looked last time.
                 number_ref = units_node
 
-            number_text = newnum
+            number_value = newnum
         else:
             # Validation failed.
             #
             # TODO: Add a validation failure indicator?
-            number_text = target_node
+            number_value = target_node
 
-    return number_text, number_ref
+    return number_value, number_units, number_ref
 
 def rb_iso_format_time(
         target_node: str,
@@ -711,8 +716,10 @@ def rb_build_current_value(
     elif rb_type == "/w/quantity":
         number_text: str
         number_ref: typing.Optional[str]
-        number_text, number_ref = rb_format_number_or_quantity(backend, target_node, value, datatype, lang)
-        current_value["text"] = number_text
+        number_value, number_units, number_ref = rb_format_number_or_quantity(backend, target_node, value, datatype, lang)
+        current_value["text"] = number_value
+        if number_units is not None:
+            current_value["units"] = number_units
         if number_ref is not None:
             current_value["ref"] = number_ref
 
