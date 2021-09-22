@@ -1605,7 +1605,8 @@ def rb_get_kb_named_item(item):
     
     lang: str = args.get("lang", default="en")
     # TODO: encode the language properly, else this is a vulnerability.
-    params += "&lang=%s" % lang
+    # Note: the first parameter does not have a leading ampersand!
+    params += "lang=%s" % lang
 
     proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
     params += "&proplist_max_len=%d" % proplist_max_len
@@ -1630,7 +1631,7 @@ def rb_get_kb_named_item(item):
         params += "&verbose"
 
     if verbose:
-        print("rb_get_kb_named_item: " + item + params)
+        print("rb_get_kb_named_item: %s params: %s" % (repr(item), repr(params)), file=sys.stderr, flush=True)
 
     try:
         return flask.render_template("kb.html", ITEMID=item, PARAMS=params, SCRIPT="/kb/kb.js")

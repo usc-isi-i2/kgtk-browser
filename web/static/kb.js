@@ -105,7 +105,7 @@ class KbApp extends Component {
     let params = document.head.querySelector('meta[property="params"]');
       if (params) {
 	  let pcontent = params.content
-	  if (pcontent.length > 0) target = target + params.content
+	  if (pcontent.length > 0) target = target + '&' + params.content
     }
     fetch(target)
       .then(response => response.json())
