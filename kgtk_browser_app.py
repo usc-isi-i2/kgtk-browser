@@ -2,6 +2,7 @@
 Kypher backend support for the KGTK browser.
 """
 
+import datetime
 import hashlib
 from http import HTTPStatus
 import os.path
@@ -513,9 +514,7 @@ def rb_iso_format_time(
             return f.yearstr + "-" + f.monthstr
         elif precision == 11 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None:
             return f.yearstr + "-" + f.monthstr + "-" + f.daystr
-        elif precision == 12 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
-            return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
-        elif precision == 13 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+        elif precision in (12, 13, 14) and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
             return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
         else:
             return target_node[1:]
@@ -524,6 +523,44 @@ def rb_iso_format_time(
         #
         # TODO: Add a validation failure indicator?
         return target_node[1:]
+
+def rb_human_format_time(
+        target_node: str,
+        value: KgtkValue,
+)->str:
+
+    if value.do_parse_fields() and value.fields.precision is not None:
+        f: KgtkValueFields = value.fields
+        d: datetime = datetime.datetime(f.year, f.month, f.day, f.hour, f.minutes, f.seconds)
+        precision: int = f.precision
+        if precision <= 9 and f.yearstr is not None:
+            return f.yearstr
+        elif precision == 10:
+            return d.strftime("%B %Y")
+        elif precision == 11:
+            return d.strftime("%B %d, %Y")
+        elif precision == 12:
+            return d.strftime("%I %p, %B %d, %Y")
+        elif precision == 13:
+            return d.strftime("%I:%M %p, %B %d, %Y")
+        else:
+            return d.strftime("%I:%M:%S %p, %B %d, %Y")
+
+    else:
+        # Validation failed.
+        #
+        # TODO: Add a validation failure indicator?
+        return target_node[1:]
+
+def rb_format_time(
+        target_node: str,
+        value: KgtkValue,
+        use_iso_format: bool = False,
+)->str:
+    if use_iso_format:
+        return rb_iso_format_time(target_node, value)
+    else:
+        return rb_human_format_time(target_node, value)
 
 rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
@@ -680,7 +717,7 @@ def rb_build_current_value(
             current_value["ref"] = number_ref
 
     elif rb_type == "/w/time":
-        current_value["text"] = rb_iso_format_time(target_node, value)
+        current_value["text"] = rb_format_time(target_node, value)
         
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]
