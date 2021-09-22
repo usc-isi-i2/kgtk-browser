@@ -455,7 +455,7 @@ def rb_format_number_or_quantity(
     
     if datatype == KgtkFormat.DataType.NUMBER:
         numberstr: str = target_node
-        if numberstr.startswith("+"): # Reamove any leading "+"
+        if numberstr.startswith("+"): # Remove any leading "+"
             numberstr = numberstr[1:]
         number_text = numberstr
     else:
@@ -525,6 +525,107 @@ def rb_iso_format_time(
         # TODO: Add a validation failure indicator?
         return target_node[1:]
 
+rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
+
+def rb_get_language_name(backend,
+                         language: str,
+                         language_suffix: typing.Optional[str],
+                         lang: str,
+                         show_code: bool = False,
+                         verbose: bool = False)->str:
+    """Get the language name for a language code.  If there is a language suffix, first look for the
+    full language code before looking for the base code.
+
+    If we find a language name:
+        if show_code is true, return "<language_name> (<code>)".
+        otherwise, return "<language_name>"
+    Otherwise, return "<code>".
+    """
+    labels: typing.List[typing.List[str]]
+    full_code: typing.Optional[str] = None
+    name: str
+
+    if language_suffix is not None and len(language_suffix) > 0:
+        full_code = language + language_suffix
+        if verbose:
+            print("Looking up full language code %s" % repr(full_code), file=sys.stderr, flush=True) 
+        if full_code in rb_language_name_cache:
+            name = rb_language_name_cache[full_code]
+            if verbose:
+                print("Found full code %s in cache: %s" % (repr(full_code), repr(name)), file=sys.stderr, flush=True)
+            return name # show_code alread applied.
+
+        labels = backend.rb_get_language_labels(KgtkFormat.stringify(full_code), lang=lang)
+        if len(labels) > 0 and labels[0][1] is not None and len(labels[0][1]) > 0:
+            name: str = KgtkFormat.unstringify(labels[0][1])
+            if show_code:
+                name += " (" + full_code + ")"
+            if verbose:
+                print("Found full code %s in database: %s" % (repr(full_code), repr(name)), file=sys.stderr, flush=True)
+
+            # Remember the languge name with the optional code.
+            rb_language_name_cache[full_code] = name
+            return name
+
+    short_code: str = language
+    if verbose:
+        print("Looking up short language code %s" % repr(short_code), file=sys.stderr, flush=True) 
+    if short_code in rb_language_name_cache:
+        name = rb_language_name_cache[short_code]
+        if verbose:
+            print("Found short code %s in cache: %s" % (repr(short_code), repr(name)), file=sys.stderr, flush=True)
+        if name == short_code:
+            if full_code is not None:
+                rb_language_name_cache[full_code] = full_code
+                return full_code
+            else:
+                return short_code
+            
+        if show_code:
+            if full_code is not None:
+                name += " (" + full_code + ")"
+            else:
+                name += " (" + short_code + ")"
+
+        if full_code is not None:
+            # Speed up the next lookup.
+            rb_language_name_cache[full_code] = name
+
+        return name
+    
+    labels = backend.rb_get_language_labels(KgtkFormat.stringify(short_code), lang=lang)
+    if len(labels) > 0 and labels[0][1] is not None and len(labels[0][1]) > 0:
+        name = KgtkFormat.unstringify(labels[0][1])
+        if verbose:
+                print("Found short code %s in cache: %s" % (repr(short_code), repr(name)), file=sys.stderr, flush=True)
+        # Remember the language name without the optional code:
+        rb_language_name_cache[short_code] = name
+
+        if show_code:
+            if full_code is not None:
+                name += " (" + full_code + ")"
+            else:
+                name += " (" + short_code + ")"
+
+        if full_code is not None:
+            # Speed up the next lookup.
+            rb_language_name_cache[full_code] = name
+
+        return name
+
+    # Return the language code, full or short, without stringification.
+    # Remember the lookup failure for speed.
+    rb_language_name_cache[short_code] = short_code
+    if full_code is not None and language_suffix is not None:
+        rb_language_name_cache[full_code] = full_code
+        if verbose:
+            print("language name not found, using full code %s" % repr(full_code), file=sys.stderr, flush=True)
+        return full_code
+    else:
+        if verbose:
+            print("language name not found, using short code %s" % repr(short_code), file=sys.stderr, flush=True)
+        return short_code
+
 def rb_build_current_value(
         backend,
         target_node: str,
@@ -562,7 +663,7 @@ def rb_build_current_value(
         language_suffix: str
         text_value, language, language_suffix = KgtkFormat.destringify(target_node)
         current_value["text"] = text_value
-        current_value["lang"] = language + language_suffix
+        current_value["lang"] = rb_get_language_name(backend, language, language_suffix, lang)
         rb_link_to_url(text_value, current_value, lang=language)
 
     elif rb_type == "/w/string":

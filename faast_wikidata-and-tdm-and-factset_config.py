@@ -522,7 +522,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     Create the Kypher query used by 'BrowserBackend.rb_get_node_inverse_edges()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2.
     Additionally retrieve descriptive information for all relationship labels.
-    Additionally retrieve descriptive information for all node2's such as their
+    Additionally retrieve descriptive information for all node1's such as their
     label, and optionally any images and fanouts.  Parameter 'LANG' controls
     the language for retrieved labels.
     Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
@@ -586,10 +586,8 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
     Create the Kypher query used by 'BrowserBackend.rb_get_node_categories()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
     under relationship P301.
-    Additionally retrieve descriptive information for all relationship labels.
-    Additionally retrieve descriptive information for all node2's such as their
-    label, and optionally any images and fanouts.  Parameter 'LANG' controls
-    the language for retrieved labels.
+    Additionally retrieve labels and descriptions for all node1's,
+    Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1`, 'node1_label', and'node1_description'.
 
     WARNING! This query may be incorrect, and should be considered a placeholder.
@@ -637,4 +635,23 @@ RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
     ret=   'n1 as node1, n2 as node2, n1label as node1_label',
 )
+
+RB_LANGUAGE_LABELS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
+    Given parameter 'CODE' retrieve all edges that have 'CODE' as their node2
+    under relationship P424. Additionally labels for the node1's.
+    Parameter 'LANG' controls the language for retrieved labels.
+    Return the category `node1` and 'node1_label'.
+    """,
+    name='rb_language_labels_query',
+    inputs=('edges', 'labels'),
+    match= '$edges: (:Q34770)<-[:P31]-(n1)-[:P424]->(n2)',
+    where= 'n2=$CODE',
+    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
+    ret=   'n1 as node1, n1label as node1_label',
+    order= 'n1, n1label'
+)
+
 

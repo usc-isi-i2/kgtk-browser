@@ -494,4 +494,9 @@ class BrowserBackend(object):
         query = self.get_config('RB_SUBPROPERTY_RELATIONSHIPS_QUERY')
         return self.execute_query(query, LANG=self.get_lang(lang), fmt=fmt)
 
-    
+    def rb_get_language_labels(self, code, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve language names for language code 'code'.
+        """
+        query = self.get_config('RB_LANGUAGE_LABELS_QUERY')
+        return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
+
