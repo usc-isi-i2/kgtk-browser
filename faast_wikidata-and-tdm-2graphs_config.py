@@ -673,4 +673,3 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     ret=   'n1 as node1, n1label as node1_label',
     order= 'n1, n1label'
 )
-

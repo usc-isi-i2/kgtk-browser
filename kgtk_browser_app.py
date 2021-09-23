@@ -11,7 +11,9 @@ import traceback
 import typing
 import urllib.parse
 
+import re
 import flask
+import pandas as pd
 import browser.backend.kypher as kybe
 
 from kgtk.kgtkformat import KgtkFormat
@@ -50,7 +52,7 @@ app = flask.Flask(__name__,
                   template_folder='web/templates')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
-DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
+DEFAULT_SERVICE_PREFIX = '/kgtk/'
 DEFAULT_LANGUAGE = 'en'
 ID_SEARCH_THRESHOLD: int = 40
 ID_SEARCH_USING_IN: bool = False
@@ -122,21 +124,21 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
         digits: str = result[0][1:]
         if len(digits) > maxdigits:
             maxdigits = len(digits)
-        
+
     # Build a map from the zero-filled item name to each result pair:
     for result in results:
         item: str = result[0]
         label: str = result[1]
         key: str = item[0] + item[1:].zfill(maxdigits)
         result_map[key] = result
-        
+
     # Sort and return the results.
     sorted_results: typing.List[typing.List[str]] = list()
     key: str
     for key in sorted(result_map.keys()):
         sorted_results.append(result_map[key])
     return sorted_results
-    
+
 
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
@@ -194,7 +196,7 @@ def rb_get_kb_query():
     The result returned is:
 
     [
-        { 
+        {
             "ref: "QNODE",
             "text"; "QNODE",
             "description": "LABEL"
@@ -283,7 +285,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_label_exactly:
                 # Query the labels, looking for an exact length match. The
                 # search may be case-sensitive or case-insensitive, according
@@ -338,7 +340,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_item_prefixes:
                 if verbose:
                     print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
@@ -361,7 +363,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_label_prefixes:
                 # Query the labels, looking for a prefix match. The search may
                 # be case-sensitive or case-insensitive, according to
@@ -395,7 +397,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
@@ -403,7 +405,7 @@ def rb_get_kb_query():
             response_data = {
                 "matches": matches
             }
-            
+
             return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -452,7 +454,7 @@ def rb_format_number_or_quantity(
 )->str:
     number_text: str
     number_ref: typing.Optional[str] = None
-    
+
     if datatype == KgtkFormat.DataType.NUMBER:
         numberstr: str = target_node
         if numberstr.startswith("+"): # Remove any leading "+"
@@ -483,7 +485,7 @@ def rb_format_number_or_quantity(
                         rb_units_node_cache[units_node] = rb_unstringify(units_node_label)
                     else:
                         rb_units_node_cache[units_node] = None # Remember the failure.
-                                       
+
                 if rb_units_node_cache[units_node] is not None:
                     newnum += " " + rb_units_node_cache[units_node]
                 else:
@@ -642,7 +644,7 @@ def rb_build_current_value(
     datatype: KgtkFormat.DataType = value.classify()
 
     text_value: str
-    
+
     if wikidatatype == "external-id":
         text_value = rb_unstringify(target_node)
         current_value["text"] = text_value
@@ -681,7 +683,7 @@ def rb_build_current_value(
 
     elif rb_type == "/w/time":
         current_value["text"] = rb_iso_format_time(target_node, value)
-        
+
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]
         current_value["text"] = geoloc # Consider reformatting
@@ -701,7 +703,7 @@ def rb_find_type(node2: str, value: KgtkValue)->str:
         else:
             rb_type = "unknown"
             print("*** unknown datatype: no node2") # ***def rb_send_kb_item(item: str):
-            
+
     elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
         rb_type = "/w/text"
     elif datatype == KgtkFormat.DataType.STRING:
@@ -722,7 +724,7 @@ def rb_find_type(node2: str, value: KgtkValue)->str:
 # The following routine was taken from Stack Overflow.
 # https://stackoverflow.com/questions/33689980/get-thumbnail-image-from-wikimedia-commons
 def rb_get_wc_thumb(image: str, width: int = 300): # image = e.g. from Wikidata, width in pixels
-    image = image.replace(' ', '_') # need to replace spaces with underline 
+    image = image.replace(' ', '_') # need to replace spaces with underline
     m = hashlib.md5()
     m.update(image.encode('utf-8'))
     d: str = m.hexdigest()
@@ -758,7 +760,7 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 
     # print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
 
-    return gallery    
+    return gallery
 
 
 # List the properties in the order that you want them to appear.  All unlisted
@@ -854,7 +856,7 @@ def rb_build_property_priority_map(backend, verbose: bool = False):
                 rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
         else:
             revised_priority_map[prop] = len(revised_priority_map)
-    
+
     rb_property_priority_map = revised_priority_map
     if verbose:
         print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
@@ -864,7 +866,7 @@ rb_property_priority_width = 5
 rb_default_property_priority = int("1" + "0".zfill(rb_property_priority_width)) - 1
 
 def rb_get_property_priority(relationship: str)->str:
-    priority: int 
+    priority: int
     if rb_property_priority_map is None:
         priority = rb_default_property_priority
     else:
@@ -944,7 +946,7 @@ def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[st
             if qual_relationship_key not in keyed_edge_map:
                 keyed_edge_map[qual_relationship_key] = list()
             keyed_edge_map[qual_relationship_key].append(item_qual_edge)
-        
+
         sorted_item_qual_edges: typing.List[typing.List[str]] = list()
         for qual_relationship_key in sorted(keyed_edge_map.keys()):
             item_qual_edges: typing.List[typing.List[str]] = keyed_edge_map[qual_relationship_key]
@@ -976,14 +978,14 @@ def rb_render_item_qualifiers(backend,
         qual_node2_label: typing.Optional[str]
         qual_node2_description: typing.Optional[str]
         _, _, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
-                        
+
         if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
             if verbose:
                 print("*** skipping duplicate qualifier %s" % repr(current_qual_edge_id), file=sys.stderr, flush=True)
             # Skip duplicates (say, multiple labels or descriptions).
             continue
         current_qual_edge_id = qual_edge_id
-                        
+
         qual_value: KgtkValue = KgtkValue(qual_node2)
         qual_rb_type: str = rb_find_type(qual_node2, qual_value)
 
@@ -999,7 +1001,7 @@ def rb_render_item_qualifiers(backend,
                 "values": current_qual_values
             }
             current_qualifiers.append(current_qual_property_map)
-                    
+
         current_qual_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
                                                                                      qual_node2,
                                                                                      qual_value,
@@ -1056,7 +1058,7 @@ def rb_render_kb_items(backend,
 
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
-                
+
         # If a relationship has multiple values, they must be next to each
         # other in the sorted list of item_edges.
         if current_relationship is None or relationship != current_relationship:
@@ -1086,7 +1088,7 @@ def rb_render_kb_items(backend,
                                                                                 target_description,
                                                                                 lang,
                                                                                 relationship,
-                                                                                wikidatatype) 
+                                                                                wikidatatype)
 
         current_value["edge_id"] = edge_id # temporarily save the current edge ID.
         current_values.append(current_value)
@@ -1097,7 +1099,7 @@ def rb_render_kb_items(backend,
         print("rb_render_kb_items returns %d response_properties and %d response_xrefs)" % (len(response_properties),
                                                                                             len(response_xrefs)),
               file=sys.stderr, flush=True) # ***
-        
+
     return response_properties, response_xrefs
 
 def rb_build_edge_id_tuple(response_properties: typing.List[typing.MutableMapping[str, any]]):
@@ -1138,7 +1140,7 @@ def rb_fetch_qualifiers_using_id_list(backend,
     edge_id_tuple_results_cache[edge_id_tuple_key] = item_qualifier_edges # Cache the results.
 
     return item_qualifier_edges
-                                      
+
 
 def rb_fetch_qualifiers_using_id_queries(backend,
                                          edge_id_tuple,
@@ -1369,7 +1371,7 @@ def rb_send_kb_categories(backend,
         if node1 in categories_seen:
             continue
         categories_seen.add(node1)
-        
+
         if node1_label is None:
             node1_label = node1
         category_key = (node1_label + "|" + str(idx + 1000000)).lower()
@@ -1608,7 +1610,7 @@ def rb_get_kb_named_item2(item):
         except Exception as e:
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-        
+
     elif item.startswith(("Q", "P")):
         try:
             return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
@@ -1626,8 +1628,8 @@ def rb_get_kb_named_item2(item):
     else:
         print("Unrecognized item: %s" % repr(item))
         flask.abort(400, "Unrecognized item %s" % repr(item))
-            
-    
+
+
 
 
 ### Test URL handlers:
@@ -1791,6 +1793,72 @@ def get_all_node_data():
             data = backend.get_all_node_data(
                 args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], inverse=args['inverse'])
             return data or {}
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_events_and_scores'), methods=['GET'])
+def get_all_events_and_scores():
+
+    q = 'event_id'
+    args = flask.request.args
+    lang = args.get("lang", default="en")
+
+    verbose = args.get("verbose", default=False, type=rb_is_true)
+    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
+    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=100000, type=int)
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
+
+    try:
+        with get_backend(app) as backend:
+            matches = []
+            items_seen: typing.Set[str] = set()
+
+            if match_label_prefixes:
+                prefix = q
+                if verbose:
+                    print("match_label_prefixes: Searching for label prefix %s (ignore_case=%s)" % (repr(prefix), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+                results = backend.rb_get_nodes_with_p585_starting_with(prefix,
+                                                                       lang=lang,
+                                                                       ignore_case=match_label_ignore_case,
+                                                                       limit=match_label_prefixes_limit)
+                if verbose:
+                    print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in rb_sort_query_results(results):
+                    event_id = result[0]
+                    if event_id in items_seen:
+                        continue
+                    items_seen.add(event_id)
+
+                    datetime_str = result[1]
+                    datetime_pattern = re.compile('\^(\d+-\d+-\d+T\d+:\d+:\d+Z)\/11')
+                    datetime_match = re.match(datetime_pattern, result[1])[1]
+
+                    matches.append(
+                        {
+                            "id": event_id,
+                            "datetime": datetime_match,
+                            "authority/virtue": round(float(result[2]), 3),
+                            "authority/vice": round(float(result[3]), 3),
+                            "fairness/virtue": round(float(result[4]), 3),
+                            "fairness/vice": round(float(result[5]), 3),
+                            "harm/virtue": round(float(result[6]), 3),
+                            "harm/vice": round(float(result[7]), 3),
+                            "ingroup/virtue": round(float(result[8]), 3),
+                            "ingroup/vice": round(float(result[9]), 3),
+                            "purity/virtue": round(float(result[10]), 3),
+                            "purity/vice": round(float(result[11]), 3),
+                        }
+                    )
+
+            df = pd.DataFrame(matches)
+            df = df.groupby('datetime').mean()
+
+            if verbose:
+                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+
+            return flask.jsonify(df.to_dict()), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)

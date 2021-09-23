@@ -303,6 +303,7 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     limit= "$LIMIT"
 )
 
+
 RB_UPPER_NODES_STARTING_WITH_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()' for case-insensitive searches.
@@ -673,4 +674,3 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     ret=   'n1 as node1, n1label as node1_label',
     order= 'n1, n1label'
 )
-
