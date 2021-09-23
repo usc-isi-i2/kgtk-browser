@@ -1591,7 +1591,7 @@ def get_mf_scores_by_date():
             items_seen: typing.Set[str] = set()
 
             if match_label_prefixes:
-                results = backend.rb_get_moral_foundationswith_p585(lang=lang,
+                results = backend.rb_get_moral_foundations_with_p585(lang=lang,
                                                                     ignore_case=match_label_ignore_case,
                                                                     limit=match_label_prefixes_limit)
                 if verbose:
