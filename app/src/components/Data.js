@@ -78,6 +78,7 @@ const useStyles = makeStyles(theme => ({
 	overflow: 'hidden',
 	textOverflow: 'ellipsis',
 	whiteSpace: 'nowrap',
+	verticalAlign: "bottom",
 	transition: '0.2s background ease',
 	'&:hover': {
 	    background: 'rgba(255, 255, 255, 0.1)',
@@ -186,17 +187,19 @@ const Data = ({ data }) => {
 				    <Grid container key={index} spacing={0}>
 					<Grid item xs={12}>
 					    {value.units ? (
-						<Typography variant='body2'
-							    component="span"
-							    className={classes.text}>
-						    {value.text}&nbsp;
+						<React.Fragment>
+						    <Typography variant='body2'
+								component="span"
+								className={classes.text4}>
+							{value.text}&nbsp;
+						    </Typography>
 						    <Link variant='body2'
 							  className={classes.link4}
 							  href={value.url ? value.url : `/kb/item/${value.ref}`}
 							  title={value.url ? value.url : `/kb/item/${value.ref}`}>
 							{value.units}
 						    </Link>
-						</Typography>
+						</React.Fragment>
 					    ) : value.url || value.ref ? (
 						<Link variant='body2'
 						      className={classes.link}
@@ -241,35 +244,37 @@ const Data = ({ data }) => {
 							{!!qualifier.values && qualifier.values.map((value, index) => (
   							    <Grid item key={index}>
 								{value.units ? (
-								    <Typography variant='body2'
-										component="span"
-										className={classes.text}>
-									{value.text}&nbsp;
+								    <React.Fragment>
+									<Typography variant='body2'
+										    component="span"
+										    className={classes.text4}>
+									    {value.text}&nbsp;
+									</Typography>
 									<Link variant='body2'
 									      className={classes.link4}
 									      href={value.url ? value.url : `/kb/item/${value.ref}`}
 									      title={value.url ? value.url : `/kb/item/${value.ref}`}>
 									    {value.units}
 									</Link>
-								    </Typography>
-								) : value.url || value.ref ? (
-								    <Link variant='body2'
-									  className={classes.link}
-									  href={value.url ? value.url : `/kb/item/${value.ref}`}
-									  title={value.url ? value.url : `/kb/item/${value.ref}`}>
-									{value.text}
-								    </Link>
-								) : (
-								    <Typography variant='body2'
-										className={classes.text}>
-									{value.text}
-									{value.lang && (
-									    <span className={classes.lang}>
-										[{value.lang}]
-									    </span>
+									) : value.url || value.ref ? (
+									<Link variant='body2'
+									      className={classes.link}
+									      href={value.url ? value.url : `/kb/item/${value.ref}`}
+									      title={value.url ? value.url : `/kb/item/${value.ref}`}>
+									    {value.text}
+									</Link>
+								    </React.Fragment>
+									) : (
+									    <Typography variant='body2'
+											className={classes.text}>
+										{value.text}
+										{value.lang && (
+										    <span className={classes.lang}>
+											[{value.lang}]
+										    </span>
+										)}
+									    </Typography>
 									)}
-								    </Typography>
-								)}
 							    </Grid>
 							))}
 						    </Grid>
