@@ -657,7 +657,7 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
        are instances of (P31) Wikisource language edition (Q15156455).
     2) Looking for entries with aliases equal to the language code.
     3) Looking for entries with matching Identifiers.
-    4) Encouraging Wikidata to consistantly mark languages.    
+    4) Encouraging Wikidata to consistently mark languages.    
     
     Returns the labels for the node1's.
     Parameter 'LANG' controls the language for retrieved labels.

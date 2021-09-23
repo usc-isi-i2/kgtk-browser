@@ -2,6 +2,7 @@
 Kypher backend support for the KGTK browser.
 """
 
+import datetime
 import hashlib
 from http import HTTPStatus
 import os.path
@@ -452,15 +453,17 @@ def rb_format_number_or_quantity(
         value: KgtkValue,
         datatype: str,
         lang: str,
-)->str:
-    number_text: str
+)->typing.Tuple[str, str, str]:
+    number_value: str
+    number_units: typing.Optional[str] = None
     number_ref: typing.Optional[str] = None
 
     if datatype == KgtkFormat.DataType.NUMBER:
         numberstr: str = target_node
         if numberstr.startswith("+"): # Remove any leading "+"
-            numberstr = numberstr[1:]
-        number_text = numberstr
+            number_value = numberstr[1:]
+        else:
+            number_value = numberstr
     else:
         if value.do_parse_fields():
             newnum: str = value.fields.numberstr
@@ -474,9 +477,12 @@ def rb_format_number_or_quantity(
                 if value.fields.high_tolerancestr is not None:
                     newnum += value.fields.high_tolerancestr
                 newnum += "]"
+
             if value.fields.si_units is not None:
-                newnum += value.fields.si_units
-            if value.fields.units_node is not None:
+                # TODO: supply a node reference for each SI unit.
+                number_units = value.fields.si_units
+
+            elif value.fields.units_node is not None:
                 # Here's where it gets fancy:
                 units_node: str = value.fields.units_node
                 if units_node not in rb_units_node_cache:
@@ -488,19 +494,19 @@ def rb_format_number_or_quantity(
                         rb_units_node_cache[units_node] = None # Remember the failure.
 
                 if rb_units_node_cache[units_node] is not None:
-                    newnum += " " + rb_units_node_cache[units_node]
+                    number_units = rb_units_node_cache[units_node]
                 else:
-                    newnum += " " + units_node # We could not find a label for this node when we looked last time.
+                    number_units = units_node # We could not find a label for this node when we looked last time.
                 number_ref = units_node
 
-            number_text = newnum
+            number_value = newnum
         else:
             # Validation failed.
             #
             # TODO: Add a validation failure indicator?
-            number_text = target_node
+            number_value = target_node
 
-    return number_text, number_ref
+    return number_value, number_units, number_ref
 
 def rb_iso_format_time(
         target_node: str,
@@ -516,9 +522,7 @@ def rb_iso_format_time(
             return f.yearstr + "-" + f.monthstr
         elif precision == 11 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None:
             return f.yearstr + "-" + f.monthstr + "-" + f.daystr
-        elif precision == 12 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
-            return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
-        elif precision == 13 and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
+        elif precision in (12, 13, 14) and f.yearstr is not None and f.monthstr is not None and f.daystr is not None and f.hourstr is not None and f.minutesstr is not None:
             return f.yearstr + "-" + f.monthstr + "-" + f.daystr + " " + f.hourstr + ":" + f.minutesstr
         else:
             return target_node[1:]
@@ -527,6 +531,44 @@ def rb_iso_format_time(
         #
         # TODO: Add a validation failure indicator?
         return target_node[1:]
+
+def rb_human_format_time(
+        target_node: str,
+        value: KgtkValue,
+)->str:
+
+    if value.do_parse_fields() and value.fields.precision is not None:
+        f: KgtkValueFields = value.fields
+        d: datetime = datetime.datetime(f.year, f.month, f.day, f.hour, f.minutes, f.seconds)
+        precision: int = f.precision
+        if precision <= 9 and f.yearstr is not None:
+            return f.yearstr
+        elif precision == 10:
+            return d.strftime("%B %Y")
+        elif precision == 11:
+            return d.strftime("%B %d, %Y")
+        elif precision == 12:
+            return d.strftime("%I %p, %B %d, %Y")
+        elif precision == 13:
+            return d.strftime("%I:%M %p, %B %d, %Y")
+        else:
+            return d.strftime("%I:%M:%S %p, %B %d, %Y")
+
+    else:
+        # Validation failed.
+        #
+        # TODO: Add a validation failure indicator?
+        return target_node[1:]
+
+def rb_format_time(
+        target_node: str,
+        value: KgtkValue,
+        use_iso_format: bool = False,
+)->str:
+    if use_iso_format:
+        return rb_iso_format_time(target_node, value)
+    else:
+        return rb_human_format_time(target_node, value)
 
 rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
@@ -551,7 +593,7 @@ def rb_get_language_name(backend,
     if language_suffix is not None and len(language_suffix) > 0:
         full_code = language + language_suffix
         if verbose:
-            print("Looking up full language code %s" % repr(full_code), file=sys.stderr, flush=True) 
+            print("Looking up full language code %s" % repr(full_code), file=sys.stderr, flush=True)
         if full_code in rb_language_name_cache:
             name = rb_language_name_cache[full_code]
             if verbose:
@@ -572,7 +614,7 @@ def rb_get_language_name(backend,
 
     short_code: str = language
     if verbose:
-        print("Looking up short language code %s" % repr(short_code), file=sys.stderr, flush=True) 
+        print("Looking up short language code %s" % repr(short_code), file=sys.stderr, flush=True)
     if short_code in rb_language_name_cache:
         name = rb_language_name_cache[short_code]
         if verbose:
@@ -583,7 +625,7 @@ def rb_get_language_name(backend,
                 return full_code
             else:
                 return short_code
-            
+
         if show_code:
             if full_code is not None:
                 name += " (" + full_code + ")"
@@ -595,7 +637,7 @@ def rb_get_language_name(backend,
             rb_language_name_cache[full_code] = name
 
         return name
-    
+
     labels = backend.rb_get_language_labels(KgtkFormat.stringify(short_code), lang=lang)
     if len(labels) > 0 and labels[0][1] is not None and len(labels[0][1]) > 0:
         name = KgtkFormat.unstringify(labels[0][1])
@@ -677,8 +719,10 @@ def rb_build_current_value(
     elif rb_type == "/w/quantity":
         number_text: str
         number_ref: typing.Optional[str]
-        number_text, number_ref = rb_format_number_or_quantity(backend, target_node, value, datatype, lang)
-        current_value["text"] = number_text
+        number_value, number_units, number_ref = rb_format_number_or_quantity(backend, target_node, value, datatype, lang)
+        current_value["text"] = number_value
+        if number_units is not None:
+            current_value["units"] = number_units
         if number_ref is not None:
             current_value["ref"] = number_ref
 
@@ -1279,7 +1323,7 @@ def downsample_properties(property_list: typing.MutableMapping[str, any],
                           valuelist_max_len: int,
                           who: str,
                           verbose: bool = False):
-                          
+
     if proplist_max_len > 0 and len(property_list) > proplist_max_len:
         if verbose:
             print("Downsampling the properties for %s" % who, file=sys.stderr, flush=True)
@@ -1561,10 +1605,11 @@ def rb_get_kb_named_item(item):
     # Parse some optional parameters.
     args = flask.request.args
     params: str = ""
-    
+
     lang: str = args.get("lang", default="en")
     # TODO: encode the language properly, else this is a vulnerability.
-    params += "&lang=%s" % lang
+    # Note: the first parameter does not have a leading ampersand!
+    params += "lang=%s" % lang
 
     proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
     params += "&proplist_max_len=%d" % proplist_max_len
@@ -1574,22 +1619,22 @@ def rb_get_kb_named_item(item):
 
     qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
     params += "&qual_proplist_max_len=%d" % qual_proplist_max_len
-    
+
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     params += "&qual_valuelist_max_len=%d" % qual_valuelist_max_len
-    
+
     query_limit: int = args.get('query_limit', default=300000, type=int)
     params += "&query_limit=%d" % query_limit
-    
+
     qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
     params += "&qual_query_limit=%d" % qual_query_limit
-    
+
     verbose: bool = args.get("verbose", default=False, type=rb_is_true)
     if verbose:
         params += "&verbose"
 
     if verbose:
-        print("rb_get_kb_named_item: " + item + params)
+        print("rb_get_kb_named_item: %s params: %s" % (repr(item), repr(params)), file=sys.stderr, flush=True)
 
     try:
         return flask.render_template("kb.html", ITEMID=item, PARAMS=params, SCRIPT="/kb/kb.js")
@@ -1601,7 +1646,7 @@ def rb_get_kb_named_item(item):
 def rb_get_kb_named_item2(item):
     args = flask.request.args
     verbose: bool = args.get("verbose", default=False, type=rb_is_true)
-    
+
     if verbose:
         print("get_kb_named_item2: " + item)
 
