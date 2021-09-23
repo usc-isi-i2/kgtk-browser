@@ -150,9 +150,9 @@ const Data = ({ data }) => {
 	    <Grid item xs={12}>
 		<Paper className={classes.paper}>
 		    <Typography variant="h6">{data.text}</Typography>
-		    <Typography variant="h8">{data.ref}</Typography>
-		    <Typography variant="h8">{data.aliases.join(' | ')}</Typography>
-		    <Typography variant="h8">{data.description}</Typography>
+		    <Typography variant="subtitle2">{data.ref}</Typography>
+		    <Typography variant="subtitle2">{data.aliases.join(' | ')}</Typography>
+		    <Typography variant="subtitle2">{data.description}</Typography>
 		</Paper>
 	    </Grid>
 	)
