@@ -6,8 +6,7 @@ import kgtk.kypher.api as kapi
 ### Basic configuration section:
 
 # GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm_data_for_browser.sqlite3.db'
-# GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/TDM_Wikidata.all.sqlite3.db'
-GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm/TDM.sqlite3.db'
+GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/wikidata-and-tdm-and-factset/FactSet_TDM_Wikidata.all.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -523,7 +522,7 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     Create the Kypher query used by 'BrowserBackend.rb_get_node_inverse_edges()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2.
     Additionally retrieve descriptive information for all relationship labels.
-    Additionally retrieve descriptive information for all node2's such as their
+    Additionally retrieve descriptive information for all node1's such as their
     label, and optionally any images and fanouts.  Parameter 'LANG' controls
     the language for retrieved labels.
     Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
@@ -587,10 +586,8 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
     Create the Kypher query used by 'BrowserBackend.rb_get_node_categories()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
     under relationship P301.
-    Additionally retrieve descriptive information for all relationship labels.
-    Additionally retrieve descriptive information for all node2's such as their
-    label, and optionally any images and fanouts.  Parameter 'LANG' controls
-    the language for retrieved labels.
+    Additionally retrieve labels and descriptions for all node1's,
+    Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1`, 'node1_label', and'node1_description'.
 
     WARNING! This query may be incorrect, and should be considered a placeholder.

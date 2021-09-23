@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Container from '@material-ui/core/Container'
+import { useParams } from 'react-router-dom'
 
 
 import Data from './Data'
@@ -8,23 +9,21 @@ import ArrowUp from './ArrowUp'
 import fetchData from '../utils/fetchData'
 
 
-const Content = () => {
+const ItemContent = () => {
 
-  const [data, setData] = useState()
+    const [data, setData] = useState()
+    const { id } = useParams()
 
-  useEffect(() => {
-    const locationQuery = new URLSearchParams(window.location.search)
-    if ( locationQuery.has('id') ) {
-      getData(locationQuery.get('id'))
-    }
+    useEffect(() => {
+	getData(id)
   }, [])
 
-  const getData = id => {
-    fetchData(id).then(data => setData(data))
+    const getData = (itemid) => {
+        fetchData(itemid).then(data => setData(data))
   }
 
   return (
-    <Container maxWidth="xl" disableGutters="true">
+    <Container maxWidth="xl">
       <div id="top" />
       <Header getData={getData} />
       {!!data && <Data data={data} />}
@@ -34,4 +33,4 @@ const Content = () => {
 }
 
 
-export default Content
+export default ItemContent
