@@ -219,6 +219,23 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     order= 'r, qn2 desc',
 )
 
+RB_UPPER_NODE_LABELS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.get_node_labels()'
+    for case_independent searches.
+    Given parameters 'NODE' and 'LANG' retrieve labels for 'NODE' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return distinct 'node1', 'node_label' pairs as the result (we include
+    'NODE' as an output to make it easier to union result frames).
+    """,
+    name='rb_upper_node_labels_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='un=$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'distinct n as node1, l as node_label',
+)
+
 RB_NODES_WITH_LABEL_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_label()'.
@@ -280,6 +297,24 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret=  'n as node1, l as node_label',
+    order= "n, l", # Questionable performance due to poor interaction with limit
+    limit= "$LIMIT"
+)
+
+RB_UPPER_NODES_STARTING_WITH_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_starting_with()' for case-insensitive searches.
+    Given parameters 'NODE' (which should end with '*') and 'LANG' retrieve labels for 'NODE' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+    """,
+    name='rb_upper_nodes_starting_with_query',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
+    where='glob($NODE, un) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
     ret=  'n as node1, l as node_label',
     order= "n, l", # Questionable performance due to poor interaction with limit
     limit= "$LIMIT"
@@ -671,3 +706,38 @@ RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
     ret=   'n1 as node1, n2 as node2, n1label as node1_label',
 )
 
+RB_LANGUAGE_LABELS_QUERY = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
+    Given parameter 'CODE' retrieve all edges that have 'CODE' as their node2
+    under relationship P424, validated by P31->Q34770 (instance_of language).
+
+    The validation is needed because P424 (Wikimedia language code) also
+    appears in in other contexts (e.g., Q15156406 (English Wikisource)).
+
+    However, some languages (Esperanto (Q143) and Armenian (Q8785), for
+    example) are not marked as instance of (P31) language (Q34770).
+
+    So, we accept instance of modern language (Q1288568) or natural
+    language (Q33742) as alternatives.
+
+    Alternative approaches include:
+    1) Excluding the items we don't want. e.g. exclude items that
+       are instances of (P31) Wikisource language edition (Q15156455).
+    2) Looking for entries with aliases equal to the language code.
+    3) Looking for entries with matching Identifiers.
+    4) Encouraging Wikidata to consistantly mark languages.    
+    
+    Returns the labels for the node1's.
+    Parameter 'LANG' controls the language for retrieved labels.
+    Return the category `node1` and 'node1_label'.
+    """,
+    name='rb_language_labels_query',
+    inputs=('edges', 'labels'),
+    match= '$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
+    where= 'n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]',
+    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
+    ret=   'n1 as node1, n1label as node1_label',
+    order= 'n1, n1label'
+)

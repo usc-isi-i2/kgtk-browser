@@ -6,8 +6,7 @@ import kgtk.kypher.api as kapi
 ### Basic configuration section:
 
 # GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm_data_for_browser.sqlite3.db'
-# GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/TDM_Wikidata.all.sqlite3.db'
-GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm/TDM.sqlite3.db'
+GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/factset/FactSet_all.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -674,3 +673,4 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     ret=   'n1 as node1, n1label as node1_label',
     order= 'n1, n1label'
 )
+

@@ -5,9 +5,7 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
-# GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm_data_for_browser.sqlite3.db'
-# GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/TDM_Wikidata.all.sqlite3.db'
-GRAPH_CACHE           = '/home/rogers/faast/github/faast-kg-building/tdm/TDM.sqlite3.db'
+GRAPH_CACHE           = 'venice/venice.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -17,13 +15,13 @@ DEFAULT_LANGUAGE      = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
 KG_EDGES_GRAPH        = 'claims'
-KG_QUALIFIERS_GRAPH   = 'qualifiers'
-KG_LABELS_GRAPH       = 'labels'
-KG_ALIASES_GRAPH      = 'aliases'
-KG_DESCRIPTIONS_GRAPH = 'descriptions'
+KG_QUALIFIERS_GRAPH   = 'claims'
+KG_LABELS_GRAPH       = 'claims'
+KG_ALIASES_GRAPH      = 'claims'
+KG_DESCRIPTIONS_GRAPH = 'claims'
 KG_IMAGES_GRAPH       = 'claims'
-KG_FANOUTS_GRAPH      = 'metadata'
-KG_DATATYPES_GRAPH     = 'metadata'
+KG_FANOUTS_GRAPH      = 'claims'
+KG_DATATYPES_GRAPH     = 'claims'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
@@ -396,7 +394,7 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     name='rb_node_edges_query',
     inputs=('edges', 'labels', 'descriptions', 'datatypes'),
     match= '$edges: (n1)-[r {label: rl}]->(n2)',
-    where= 'n1=$NODE',
+    where= 'n1=$NODE and rl <> "label" and rl <> "alias" and rl <> "description" and rl <> "P18" and rl <> "count_distinct_properties" and rl <> "datatype"',
     opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
     opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
@@ -639,38 +637,3 @@ RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
     ret=   'n1 as node1, n2 as node2, n1label as node1_label',
 )
 
-RB_LANGUAGE_LABELS_QUERY = _api.get_query(
-    doc="""
-    Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
-    Given parameter 'CODE' retrieve all edges that have 'CODE' as their node2
-    under relationship P424, validated by P31->Q34770 (instance_of language).
-
-    The validation is needed because P424 (Wikimedia language code) also
-    appears in in other contexts (e.g., Q15156406 (English Wikisource)).
-
-    However, some languages (Esperanto (Q143) and Armenian (Q8785), for
-    example) are not marked as instance of (P31) language (Q34770).
-
-    So, we accept instance of modern language (Q1288568) or natural
-    language (Q33742) as alternatives.
-
-    Alternative approaches include:
-    1) Excluding the items we don't want. e.g. exclude items that
-       are instances of (P31) Wikisource language edition (Q15156455).
-    2) Looking for entries with aliases equal to the language code.
-    3) Looking for entries with matching Identifiers.
-    4) Encouraging Wikidata to consistantly mark languages.    
-    
-    Returns the labels for the node1's.
-    Parameter 'LANG' controls the language for retrieved labels.
-    Return the category `node1` and 'node1_label'.
-    """,
-    name='rb_language_labels_query',
-    inputs=('edges', 'labels'),
-    match= '$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
-    where= 'n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]',
-    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
-    owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    ret=   'n1 as node1, n1label as node1_label',
-    order= 'n1, n1label'
-)

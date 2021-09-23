@@ -98,14 +98,20 @@ class KbApp extends Component {
     if (state) {
       let item = state.item;
       state.pos = this.find("md-content").scrollTop;
-      history.replaceState(state, item.text, "/kb/" + item.ref);
+      history.replaceState(state, item.text, "/kb/item/" + item.ref);
     }
 
-    fetch("/kb/item?fmt=cjson&id=" + encodeURIComponent(id))
+    var target = "/kb/item?fmt=cjson&id=" + encodeURIComponent(id)
+    let params = document.head.querySelector('meta[property="params"]');
+      if (params) {
+	  let pcontent = params.content
+	  if (pcontent.length > 0) target = target + params.content
+    }
+    fetch(target)
       .then(response => response.json())
       .then((item) => {
         let state = {item: item, pos: 0};
-        history.pushState(state, item.text, "/kb/" + item.ref);
+        history.pushState(state, item.text, "/kb/item/" + item.ref);
         this.display(item);
         this.find("md-content").scrollTop = 0;
       })
@@ -595,6 +601,9 @@ class KbItemCard extends MdCard {
       text: item.ref,
       external: true,
     });
+      if (item.aliases && item.aliases.length > 0) {
+	this.find("#aliases").update(item.aliases.join(' | '));
+    }
     this.find("#description").update(item.description);
     this.find("#datatype").update(item.type ? "Datatype: " + item.type : "");
   }
@@ -630,6 +639,10 @@ class KbItemCard extends MdCard {
         text-decoration: none;
         width: fit-content;
         outline: none;
+      }
+
+      $ #aliases {
+        font-size: 16px;
       }
 
       $ #description {
@@ -1296,6 +1309,7 @@ const desktop_template = `
                 <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
               </div>
             </md-card-toolbar>
+            <div><md-text id="aliases"></md-text></div>
             <div><md-text id="description"></md-text></div>
             <div><md-text id="datatype"></md-text></div>
           </kb-item-card>
@@ -1370,6 +1384,7 @@ const mobile_template = `
               <md-link id="ref" notab="1" newtab="1" external="1"></md-link>
             </div>
           </md-card-toolbar>
+          <div><md-text id="aliases"></md-text></div>
           <div><md-text id="description"></md-text></div>
           <div><md-text id="datatype"></md-text></div>
         </kb-item-card>

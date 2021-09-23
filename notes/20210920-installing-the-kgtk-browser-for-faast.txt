@@ -1,0 +1,235 @@
+							Craig Milo Rogers
+							20-Sep-2021
+
+1)	This memo gives instructions for installing the KGTK Browser
+	with the FAAST project's combined Wikidata/TDM/FactSet data.
+
+2)	The goal is to have a an npm-based server instance running
+	and serving requeste for a React-based KGTK Browser.
+
+	1) A second server, flask-based, serves requrests for
+	   Wikidata/TDM/FactSet data from Kypher graphs
+	   stored in a sqlite3 database.
+
+	2) The second server incidentally serves requests for
+	   a Ringgaard-based KGTK Browser.
+
+3)	The main prerequesites are:
+
+	1) You must have access to a suitable Linux-based server
+	   system or VM.
+
+	2) You must have access to a "kgtk" command.
+
+	   1) Follow the KGTK project's INSTALL.md instructions, or
+
+	   2) pip install kgtk
+
+	3) The "kgtk" command must have access to the current
+	   kgtk GitHub repository's "dev" branch.
+
+	   1) This may include updating the installed external
+	      modules per the three requirements files.
+
+	4) You must have access to the "kgtk-browser" GitHub
+	   repository's "dev" branch.
+
+git clone git@github.com:usc-isi-i2/kgtk-browser.git -b dev
+cd kgtk-browser
+
+	5) You must have access to the data files stored in the
+	   FAAST-ISI Google Drive in:
+
+	   FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/
+
+4)	You may need to install flask:
+
+conda install flask
+
+5)	You may need to install nodejs (thus, npm).  Note that
+	the following command installs "nodejs" from the "conda-forge"
+	channel in order to obtain an up-to-date version of "nodejs".
+
+conda install -c conda-forge nodejs
+
+6)	You should check out the "kgtk-browser" repository
+	and use it as the top level folder for the following
+	commands to install the nodejs library of modules:
+
+cd app
+npm install
+
+7)	Going back to the top level folder of your
+        "kgtk-browser" repository instance, create
+	the following folders:
+
+mkdir wikidata-and-tdm-and-factset/
+mkdir wikidata-and-tdm-and-factset-temp/
+
+8)	Download the files from the FAAST-ISI Google Drive folder
+	mentioned above.  Assuming that you are at the top level
+	of your "kgtk-browser" repository instance:
+
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/aliases.tsv.gz wikidata-and-tdm-and-factset/
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/claims.tsv.gz wikidata-and-tdm-and-factset/
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/descriptions.tsv.gz wikidata-and-tdm-and-factset/
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/labels.tsv.gz wikidata-and-tdm-and-factset/
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/metadata.tsv.gz wikidata-and-tdm-and-factset/
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/qualifiers.tsv.gz wikidata-and-tdm-and-factset/
+
+rclone copy FAAST-ISI:FAAST-data/20210920-wikidata-tdm-factset/load-wikidata-and-tdm-and-factset.csh .
+
+	Note: "load-wikidata-and-tdm-and-factset.csh" is also available at
+	the top level of the "faast-kg-building" GitHub repository.
+	It was included in the FAAST_ISI Google Drive so it wouldn't
+	be necessary to check out "faast-kg-building" for just the one file.
+
+9)	Execute "load-wikidata-and-tdm-and-factset.csh" to load the data
+        files (downloaded in the previous step) into a Kypher graph cache
+	(a sqlite3 database).
+
+./load-wikidata-and-tdm-and-factset.csh
+
+
+	NOTE: This script assume the availablilty of the tcsh shell.
+	If tcsh is not available, convert the script to a bash or
+	other shell by:
+
+        1) Editing the "setenv" commands.
+	2) Editing the "|& tee" sequences
+
+10)	Verify that the previous step created the expected output file:
+
+ls -h wikidata-and-tdm-and-factset/FactSet_TDM_Wikidata.all.sqlite3.db
+
+	It should be about 162 GB in size.
+
+11)	Edit the following file, editing the GRAPH_CACHE declaration to
+	contain an absolute path to the "FactSet_TDM_Wikidata.all.sqlite3.db"
+	file:
+
+faast_wikidata-and-tdm-and-factset_config_on_ckg07.py
+
+	1) In more detail, edit the line that says:
+
+GRAPH_CACHE           = '/data/rogers/faast-kg-building/wikidata-and-tdm-and-factset/FactSet_TDM_Wikidata.all.sqlite3.db'
+
+	2) Replace "/data/rogers/faast-kg-building/" with the path to
+	   your "wikidata-and-tdm-and-factset" folder.
+
+12)	Examine the following file, which starts the FAAST data server
+	on the local host using port 5006, and giving access to the port
+	to the Internet (modulo any firewall setting on the VM or its
+	enclosing network).  If it looks good, execute it:
+
+./start-faast-wikidata-and-tdm-and-factset-server-on-ckg07.csh
+
+	1) You should see some startup messages that end with the following:
+
+[2021-09-20 20:21:15 query]: SQL Translation:
+---------------------------------------------
+  SELECT graph_1_c1."id" "_aLias.id", graph_1_c1."node1" "_aLias.node1", graph_5_c2."id" "_aLias.qual_id", graph_5_c2."label" "_aLias.qual_relationship", graph_5_c2."node2" "_aLias.qual_node2", graph_2_c3."node2" "_aLias.qual_relationship_label", graph_2_c4."node2" "_aLias.qual_node2_label", graph_4_c5."node2" "_aLias.qual_node2_description"
+     FROM graph_1 AS graph_1_c1
+     INNER JOIN graph_5 AS graph_5_c2
+     ON graph_1_c1."id" = graph_5_c2."node1"
+        AND graph_5_c2."label" = graph_5_c2."label"
+        AND (graph_1_c1."node1" = ?)
+     LEFT JOIN graph_2 AS graph_2_c3
+     ON graph_5_c2."label" = graph_2_c3."node1"
+        AND graph_2_c3."label" = ?
+        AND ((? = ?) OR (kgtk_lqstring_lang(graph_2_c3."node2") = ?))
+     LEFT JOIN graph_2 AS graph_2_c4
+     ON graph_5_c2."node2" = graph_2_c4."node1"
+        AND graph_2_c4."label" = ?
+        AND ((? = ?) OR (kgtk_lqstring_lang(graph_2_c4."node2") = ?))
+     LEFT JOIN graph_4 AS graph_4_c5
+     ON graph_1_c1."id" = graph_4_c5."id"
+        AND graph_5_c2."node2" = graph_4_c5."node1"
+        AND graph_4_c5."label" = ?
+        AND ((? = ?) OR (kgtk_lqstring_lang(graph_4_c5."node2") = ?))
+     ORDER BY graph_1_c1."id" ASC, graph_5_c2."label" ASC, graph_5_c2."node2" ASC, graph_5_c2."id" ASC, graph_2_c3."node2" ASC, graph_2_c4."node2" ASC, graph_4_c5."node2" ASC
+     LIMIT ?
+  PARAS: [('NODE',), 'label', ('LANG',), 'any', ('LANG',), 'label', ('LANG',), 'any', ('LANG',), 'description', ('LANG',), 'any', ('LANG',), ('LIMIT',)]
+
+	2) Leave this server running, and move to a different window/pane to
+	   your target system.  Reconnect to the "kgtk-browser" instance
+	   top-level folder.
+
+13)	You should now have access to the Ringgaard-base KGTK browser
+	for the FAAST data.  If "xxx.yyy.zzz" is the name of the host
+	on which you started the server, and you didn't change the port
+	from "5006", you should be able to start a Ringgaard-based KGTK
+	browser by pointing your Web browser to:
+
+http://xxx.yyy.zzz:5006/kb
+
+	If you had to chose a port other than "5006", may the appropriate
+	change in the URL above.
+
+14)	Next, we will start the server for the React-based KGTK browser.
+	First, examine the configuration file at:
+
+app/package.json
+
+	1) Look at the following two lines:
+
+  "homepage": "https://kgtk.isi.edu/browser",
+  "proxy": "http://localhost:5006"
+
+	2) The homepage should be edited to reflect the host and
+	   port from which the React-based KGTK browser will be
+	   served.  We won't know until we start it, but if we
+	   assume that it starts on port 3000, then a suitable
+	   substitute would be:
+
+  "homepage": "https://xxx.yyy.zzz:3000/kb",
+
+	3) If the port number for the KGTK browser data server was
+	   changed from the default "5006", say to "9002", then the
+	   "proxy" line may need to be changed:
+
+  "proxy": "http://localhost:9002"
+
+15)	Edit the following script:
+
+start-faast-wikidata-and-tdm-and-factset-npm-server-on-ckg07.csh
+
+	1) Change the following line:
+
+setenv HOST ckg07.isi.edu
+
+	2) It should be changed to:
+
+setenv HOST xxx.yyy.zzz
+
+           where "xxx.yyy.zzz" is the name of your target host.
+
+16)	Start the nodejs server for the React-based KGTK Browser
+	using the FAAST combined data:
+
+./start-faast-wikidata-and-tdm-and-factset-npm-server-on-ckg07.csh
+
+	1) The server should produce some output, ending with:
+
+Compiled successfully!
+
+You can now view kgtk-browser in the browser.
+
+  http://xxx.yyy.zzz:3000/
+
+Note that the development build is not optimized.
+To create a production build, use npm run build.
+
+	2) If a port other than "3000" is reported above, the
+	   server may beed to be stopped and the configuration
+	   file ("app/package.json") edited.
+
+	2) Leave the server running.
+
+17)	You should now be able to access the React-based
+	KGTK Browser for the FAAST combined data using the
+	URL reported by the server:
+
+http://xxx.yyy.zzz:3000/kb
+
+

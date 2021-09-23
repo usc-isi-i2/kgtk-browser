@@ -338,7 +338,7 @@ class BrowserBackend(object):
             return formatter.format_node_data(node_data)
 
     ### Support for the revised browser:
-    def rb_get_node_labels(self, node, lang=None, fmt=None):
+    def rb_get_node_labels(self, node, lang=None, fmt=None, ignore_case: bool = False):
         """Retrieve all labels for 'node'.
 
         Node names are assumed to always be in upper case in the database and
@@ -348,12 +348,13 @@ class BrowserBackend(object):
         This search method supports rb_get_kb_query(), which generates a list of
         candidate nodes.  The search must be fast.
         """
-        # Raise the case of the node to implement a case-insensitive search.
-        #
-        # TODO: Can we do this in the SQL query?
-        node = node.upper()
-
-        query = self.get_config('NODE_LABELS_QUERY')
+        if ignore_case:
+            # Raise the case of the label to implement a case-insensitive search.
+            node = node.upper()
+            query = self.get_config('RB_UPPER_NODE_LABELS_QUERY')
+        else:
+            query = self.get_config('NODE_LABELS_QUERY')
+            
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
@@ -376,7 +377,7 @@ class BrowserBackend(object):
         return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
+    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
         """Retrieve nodes and labels for all nodes starting with 'node'.
 
         Node names are assumed to always be in upper case in the database and
@@ -387,15 +388,15 @@ class BrowserBackend(object):
         candidate nodes.  The search must be fast.
         """
 
-        # Raise the case of the node to implement a case-insensitive search.
-        #
-        # TODO: Can we do this in the SQL query?
-        node = node.upper()
+        if ignore_case:
+            # Raise the case of the label to implement a case-insensitive search.
+            node = node.upper()
+            query = self.get_config('RB_UPPER_NODES_STARTING_WITH_QUERY')
+        else:
+            query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
 
         # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
         safe_node: str = node.translate({ord(i): None for i in '*[?'})
-
-        query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
 
         # We have to append the wildcard "*" here because kypher currently
         # does not accept the SQL concatenation operator ('||') in the query definition.
@@ -506,4 +507,8 @@ class BrowserBackend(object):
         query = self.get_config('RB_SUBPROPERTY_RELATIONSHIPS_QUERY')
         return self.execute_query(query, LANG=self.get_lang(lang), fmt=fmt)
 
-
+    def rb_get_language_labels(self, code, lang=None, images=False, fanouts=False, fmt=None):
+        """Retrieve language names for language code 'code'.
+        """
+        query = self.get_config('RB_LANGUAGE_LABELS_QUERY')
+        return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
