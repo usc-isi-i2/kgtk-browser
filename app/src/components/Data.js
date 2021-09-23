@@ -184,7 +184,7 @@ const Data = ({ data }) => {
 			    <Grid item xs={9}>
 				{!!property.values && property.values.map((value, index) => (
 				    <Grid container key={index} spacing={0}>
-					<Grid item xs={12} spacing={0}>
+					<Grid item xs={12}>
 					    {value.units ? (
 						<Typography variant='body2'
 							    component="span"
@@ -217,7 +217,7 @@ const Data = ({ data }) => {
 					    )}
 					    {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
 						<Grid container spacing={0} key={index}>
-						    <Grid item xs={4} spacing={0}>
+						    <Grid item xs={4}>
 							{qualifier.url || qualifier.ref ? (
 							    <Link variant='body2'
 								  className={classes.link2}
@@ -237,9 +237,9 @@ const Data = ({ data }) => {
 							    </Typography>
 							)}
 						    </Grid>
-						    <Grid item xs={8} spacing={0}>
+						    <Grid item xs={8}>
 							{!!qualifier.values && qualifier.values.map((value, index) => (
-  							    <Grid item key={index} spacing={0}>
+  							    <Grid item key={index}>
 								{value.units ? (
 								    <Typography variant='body2'
 										component="span"
