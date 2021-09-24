@@ -256,25 +256,25 @@ const Data = ({ data }) => {
 									      title={value.url ? value.url : `/kb/item/${value.ref}`}>
 									    {value.units}
 									</Link>
-									) : value.url || value.ref ? (
-									<Link variant='body2'
-									      className={classes.link}
-									      href={value.url ? value.url : `/kb/item/${value.ref}`}
-									      title={value.url ? value.url : `/kb/item/${value.ref}`}>
-									    {value.text}
-									</Link>
 								    </React.Fragment>
-									) : (
-									    <Typography variant='body2'
-											className={classes.text}>
-										{value.text}
-										{value.lang && (
-										    <span className={classes.lang}>
-											[{value.lang}]
-										    </span>
-										)}
-									    </Typography>
+								) : value.url || value.ref ? (
+								    <Link variant='body2'
+									  className={classes.link}
+									  href={value.url ? value.url : `/kb/item/${value.ref}`}
+									  title={value.url ? value.url : `/kb/item/${value.ref}`}>
+									{value.text}
+								    </Link>
+								) : (
+								    <Typography variant='body2'
+										className={classes.text}>
+									{value.text}
+									{value.lang && (
+									    <span className={classes.lang}>
+										[{value.lang}]
+									    </span>
 									)}
+								    </Typography>
+								)}
 							    </Grid>
 							))}
 						    </Grid>
