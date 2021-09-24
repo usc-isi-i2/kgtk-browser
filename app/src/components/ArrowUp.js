@@ -7,8 +7,8 @@ import { withStyles } from '@material-ui/core/styles'
 
 const styles = theme => ({
   root: {
+    color: '#333',
     position: 'fixed',
-    color: 'white',
     cursor: 'pointer',
     fontSize: theme.spacing(1),
     bottom: theme.spacing(1),
