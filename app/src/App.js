@@ -9,7 +9,7 @@ import {
 import ContentRouter from './components/ContentRouter'
 
 
-const theme = createTheme({
+let theme = createTheme({
   overrides: {
     MuiCssBaseline: {
       '@global': {
@@ -24,6 +24,7 @@ const theme = createTheme({
     },
   },
 })
+theme = responsiveFontSizes(theme)
 
 
 const App = () => {
