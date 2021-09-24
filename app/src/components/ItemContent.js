@@ -23,12 +23,14 @@ const ItemContent = () => {
   }
 
   return (
-    <Container maxWidth="xl">
+    <React.Fragment>
       <div id="top" />
       <Header getData={getData} />
-      {!!data && <Data data={data} />}
-      <ArrowUp/>
-    </Container>
+      <Container maxWidth="xl">
+        {!!data && <Data data={data} />}
+        <ArrowUp/>
+      </Container>
+    </React.Fragment>
   )
 }
 
