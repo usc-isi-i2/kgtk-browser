@@ -11,15 +11,15 @@ import fetchData from '../utils/fetchData'
 
 const ItemContent = () => {
 
-    const [data, setData] = useState()
-    const { id } = useParams()
+  const [data, setData] = useState()
+  const { id } = useParams()
 
-    useEffect(() => {
-	getData(id)
+  useEffect(() => {
+    getData(id)
   }, [])
 
-    const getData = (itemid) => {
-        fetchData(itemid).then(data => setData(data))
+  const getData = (itemid) => {
+    fetchData(itemid).then(data => setData(data))
   }
 
   return (

@@ -155,22 +155,22 @@ const Header = ({ getData }) => {
     }, 500)
   }
 
-    const handleOnKeyUp = event => {
-	const value = event.target.value
-	if (event.key === 'Enter') {
-            if ( !!results.length ) {
-		const item = results[0]
-		setResults([])
-		closeMenu()
-		selectResult(item)
-	    } else if (value.length > 0) {
-		setResults([])
-		closeMenu()
-		setAnchorElement()
-		getData(value)
-	    }
-	}
+  const handleOnKeyUp = event => {
+    const value = event.target.value
+    if (event.key === 'Enter') {
+      if ( !!results.length ) {
+        const item = results[0]
+        setResults([])
+        closeMenu()
+        selectResult(item)
+      } else if (value.length > 0) {
+        setResults([])
+        closeMenu()
+        setAnchorElement()
+        getData(value)
+      }
     }
+  }
 
   const renderSearchResults = () => {
     return (
@@ -179,9 +179,9 @@ const Header = ({ getData }) => {
         id="search-results"
         className={classes.menu}
         anchorEl={anchorElement}
-	autoFocus={false}
-	disableAutoFocus={true}
-	disableEnforceFocus={true}
+        autoFocus={false}
+        disableAutoFocus={true}
+        disableEnforceFocus={true}
         transformOrigin={{
           vertical: -55,
           horizontal: 0,
@@ -224,8 +224,8 @@ const Header = ({ getData }) => {
                 input: classes.inputInput,
               }}
               inputProps={{ 'aria-label': 'search' }}
-		onChange={handleOnChange}
-		onKeyUp={handleOnKeyUp}
+              onChange={handleOnChange}
+              onKeyUp={handleOnKeyUp}
             />
             {loading && (
               <div className={classes.loadingIcon}>
