@@ -7,10 +7,7 @@ import {
   responsiveFontSizes,
 } from '@material-ui/core/styles'
 
-
 import ContentRouter from './components/ContentRouter'
-// import ContentRewrite from './components/ContentRewrite'
-// import Content from './components/Content'
 
 
 let theme = createTheme()
