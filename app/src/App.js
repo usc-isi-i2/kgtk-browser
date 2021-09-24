@@ -22,6 +22,12 @@ let theme = createTheme({
         },
       },
     },
+    MuiAppBar: {
+      colorPrimary: {
+        backgroundColor: '#fefefe',
+        color: '#333',
+      },
+    },
   },
 })
 theme = responsiveFontSizes(theme)

@@ -2,17 +2,11 @@ import { alpha, makeStyles } from '@material-ui/core/styles'
 
 
 const useStyles = makeStyles(theme => ({
-  header: {
-    color: '#fefefe',
-    marginTop: theme.spacing(0),
-  },
   grow: {
     flexGrow: 1,
   },
   appBar: {
-    backgroundColor: 'rgba(254, 254, 254, 0.25)',
-    marginBottom: theme.spacing(1),
-    padding: theme.spacing(0),
+    marginBottom: theme.spacing(3),
   },
   menuIcon: {
     width: theme.spacing(8),
@@ -28,9 +22,9 @@ const useStyles = makeStyles(theme => ({
   search: {
     position: 'relative',
     borderRadius: 0,
-    backgroundColor: alpha(theme.palette.common.white, 0.15),
+    backgroundColor: alpha(theme.palette.common.black, 0.05),
     '&:hover': {
-      backgroundColor: alpha(theme.palette.common.white, 0.25),
+      backgroundColor: alpha(theme.palette.common.black, 0.10),
     },
     marginRight: theme.spacing(2),
     marginLeft: 0,
@@ -56,7 +50,7 @@ const useStyles = makeStyles(theme => ({
     position: 'absolute',
     pointerEvents: 'none',
     '& .MuiCircularProgress-root': {
-      color: '#fefefe',
+      color: '#333',
     },
   },
   inputRoot: {
