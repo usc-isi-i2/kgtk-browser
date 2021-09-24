@@ -1,7 +1,6 @@
 import React from 'react'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import {
-  withStyles,
   createTheme,
   ThemeProvider,
   responsiveFontSizes,
@@ -10,21 +9,22 @@ import {
 import ContentRouter from './components/ContentRouter'
 
 
-let theme = createTheme()
-theme = responsiveFontSizes(theme)
-
-
-const styles = theme => ({
-  '@global': {
-    body: {
-      background: 'linear-gradient(150deg, #708090, #002133)',
-      backgroundAttachment: 'fixed',
-      backgroundSize: '100% 150%',
-      padding: theme.spacing(1, 1),
-      height: '100vh',
+const theme = createTheme({
+  overrides: {
+    MuiCssBaseline: {
+      '@global': {
+        html: {
+          WebkitFontSmoothing: 'auto',
+        },
+        body: {
+          background: '#fefefe',
+          color: '#333',
+        },
+      },
     },
   },
 })
+
 
 const App = () => {
 
@@ -37,4 +37,4 @@ const App = () => {
 }
 
 
-export default withStyles(styles)(App)
+export default App
