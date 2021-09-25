@@ -70,7 +70,7 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: 'nowrap',
     width: '100%',
     transition: '0.2s background ease',
-    fontSize: 10,
+    fontSize: '12px',
     '&:hover': {
       background: alpha(theme.palette.common.black, 0.05),
       color: '#111',
@@ -110,7 +110,7 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(0),
     color: '#333',
     width: '100%',
-    fontSize: 10,
+    fontSize: '12px',
   },
   text4: {
     display: 'inline-block',
