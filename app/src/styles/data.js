@@ -49,7 +49,7 @@ const useStyles = makeStyles(theme => ({
       paddingLeft: theme.spacing(3),
     },
   },
-  link3: {
+  identifierLink: {
     display: 'inline-block',
     padding: theme.spacing(0),
     textDecoration: 'underline',
@@ -65,21 +65,11 @@ const useStyles = makeStyles(theme => ({
       background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
-  },
-  link4: {
-    display: 'inline-block',
-    padding: theme.spacing(0),
-    textDecoration: 'underline',
-    color: '#333',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    verticalAlign: 'bottom',
-    transition: '0.2s background ease',
-    '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
-      color: '#111',
+    '&.identifier': {
+      color: '#0077ea',
+    },
+    '&.indent': {
+      paddingLeft: theme.spacing(3),
     },
   },
   text: {

@@ -78,7 +78,7 @@ const Data = ({ data }) => {
                           </Typography>
                           <Link
                             variant="body2"
-                            className={classes.link4}
+                            className={classes.propertyLink}
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
                             title={value.url ? value.url : `/kb/item/${value.ref}`}>
                             {value.units}
@@ -145,7 +145,7 @@ const Data = ({ data }) => {
                                     </Typography>
                                     <Link
                                       variant="body2"
-                                      className={classes.link4}
+                                      className={classes.propertyLink}
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
                                       title={value.url ? value.url : `/kb/item/${value.ref}`}>
                                       {value.units}
@@ -228,7 +228,11 @@ const Data = ({ data }) => {
                 {property.url || property.ref ? (
                   <Link
                     variant="body2"
-                    className={classes.link3}
+                    className={
+                      classNames(classes.identifierLink, {
+                        identifier: true,
+                      })
+                    }
                     href={property.url ? property.url : `/?id=${property.ref}`}
                     title={property.url ? property.url : `/?id=${property.ref}`}>
                     {property.property}
@@ -246,7 +250,7 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.link3}
+                          className={classes.identifierLink}
                           href={value.url ? value.url : `/?id=${value.ref}`}
                           title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
@@ -267,11 +271,7 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
-                                className={
-                                  classNames(classes.propertyLink, {
-                                    indent: true,
-                                  })
-                                }
+                                className={classes.identifierLink}
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
                                 title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
                                 {qualifier.property}
@@ -294,7 +294,7 @@ const Data = ({ data }) => {
                                   <Link
                                     variant="body2"
                                     className={
-                                      classNames(classes.propertyLink, {
+                                      classNames(classes.identifierLink, {
                                         indent: true,
                                       })
                                     }
