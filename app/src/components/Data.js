@@ -73,7 +73,7 @@ const Data = ({ data }) => {
                           <Typography
                             variant="body2"
                             component="span"
-                            className={classes.text4}>
+                            className={classes.text}>
                             {value.text}&nbsp;
                           </Typography>
                           <Link
@@ -122,7 +122,11 @@ const Data = ({ data }) => {
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={classes.text2}>
+                              <Typography variant="body2" className={
+                                classNames(classes.text, {
+                                  indent: true,
+                                })
+                              }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -140,7 +144,7 @@ const Data = ({ data }) => {
                                     <Typography
                                       variant="body2"
                                       component="span"
-                                      className={classes.text4}>
+                                      className={classes.text}>
                                       {value.text}&nbsp;
                                     </Typography>
                                     <Link
@@ -238,7 +242,7 @@ const Data = ({ data }) => {
                     {property.property}
                   </Link>
                 ) : (
-                  <Typography variant="body2" className={classes.text3}>
+                  <Typography variant="body2" className={classes.text}>
                     {property.property}
                   </Typography>
                 )}
@@ -256,7 +260,7 @@ const Data = ({ data }) => {
                           {value.text}
                         </Link>
                       ) : (
-                        <Typography variant="body2" className={classes.text3}>
+                        <Typography variant="body2" className={classes.text}>
                           {value.text}
                           {value.lang && (
                             <span className={classes.lang}>
@@ -277,7 +281,11 @@ const Data = ({ data }) => {
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={classes.text2}>
+                              <Typography variant="body2" className={
+                                classNames(classes.text, {
+                                  indent: true,
+                                })
+                              }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -303,7 +311,11 @@ const Data = ({ data }) => {
                                     {value.text}
                                   </Link>
                                 ) : (
-                                  <Typography variant="body2" className={classes.text2}>
+                                  <Typography variant="body2" className={
+                                    classNames(classes.text, {
+                                      indent: true,
+                                    })
+                                  }>
                                     {value.text}
                                     {value.lang && (
                                       <span className={classes.lang}>
