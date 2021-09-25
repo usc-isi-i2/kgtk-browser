@@ -14,6 +14,19 @@ const useStyles = makeStyles(theme => ({
     position: 'relative',
     color: '#333',
   },
+  title: {
+    color: '#0c8e7d',
+  },
+  nodeId: {
+    fontStyle: 'italic',
+  },
+  aliases: {
+    color: '#999',
+  },
+  heading: {
+    color: '#0c8e7d',
+  },
+  description: {},
   link: {
     display: 'inline-block',
     padding: theme.spacing(0),

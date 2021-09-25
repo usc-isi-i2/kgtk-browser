@@ -18,10 +18,18 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h6">{data.text}</Typography>
-          <Typography variant="subtitle2">{data.ref}</Typography>
-          <Typography variant="subtitle2">{data.aliases.join(' | ')}</Typography>
-          <Typography variant="subtitle2">{data.description}</Typography>
+          <Typography variant="h4" className={classes.title}>
+            {data.text}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.nodeId}>
+            ({data.ref})
+          </Typography>
+          <Typography variant="subtitle2" className={classes.aliases}>
+            {data.aliases.join(' | ')}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.description}>
+            {data.description}
+          </Typography>
         </Paper>
       </Grid>
     )
@@ -31,7 +39,9 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h6">Properties</Typography>
+          <Typography variant="h6" className={classes.heading}>
+            Properties
+          </Typography>
           {data.properties.map((property, index) => (
             <Grid container key={index} className={classes.row} spacing={0}>
               <Grid item xs={3}>
@@ -192,7 +202,9 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h4">Identifiers</Typography>
+          <Typography variant="h4" className={classes.heading}>
+            Identifiers
+          </Typography>
           {data.xrefs.map((property, index) => (
             <Grid container key={index} className={classes.row}>
               <Grid item xs={6}>
