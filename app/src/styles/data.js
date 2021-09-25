@@ -1,4 +1,4 @@
-import { alpha, makeStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 
 
 const useStyles = makeStyles(theme => ({
@@ -14,7 +14,20 @@ const useStyles = makeStyles(theme => ({
     position: 'relative',
     color: '#333',
   },
-  link: {
+  title: {
+    color: '#0c8e7d',
+  },
+  nodeId: {
+    fontStyle: 'italic',
+  },
+  aliases: {
+    color: '#999',
+  },
+  heading: {
+    color: '#0c8e7d',
+  },
+  description: {},
+  propertyLink: {
     display: 'inline-block',
     padding: theme.spacing(0),
     textDecoration: 'underline',
@@ -26,27 +39,17 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     transition: '0.2s background ease',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
-  },
-  link2: {
-    display: 'inline-block',
-    paddingLeft: theme.spacing(3),
-    color: '#333',
-    textDecoration: 'underline',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    width: '100%',
-    transition: '0.2s background ease',
-    '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
-      color: '#111',
+    '&.property': {
+      color: '#0077ea',
+    },
+    '&.indent': {
+      paddingLeft: theme.spacing(3),
     },
   },
-  link3: {
+  identifierLink: {
     display: 'inline-block',
     padding: theme.spacing(0),
     textDecoration: 'underline',
@@ -57,26 +60,16 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: 'nowrap',
     width: '100%',
     transition: '0.2s background ease',
-    fontSize: 10,
+    fontSize: '12px',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
-  },
-  link4: {
-    display: 'inline-block',
-    padding: theme.spacing(0),
-    textDecoration: 'underline',
-    color: '#333',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    verticalAlign: 'bottom',
-    transition: '0.2s background ease',
-    '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
-      color: '#111',
+    '&.identifier': {
+      color: '#0077ea',
+    },
+    '&.indent': {
+      paddingLeft: theme.spacing(3),
     },
   },
   text: {
@@ -97,7 +90,7 @@ const useStyles = makeStyles(theme => ({
     padding: theme.spacing(0),
     color: '#333',
     width: '100%',
-    fontSize: 10,
+    fontSize: '12px',
   },
   text4: {
     display: 'inline-block',
@@ -123,16 +116,12 @@ const useStyles = makeStyles(theme => ({
     width: '50%',
     height: '300px',
   },
-  title: {
+  imageTitle: {
     color: '#333',
   },
-  titleBar: {
+  imageTitleBar: {
     background:
       'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
-  },
-  inlineFlex: {
-    flex: 1,
-    flexDirection: 'row',
   },
 }))
 

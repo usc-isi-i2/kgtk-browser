@@ -8,6 +8,7 @@ import ImageListItem from '@material-ui/core/ImageListItem'
 import ImageListItemBar from '@material-ui/core/ImageListItemBar'
 
 import useStyles from '../styles/data'
+import classNames from '../utils/classNames'
 
 
 const Data = ({ data }) => {
@@ -18,10 +19,18 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h6">{data.text}</Typography>
-          <Typography variant="subtitle2">{data.ref}</Typography>
-          <Typography variant="subtitle2">{data.aliases.join(' | ')}</Typography>
-          <Typography variant="subtitle2">{data.description}</Typography>
+          <Typography variant="h4" className={classes.title}>
+            {data.text}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.nodeId}>
+            ({data.ref})
+          </Typography>
+          <Typography variant="subtitle2" className={classes.aliases}>
+            {data.aliases.join(' | ')}
+          </Typography>
+          <Typography variant="subtitle1" className={classes.description}>
+            {data.description}
+          </Typography>
         </Paper>
       </Grid>
     )
@@ -31,14 +40,20 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h6">Properties</Typography>
+          <Typography variant="h6" className={classes.heading}>
+            Properties
+          </Typography>
           {data.properties.map((property, index) => (
             <Grid container key={index} className={classes.row} spacing={0}>
               <Grid item xs={3}>
                 {property.url || property.ref ? (
                   <Link
                     variant="body2"
-                    className={classes.link}
+                    className={
+                      classNames(classes.propertyLink, {
+                        property: true,
+                      })
+                    }
                     href={property.url ? property.url : `/kb/item/${property.ref}`}
                     title={property.url ? property.url : `/kb/item/${property.ref}`}>
                     {property.property}
@@ -63,7 +78,7 @@ const Data = ({ data }) => {
                           </Typography>
                           <Link
                             variant="body2"
-                            className={classes.link4}
+                            className={classes.propertyLink}
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
                             title={value.url ? value.url : `/kb/item/${value.ref}`}>
                             {value.units}
@@ -72,7 +87,11 @@ const Data = ({ data }) => {
                       ) : value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.link}
+                          className={
+                            classNames(classes.propertyLink, {
+                              indent: false,
+                            })
+                          }
                           href={value.url ? value.url : `/kb/item/${value.ref}`}
                           title={value.url ? value.url : `/kb/item/${value.ref}`}>
                           {value.text}
@@ -93,7 +112,11 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
-                                className={classes.link2}
+                                className={
+                                  classNames(classes.propertyLink, {
+                                    indent: true,
+                                  })
+                                }
                                 href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
                                 title={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}>
                                 {qualifier.property}
@@ -122,7 +145,7 @@ const Data = ({ data }) => {
                                     </Typography>
                                     <Link
                                       variant="body2"
-                                      className={classes.link4}
+                                      className={classes.propertyLink}
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
                                       title={value.url ? value.url : `/kb/item/${value.ref}`}>
                                       {value.units}
@@ -131,7 +154,11 @@ const Data = ({ data }) => {
                                 ) : value.url || value.ref ? (
                                   <Link
                                     variant="body2"
-                                    className={classes.link}
+                                    className={
+                                      classNames(classes.propertyLink, {
+                                        indent: false,
+                                      })
+                                    }
                                     href={value.url ? value.url : `/kb/item/${value.ref}`}
                                     title={value.url ? value.url : `/kb/item/${value.ref}`}>
                                     {value.text}
@@ -176,8 +203,8 @@ const Data = ({ data }) => {
                 <ImageListItemBar
                   title={image.text}
                   classes={{
-                    root: classes.titleBar,
-                    title: classes.title,
+                    root: classes.imageTitleBar,
+                    title: classes.imageTitle,
                   }}
                 />
               </ImageListItem>
@@ -192,14 +219,20 @@ const Data = ({ data }) => {
     return (
       <Grid item xs={12}>
         <Paper className={classes.paper}>
-          <Typography variant="h4">Identifiers</Typography>
+          <Typography variant="h4" className={classes.heading}>
+            Identifiers
+          </Typography>
           {data.xrefs.map((property, index) => (
             <Grid container key={index} className={classes.row}>
               <Grid item xs={6}>
                 {property.url || property.ref ? (
                   <Link
                     variant="body2"
-                    className={classes.link3}
+                    className={
+                      classNames(classes.identifierLink, {
+                        identifier: true,
+                      })
+                    }
                     href={property.url ? property.url : `/?id=${property.ref}`}
                     title={property.url ? property.url : `/?id=${property.ref}`}>
                     {property.property}
@@ -217,7 +250,7 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.link3}
+                          className={classes.identifierLink}
                           href={value.url ? value.url : `/?id=${value.ref}`}
                           title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
@@ -238,7 +271,7 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
-                                className={classes.link2}
+                                className={classes.identifierLink}
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
                                 title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
                                 {qualifier.property}
@@ -260,7 +293,11 @@ const Data = ({ data }) => {
                                 {value.url || value.ref ? (
                                   <Link
                                     variant="body2"
-                                    className={classes.link2}
+                                    className={
+                                      classNames(classes.identifierLink, {
+                                        indent: true,
+                                      })
+                                    }
                                     href={value.url ? value.url : `/?id=${value.ref}`}
                                     title={value.url ? value.url : `/?id=${value.ref}`}>
                                     {value.text}
