@@ -27,7 +27,7 @@ const useStyles = makeStyles(theme => ({
     color: '#0c8e7d',
   },
   description: {},
-  link: {
+  propertyLink: {
     display: 'inline-block',
     padding: theme.spacing(0),
     textDecoration: 'underline',
@@ -42,21 +42,11 @@ const useStyles = makeStyles(theme => ({
       background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
-  },
-  link2: {
-    display: 'inline-block',
-    paddingLeft: theme.spacing(3),
-    color: '#333',
-    textDecoration: 'underline',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    width: '100%',
-    transition: '0.2s background ease',
-    '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
-      color: '#111',
+    '&.property': {
+      color: '#0077ea',
+    },
+    '&.indent': {
+      paddingLeft: theme.spacing(3),
     },
   },
   link3: {
