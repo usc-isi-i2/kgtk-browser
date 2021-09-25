@@ -50,8 +50,8 @@ const Data = ({ data }) => {
                   <Link
                     variant="body2"
                     className={
-                      classNames(classes.propertyLink, {
-                        property: true,
+                      classNames(classes.link, {
+                        main: true,
                       })
                     }
                     href={property.url ? property.url : `/kb/item/${property.ref}`}
@@ -73,12 +73,12 @@ const Data = ({ data }) => {
                           <Typography
                             variant="body2"
                             component="span"
-                            className={classes.text4}>
+                            className={classes.text}>
                             {value.text}&nbsp;
                           </Typography>
                           <Link
                             variant="body2"
-                            className={classes.propertyLink}
+                            className={classes.link}
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
                             title={value.url ? value.url : `/kb/item/${value.ref}`}>
                             {value.units}
@@ -88,7 +88,7 @@ const Data = ({ data }) => {
                         <Link
                           variant="body2"
                           className={
-                            classNames(classes.propertyLink, {
+                            classNames(classes.link, {
                               indent: false,
                             })
                           }
@@ -113,7 +113,7 @@ const Data = ({ data }) => {
                               <Link
                                 variant="body2"
                                 className={
-                                  classNames(classes.propertyLink, {
+                                  classNames(classes.link, {
                                     indent: true,
                                   })
                                 }
@@ -122,7 +122,11 @@ const Data = ({ data }) => {
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={classes.text2}>
+                              <Typography variant="body2" className={
+                                classNames(classes.text, {
+                                  indent: true,
+                                })
+                              }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -140,12 +144,12 @@ const Data = ({ data }) => {
                                     <Typography
                                       variant="body2"
                                       component="span"
-                                      className={classes.text4}>
+                                      className={classes.text}>
                                       {value.text}&nbsp;
                                     </Typography>
                                     <Link
                                       variant="body2"
-                                      className={classes.propertyLink}
+                                      className={classes.link}
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
                                       title={value.url ? value.url : `/kb/item/${value.ref}`}>
                                       {value.units}
@@ -155,7 +159,7 @@ const Data = ({ data }) => {
                                   <Link
                                     variant="body2"
                                     className={
-                                      classNames(classes.propertyLink, {
+                                      classNames(classes.link, {
                                         indent: false,
                                       })
                                     }
@@ -229,8 +233,8 @@ const Data = ({ data }) => {
                   <Link
                     variant="body2"
                     className={
-                      classNames(classes.identifierLink, {
-                        identifier: true,
+                      classNames(classes.link, {
+                        main: true,
                       })
                     }
                     href={property.url ? property.url : `/?id=${property.ref}`}
@@ -238,7 +242,7 @@ const Data = ({ data }) => {
                     {property.property}
                   </Link>
                 ) : (
-                  <Typography variant="body2" className={classes.text3}>
+                  <Typography variant="body2" className={classes.text}>
                     {property.property}
                   </Typography>
                 )}
@@ -250,13 +254,13 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.identifierLink}
+                          className={classes.link}
                           href={value.url ? value.url : `/?id=${value.ref}`}
                           title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
                         </Link>
                       ) : (
-                        <Typography variant="body2" className={classes.text3}>
+                        <Typography variant="body2" className={classes.text}>
                           {value.text}
                           {value.lang && (
                             <span className={classes.lang}>
@@ -271,13 +275,17 @@ const Data = ({ data }) => {
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
-                                className={classes.identifierLink}
+                                className={classes.link}
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
                                 title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={classes.text2}>
+                              <Typography variant="body2" className={
+                                classNames(classes.text, {
+                                  indent: true,
+                                })
+                              }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -294,7 +302,7 @@ const Data = ({ data }) => {
                                   <Link
                                     variant="body2"
                                     className={
-                                      classNames(classes.identifierLink, {
+                                      classNames(classes.link, {
                                         indent: true,
                                       })
                                     }
@@ -303,7 +311,11 @@ const Data = ({ data }) => {
                                     {value.text}
                                   </Link>
                                 ) : (
-                                  <Typography variant="body2" className={classes.text2}>
+                                  <Typography variant="body2" className={
+                                    classNames(classes.text, {
+                                      indent: true,
+                                    })
+                                  }>
                                     {value.text}
                                     {value.lang && (
                                       <span className={classes.lang}>
