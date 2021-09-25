@@ -27,29 +27,7 @@ const useStyles = makeStyles(theme => ({
     color: '#0c8e7d',
   },
   description: {},
-  propertyLink: {
-    display: 'inline-block',
-    padding: theme.spacing(0),
-    textDecoration: 'underline',
-    color: '#333',
-    cursor: 'pointer',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    width: '100%',
-    transition: '0.2s background ease',
-    '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
-      color: '#111',
-    },
-    '&.property': {
-      color: '#0077ea',
-    },
-    '&.indent': {
-      paddingLeft: theme.spacing(3),
-    },
-  },
-  identifierLink: {
+  link: {
     display: 'inline-block',
     padding: theme.spacing(0),
     textDecoration: 'underline',
@@ -65,7 +43,7 @@ const useStyles = makeStyles(theme => ({
       background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
-    '&.identifier': {
+    '&.main': {
       color: '#0077ea',
     },
     '&.indent': {
