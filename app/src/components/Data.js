@@ -176,8 +176,8 @@ const Data = ({ data }) => {
                 <ImageListItemBar
                   title={image.text}
                   classes={{
-                    root: classes.titleBar,
-                    title: classes.title,
+                    root: classes.imageTitleBar,
+                    title: classes.imageTitle,
                   }}
                 />
               </ImageListItem>
