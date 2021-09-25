@@ -1,4 +1,4 @@
-import { alpha, makeStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 
 
 const useStyles = makeStyles(theme => ({
@@ -39,7 +39,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     transition: '0.2s background ease',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
   },
@@ -55,7 +55,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     transition: '0.2s background ease',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
   },
@@ -72,7 +72,7 @@ const useStyles = makeStyles(theme => ({
     transition: '0.2s background ease',
     fontSize: '12px',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
   },
@@ -88,7 +88,7 @@ const useStyles = makeStyles(theme => ({
     verticalAlign: 'bottom',
     transition: '0.2s background ease',
     '&:hover': {
-      background: alpha(theme.palette.common.black, 0.05),
+      background: 'rgba(253, 214, 0, 0.25)',
       color: '#111',
     },
   },
