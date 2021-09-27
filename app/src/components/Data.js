@@ -52,7 +52,7 @@ const Data = ({ data }) => {
                     className={
                       classNames(classes.link, {
                         main: true,
-                        reference: !!property.url,
+                        externalLink: !!property.url,
                       })
                     }
                     href={property.url ? property.url : `/kb/item/${property.ref}`}
@@ -83,7 +83,7 @@ const Data = ({ data }) => {
                               classNames(classes.link, {
                                 property: !!value.ref && value.ref[0] === 'P',
                                 item: !!value.ref && value.ref[0] === 'Q',
-                                reference: !!value.url,
+                                externalLink: !!value.url,
                               })
                             }
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -99,7 +99,7 @@ const Data = ({ data }) => {
                               indent: false,
                               property: !!value.ref && value.ref[0] === 'P',
                               item: !!value.ref && value.ref[0] === 'Q',
-                              reference: !!value.url,
+                              externalLink: !!value.url,
                             })
                           }
                           href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -126,7 +126,7 @@ const Data = ({ data }) => {
                                   classNames(classes.link, {
                                     indent: true,
                                     property: true,
-                                    reference: !!value.url,
+                                    externalLink: !!value.url,
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
@@ -166,7 +166,7 @@ const Data = ({ data }) => {
                                         classNames(classes.link, {
                                           property: !!value.ref && value.ref[0] === 'P',
                                           item: !!value.ref && value.ref[0] === 'Q',
-                                          reference: !!value.url,
+                                          externalLink: !!value.url,
                                         })
                                       }
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -182,7 +182,7 @@ const Data = ({ data }) => {
                                         indent: false,
                                         property: !!value.ref && value.ref[0] === 'P',
                                         item: !!value.ref && value.ref[0] === 'Q',
-                                        reference: !!value.url,
+                                        externalLink: !!value.url,
                                       })
                                     }
                                     href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -257,7 +257,7 @@ const Data = ({ data }) => {
                     className={
                       classNames(classes.link, {
                         main: true,
-                        reference: !!property.url,
+                        externalLink: !!property.url,
                       })
                     }
                     href={property.url ? property.url : `/?id=${property.ref}`}
@@ -279,7 +279,7 @@ const Data = ({ data }) => {
                           variant="body2"
                           className={
                             classNames(classes.link, {
-                              reference: !!value.url,
+                              externalLink: !!value.url,
                             })
                           }
                           href={value.url ? value.url : `/?id=${value.ref}`}
@@ -304,7 +304,7 @@ const Data = ({ data }) => {
                                 variant="body2"
                                 className={
                                   classNames(classes.link, {
-                                    reference: !!value.url,
+                                    externalLink: !!value.url,
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
@@ -335,7 +335,7 @@ const Data = ({ data }) => {
                                     className={
                                       classNames(classes.link, {
                                         indent: true,
-                                        reference: !!value.url,
+                                        externalLink: !!value.url,
                                       })
                                     }
                                     href={value.url ? value.url : `/?id=${value.ref}`}

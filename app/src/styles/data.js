@@ -49,7 +49,7 @@ const useStyles = makeStyles(theme => ({
     '&.indent': {
       paddingLeft: theme.spacing(3),
     },
-    '&.reference': {
+    '&.externalLink': {
       textDecoration: 'underline',
     },
     '&.qualifier': {
