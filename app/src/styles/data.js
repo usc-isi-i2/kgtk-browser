@@ -79,7 +79,7 @@ const useStyles = makeStyles(theme => ({
     height: '300px',
   },
   imageTitle: {
-    color: '#333',
+    color: '#fefefe',
   },
   imageTitleBar: {
     background:
