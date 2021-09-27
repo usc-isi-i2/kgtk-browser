@@ -15,7 +15,8 @@ const useStyles = makeStyles(theme => ({
     color: '#333',
   },
   title: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   nodeId: {
     fontStyle: 'italic',
@@ -24,7 +25,8 @@ const useStyles = makeStyles(theme => ({
     color: '#999',
   },
   heading: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   description: {},
   link: {
