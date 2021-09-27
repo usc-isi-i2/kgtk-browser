@@ -15,7 +15,8 @@ const useStyles = makeStyles(theme => ({
     color: '#333',
   },
   title: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   nodeId: {
     fontStyle: 'italic',
@@ -24,13 +25,13 @@ const useStyles = makeStyles(theme => ({
     color: '#999',
   },
   heading: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   description: {},
   link: {
     display: 'inline-block',
     padding: theme.spacing(0),
-    textDecoration: 'underline',
     color: '#333',
     cursor: 'pointer',
     overflow: 'hidden',
@@ -40,7 +41,8 @@ const useStyles = makeStyles(theme => ({
     transition: '0.2s background ease',
     fontSize: '12px',
     '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
+      background: 'rgba(0, 0, 0, 0.05)',
+      textDecoration: 'underline',
       color: '#111',
     },
     '&.main': {
@@ -48,6 +50,18 @@ const useStyles = makeStyles(theme => ({
     },
     '&.indent': {
       paddingLeft: theme.spacing(3),
+    },
+    '&.externalLink': {
+      textDecoration: 'underline',
+    },
+    '&.qualifier': {
+      color: '#7059e6',
+    },
+    '&.property': {
+      color: '#0077ea',
+    },
+    '&.item': {
+      color: '#de6720',
     },
   },
   text: {
@@ -79,7 +93,7 @@ const useStyles = makeStyles(theme => ({
     height: '300px',
   },
   imageTitle: {
-    color: '#333',
+    color: '#fefefe',
   },
   imageTitleBar: {
     background:
