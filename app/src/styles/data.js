@@ -49,6 +49,9 @@ const useStyles = makeStyles(theme => ({
     '&.indent': {
       paddingLeft: theme.spacing(3),
     },
+    '&.reference': {
+      textDecoration: 'underline',
+    },
   },
   text: {
     display: 'inline-block',

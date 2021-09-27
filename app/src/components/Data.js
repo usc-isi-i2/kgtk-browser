@@ -254,7 +254,11 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.link}
+                          className={
+                            classNames(classes.link, {
+                              reference: true,
+                            })
+                          }
                           href={value.url ? value.url : `/?id=${value.ref}`}
                           title={value.url ? value.url : `/?id=${value.ref}`}>
                           {value.text}
