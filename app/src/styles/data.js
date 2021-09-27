@@ -39,7 +39,7 @@ const useStyles = makeStyles(theme => ({
     transition: '0.2s background ease',
     fontSize: '12px',
     '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
+      background: 'rgba(0, 0, 0, 0.05)',
       textDecoration: 'underline',
       color: '#111',
     },
