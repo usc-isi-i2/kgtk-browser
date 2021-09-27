@@ -52,6 +52,15 @@ const useStyles = makeStyles(theme => ({
     '&.reference': {
       textDecoration: 'underline',
     },
+    '&.qualifier': {
+      color: '#7059e6',
+    },
+    '&.property': {
+      color: '#0077ea',
+    },
+    '&.item': {
+      color: '#de6720',
+    },
   },
   text: {
     display: 'inline-block',

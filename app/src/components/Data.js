@@ -78,7 +78,12 @@ const Data = ({ data }) => {
                           </Typography>
                           <Link
                             variant="body2"
-                            className={classes.link}
+                            className={
+                              classNames(classes.link, {
+                                property: !!value.ref && value.ref[0] === 'P',
+                                item: !!value.ref && value.ref[0] === 'Q',
+                              })
+                            }
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
                             title={value.url ? value.url : `/kb/item/${value.ref}`}>
                             {value.units}
@@ -90,6 +95,8 @@ const Data = ({ data }) => {
                           className={
                             classNames(classes.link, {
                               indent: false,
+                              property: !!value.ref && value.ref[0] === 'P',
+                              item: !!value.ref && value.ref[0] === 'Q',
                             })
                           }
                           href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -115,6 +122,7 @@ const Data = ({ data }) => {
                                 className={
                                   classNames(classes.link, {
                                     indent: true,
+                                    property: true,
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
@@ -125,6 +133,7 @@ const Data = ({ data }) => {
                               <Typography variant="body2" className={
                                 classNames(classes.text, {
                                   indent: true,
+                                  property: true,
                                 })
                               }>
                                 {qualifier.text}
@@ -149,7 +158,12 @@ const Data = ({ data }) => {
                                     </Typography>
                                     <Link
                                       variant="body2"
-                                      className={classes.link}
+                                      className={
+                                        classNames(classes.link, {
+                                          property: !!value.ref && value.ref[0] === 'P',
+                                          item: !!value.ref && value.ref[0] === 'Q',
+                                        })
+                                      }
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
                                       title={value.url ? value.url : `/kb/item/${value.ref}`}>
                                       {value.units}
@@ -161,6 +175,8 @@ const Data = ({ data }) => {
                                     className={
                                       classNames(classes.link, {
                                         indent: false,
+                                        property: !!value.ref && value.ref[0] === 'P',
+                                        item: !!value.ref && value.ref[0] === 'Q',
                                       })
                                     }
                                     href={value.url ? value.url : `/kb/item/${value.ref}`}
