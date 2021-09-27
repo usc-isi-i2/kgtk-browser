@@ -30,7 +30,6 @@ const useStyles = makeStyles(theme => ({
   link: {
     display: 'inline-block',
     padding: theme.spacing(0),
-    textDecoration: 'underline',
     color: '#333',
     cursor: 'pointer',
     overflow: 'hidden',
@@ -41,6 +40,7 @@ const useStyles = makeStyles(theme => ({
     fontSize: '12px',
     '&:hover': {
       background: 'rgba(253, 214, 0, 0.25)',
+      textDecoration: 'underline',
       color: '#111',
     },
     '&.main': {
