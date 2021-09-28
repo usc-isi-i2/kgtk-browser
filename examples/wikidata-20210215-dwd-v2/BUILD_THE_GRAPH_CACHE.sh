@@ -3,7 +3,11 @@
 # Define some locations and options:
 export GRAPHS="./graphs"
 export GRAPH_CACHE="./cache/browser.sqlite3.db"
-export KGTK_OPTIONS="--progress"
+
+# There's no point in using "--progress", as it doesn't yet work
+# properly with "kgtk query" and this project's data is processed very
+# quickly.
+export KGTK_OPTIONS=""
 
 # *****************************************************************
 # Remove any existing graph cache file:
