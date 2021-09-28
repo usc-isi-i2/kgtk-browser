@@ -31,17 +31,17 @@ const useStyles = makeStyles(theme => ({
   description: {},
   link: {
     display: 'inline-block',
-    padding: theme.spacing(0),
+    padding: '0 3px',
     color: '#333',
     cursor: 'pointer',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    width: '100%',
     transition: '0.2s background ease',
+    verticalAlign: 'bottom',
     fontSize: '12px',
     '&:hover': {
-      background: 'rgba(0, 0, 0, 0.05)',
+      background: '#f3f3f3',
       textDecoration: 'underline',
       color: '#111',
     },
@@ -49,7 +49,7 @@ const useStyles = makeStyles(theme => ({
       color: '#0077ea',
     },
     '&.indent': {
-      paddingLeft: theme.spacing(3),
+      marginLeft: theme.spacing(3),
     },
     '&.externalLink': {
       textDecoration: 'underline',
@@ -66,8 +66,8 @@ const useStyles = makeStyles(theme => ({
   },
   text: {
     display: 'inline-block',
+    padding: '0 3px',
     color: '#333',
-    width: '100%',
     fontSize: '12px',
     '&.indent': {
       paddingLeft: theme.spacing(3),
