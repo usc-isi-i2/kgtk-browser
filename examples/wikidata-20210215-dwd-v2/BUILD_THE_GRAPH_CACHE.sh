@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Define some locations and options:
-export FINAL_PRODUCTS="./parts"
+export GRAPHS="./graphs"
 export GRAPH_CACHE="./cache/browser.sqlite3.db"
 export KGTK_OPTIONS="--progress"
 
@@ -19,7 +19,7 @@ rm -f ${GRAPH_CACHE}
 # *** Load and index graph_1: claims. ***
 echo -e "\n*** Load and index graph_1: claims. ***"
 time kgtk ${KGTK_OPTIONS} query \
-     -i ${FINAL_PRODUCTS}/claims.tsv.gz \
+     -i ${GRAPHS}/claims.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as claims --limit 1
 
@@ -51,7 +51,7 @@ time sqlite3 ${GRAPH_CACHE} \
 # *** Load and index graph_2: labels. ***
 echo -e "\n*** Load and index graph_2: labels. ***"
 time kgtk ${KGTK_OPTIONS} q
-     -i ${FINAL_PRODUCTS}/labels.tsv.gz \
+     -i ${GRAPHS}/labels.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as labels --limit 1
 
@@ -79,7 +79,7 @@ time sqlite3 ${GRAPH_CACHE} \
 # *** Load graph_3: aliases. ***
 echo -e "\n*** Load graph_3: aliases. ***"
 time kgtk ${KGTK_OPTIONS} query \
-     -i ${FINAL_PRODUCTS}/aliases.tsv.gz \
+     -i ${GRAPHS}/aliases.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as aliases --limit 1
 
@@ -100,7 +100,7 @@ time sqlite3 ${GRAPH_CACHE} \
 # *** Load graph_4: descriptions. ***
 echo -e "\n*** Load graph_4: descriptions. ***"
 time kgtk ${KGTK_OPTIONS} query \
-     -i ${FINAL_PRODUCTS}/descriptions.tsv.gz \
+     -i ${GRAPHS}/descriptions.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as descriptions --limit 1
 
@@ -128,7 +128,7 @@ time sqlite3 ${GRAPH_CACHE} \
 # *** Load graph_5: qualifiers. ***
 echo -e "\n*** Load graph_5: qualifiers. ***"
 time kgtk ${KGTK_OPTIONS} query \
-     -i ${FINAL_PRODUCTS}/quals.tsv.gz \
+     -i ${GRAPHS}/quals.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as qualifiers --limit 1
 
@@ -154,7 +154,7 @@ time sqlite3 ${GRAPH_CACHE} \
 # *** Load graph_6: metadata. ***
 echo -e "\n*** Load graph_6: metadata. ***"
 time kgtk ${KGTK_OPTIONS} query \
-     -i ${FINAL_PRODUCTS}/metadata.tsv.gz \
+     -i ${GRAPHS}/metadata.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as metadata --limit 1
 
