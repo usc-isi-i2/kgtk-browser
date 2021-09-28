@@ -5,7 +5,6 @@
 export INPUT_FILE="data/./all.tsv.gz"
 export WORKING_FOLDER="./temp"
 export FINAL_PRODUCTS="./parts"
-export GRAPH_CACHE="./cache/browser.sqlite3.db"
 export KGTK_OPTIONS="--progress"
 export MGZIP_OPTIONS="--use-mgzip --mgzip-threads=5"
 

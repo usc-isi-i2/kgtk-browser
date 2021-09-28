@@ -1,27 +1,23 @@
 #! /bin/bash
 
 # Define some locations and options:
+export FINAL_PRODUCTS="./data"
+export GRAPH_CACHE="./cache/browser.sqlite3.db"
+export KGTK_OPTIONS="--progress"
 
-FINAL_PRODUCTS="./data"
-export FINAL_PRODUCTS
-
-GRAPH_CACHE="./cache/browser.sqlite3.db"
-export GRAPH_CACHE
-
-KGTK_OPTIONS="--progress"
-export KGTK_OPTIONS
-
-# *** Load the various types of edges into the graph cache. ***
-# *** Note: These loads must take place in the order shown. ***
-# If the loads are not completed in this oder, then the
-# index commands that follow may execute on the wrong data.
-
+# ******************************************************************
 # Remove any existing graph cache file:
-echo -e "\nRemoving ${GRAPH_CACHE}"
+echo -e "\n*** Removing ${GRAPH_CACHE} ***"
 rm -f ${GRAPH_CACHE}
 
+# ******************************************************************
+# Load the various types of edges into the graph cache.  These loads
+# must take place in the order shown.  If the loads are not completed
+# in this order, then the sqlite3 commands that follow may execute on
+# the wrong data.
+
 # *** Load and index graph_1: claims. ***
-echo -e "\nLoad and index graph_1: claims."
+echo -e "\n*** Load and index graph_1: claims. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/claims.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -53,7 +49,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_1_id_idx"'
 
 # *** Load and index graph_2: labels. ***
-echo -e "\nLoad and index graph_2: labels."
+echo -e "\n*** Load and index graph_2: labels. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/labels.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -81,7 +77,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_2_node2_idx"'
 
 # *** Load graph_3: aliases. ***
-echo -e "\nLoad graph_3: aliases."
+echo -e "\n*** Load graph_3: aliases. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/aliases.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -102,7 +98,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_3_label_idx"'
 
 # *** Load graph_4: descriptions. ***
-echo -e "\nLoad graph_4: descriptions."
+echo -e "\n*** Load graph_4: descriptions. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/descriptions.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -130,7 +126,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_4_id_idx"'
 
 # *** Load graph_5: qualifiers. ***
-echo -e "\nLoad graph_5: qualifiers."
+echo -e "\n*** Load graph_5: qualifiers. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/quals.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -156,7 +152,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_5_node2_idx"'
 
 # *** Load graph_6: metadata. ***
-echo -e "\nLoad graph_6: metadata."
+echo -e "\n*** Load graph_6: metadata. ***"
 time kgtk ${KGTK_OPTIONS} query \
      -i ${FINAL_PRODUCTS}/metadata.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
@@ -208,8 +204,8 @@ time sqlite3 ${GRAPH_CACHE} \
     'ANALYZE "graph_2_node2upper_idx"'
 
 # ********************************************************
-# *** Verify that the graph cache has loaded as expected. ***
-echo -e "\nVerify that the graph cache has loaded as expected."
+# Verify that the graph cache has loaded as expected.
+echo -e "\n*** Verify that the graph cache has loaded as expected. ***"
 time kgtk ${KGTK_OPTIONS} query --show-cache \
      --graph-cache ${GRAPH_CACHE}
 

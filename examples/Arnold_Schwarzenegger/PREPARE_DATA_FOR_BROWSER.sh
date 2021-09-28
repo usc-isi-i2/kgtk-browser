@@ -2,39 +2,28 @@
 
 # Define some locations and options:
 
-INPUT_FILE="./data/Q2685.graph.all.tsv.gz"
-export INPUT_FILE
+export INPUT_FILE="./data/Q2685.graph.all.tsv.gz"
+export WORKING_FOLDER="./temp"
+export FINAL_PRODUCTS="./data"
+export KGTK_OPTIONS="--progress"
+export MGZIP_OPTIONS="--use-mgzip --mgzip-threads=5"
 
-WORKING_FOLDER="./temp"
-export WORKING_FOLDER
+# If pigz is installed, use it for better sorting performance.
+if [ -x "$(command -v pigz)" ]; then
+    export GZIP_CMD="--gzip-command=pigz"
+else
+    export GZIP_CMD=""
+fi
 
-FINAL_PRODUCTS="./data"
-export FINAL_PRODUCTS
+# Sort options, size these to your system.
+export SORT_PARALLEL=20
+export SORT_BUFFER_SIZE="25%"
+export SORT_TEMP_FOLDER="./temp"
 
-KGTK_OPTIONS="--progress"
-export KGTK_OPTIONS
-
-MGZIP_OPTIONS="--use-mgzip --mgzip-threads=5"
-export MGZIP_OPTIONS
-
-# If pigz is installed, you can enable it for better sorting performance.
-GZIP_CMD="--gzip-command=pigz"
-# GZIP_CMD=""
-export GZIP_CMD
-
-# Sort options
-SORT_PARALLEL=20
-export SORT_PARALLEL
-
-SORT_BUFFER_SIZE="25%"
-export SORT_BUFFER_SIZE
-
-TEMP_FOLDER="./data/temp"
-export TEMP_FOLDER
-
-# Create the working folder and final products folder:
+# Create the working, final products, and temporary folders:
 mkdir -p ${WORKING_FOLDER}
 mkdir -p ${FINAL_PRODUCTS}
+mkdir -p ${SORT_TEMP_FOLDER}
 
 # ******************************************************************
 # Split the unified input file into:
@@ -62,14 +51,14 @@ time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
 
 echo -e "\n*** Sort the claims and qualifiers file on the id column: ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      -i ${WORKING_FOLDER}/claims_and_quals.tsv.gz \
      -c id \
      -o ${WORKING_FOLDER}/claims_and_quals.sort-by-id.tsv.gz
 
 echo -e "\n*** Sort the claims and qualifiers file on the node1 column: ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      -i ${WORKING_FOLDER}/claims_and_quals.tsv.gz \
      -c node1 \
      -o ${WORKING_FOLDER}/claims_and_quals.sort-by-node1.tsv.gz
@@ -99,7 +88,7 @@ time kgtk ${KGTK_OPTIONS} add-id ${MGZIP_OPTIONS} --verbose \
 # the edges are loaded into the graph cache is a later script.
 echo -e "\n*** Ensure that the aliases do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/aliases.tsv.gz \
      -o ${WORKING_FOLDER}/aliases.sorted.tsv.gz
@@ -114,7 +103,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
  
 echo -e "\n*** Ensure that the descriptions do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/descriptions.tsv.gz \
      -o ${WORKING_FOLDER}/descriptions.sorted.tsv.gz
@@ -129,7 +118,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
  
 echo -e "\n*** Ensure that the labels do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/labels.tsv.gz \
      -o ${WORKING_FOLDER}/labels.sorted.tsv.gz
@@ -144,7 +133,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
  
 echo -e "\n*** Ensure that the metadata do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/metadata.tsv.gz \
      -o ${WORKING_FOLDER}/metadata.sorted.tsv.gz
@@ -159,7 +148,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
 
 echo -e "\n*** Ensure that the claims do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/claims.tsv.gz \
      -o ${WORKING_FOLDER}/claims.sorted.tsv.gz
@@ -173,7 +162,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
  
 echo -e "\n*** Ensure that the qualifiers do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
-     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${TEMP_FOLDER}" \
+     -X "--parallel ${SORT_PARALLEL} --buffer-size ${SORT_BUFFER_SIZE} -T ${SORT_TEMP_FOLDER}" \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/quals.with-ids.tsv.gz \
      -o ${WORKING_FOLDER}/quals.sorted.tsv.gz
