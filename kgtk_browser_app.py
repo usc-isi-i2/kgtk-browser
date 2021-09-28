@@ -1360,6 +1360,14 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose)
+    rb_fetch_and_render_qualifiers(backend,
+                                   item,
+                                   response_xrefs,
+                                   qual_proplist_max_len=qual_proplist_max_len,
+                                   qual_valuelist_max_len=qual_valuelist_max_len,
+                                   qual_query_limit=qual_query_limit,
+                                   lang=lang,
+                                   verbose=verbose)
     return response_properties, response_xrefs
 
 def downsample_properties(property_list: typing.MutableMapping[str, any],
