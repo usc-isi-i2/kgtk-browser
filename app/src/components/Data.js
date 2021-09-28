@@ -79,7 +79,7 @@ const Data = ({ data }) => {
                             component="span"
                             title={value.text}
                             className={classes.text}>
-                            {value.text}&nbsp;
+                            {value.text}
                           </Typography>
                           <Link
                             variant="body2"
@@ -175,7 +175,7 @@ const Data = ({ data }) => {
                                           smaller: true,
                                         })
                                       }>
-                                      {value.text}&nbsp;
+                                      {value.text}
                                     </Typography>
                                     <Link
                                       variant="body2"
