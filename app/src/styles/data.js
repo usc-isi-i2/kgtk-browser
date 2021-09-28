@@ -15,7 +15,8 @@ const useStyles = makeStyles(theme => ({
     color: '#333',
   },
   title: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   nodeId: {
     fontStyle: 'italic',
@@ -24,39 +25,64 @@ const useStyles = makeStyles(theme => ({
     color: '#999',
   },
   heading: {
-    color: '#0c8e7d',
+    color: '#333',
+    fontWeight: 'bold',
   },
   description: {},
   link: {
     display: 'inline-block',
-    padding: theme.spacing(0),
-    textDecoration: 'underline',
+    padding: '0 3px',
     color: '#333',
     cursor: 'pointer',
+    maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    width: '100%',
     transition: '0.2s background ease',
-    fontSize: '12px',
+    fontSize: '14px',
     '&:hover': {
-      background: 'rgba(253, 214, 0, 0.25)',
+      background: '#f3f3f3',
+      textDecoration: 'underline',
       color: '#111',
     },
-    '&.main': {
-      color: '#0077ea',
+    '&.smaller': {
+      fontSize: '12px',
     },
     '&.indent': {
-      paddingLeft: theme.spacing(3),
+      marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
+    },
+    '&.externalLink': {
+      textDecoration: 'underline',
+    },
+    '&.identifier': {
+      color: '#0077ea',
+    },
+    '&.qualifier': {
+      color: '#7059e6',
+    },
+    '&.property': {
+      color: '#0077ea',
+    },
+    '&.item': {
+      color: '#de6720',
     },
   },
   text: {
     display: 'inline-block',
+    paddingLeft: '3px',
     color: '#333',
-    width: '100%',
-    fontSize: '12px',
+    fontSize: '14px',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     '&.indent': {
-      paddingLeft: theme.spacing(3),
+      marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
+    },
+    '&.smaller': {
+      fontSize: '12px',
     },
   },
   lang: {
@@ -79,7 +105,7 @@ const useStyles = makeStyles(theme => ({
     height: '300px',
   },
   imageTitle: {
-    color: '#333',
+    color: '#fefefe',
   },
   imageTitleBar: {
     background:

@@ -51,15 +51,19 @@ const Data = ({ data }) => {
                     variant="body2"
                     className={
                       classNames(classes.link, {
-                        main: true,
+                        property: true,
+                        externalLink: !!property.url,
                       })
                     }
                     href={property.url ? property.url : `/kb/item/${property.ref}`}
-                    title={property.url ? property.url : `/kb/item/${property.ref}`}>
+                    title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
                 ) : (
-                  <Typography variant="body2" className={classes.text}>
+                  <Typography
+                    variant="body2"
+                    title={property.property}
+                    className={classes.text}>
                     {property.property}
                   </Typography>
                 )}
@@ -73,14 +77,21 @@ const Data = ({ data }) => {
                           <Typography
                             variant="body2"
                             component="span"
+                            title={value.text}
                             className={classes.text}>
-                            {value.text}&nbsp;
+                            {value.text}
                           </Typography>
                           <Link
                             variant="body2"
-                            className={classes.link}
+                            className={
+                              classNames(classes.link, {
+                                property: !!value.ref && value.ref[0] === 'P',
+                                item: !!value.ref && value.ref[0] === 'Q',
+                                externalLink: !!value.url,
+                              })
+                            }
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
-                            title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                            title={value.url ? value.url : value.text}>
                             {value.units}
                           </Link>
                         </React.Fragment>
@@ -90,14 +101,20 @@ const Data = ({ data }) => {
                           className={
                             classNames(classes.link, {
                               indent: false,
+                              property: !!value.ref && value.ref[0] === 'P',
+                              item: !!value.ref && value.ref[0] === 'Q',
+                              externalLink: !!value.url,
                             })
                           }
                           href={value.url ? value.url : `/kb/item/${value.ref}`}
-                          title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                          title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
                       ) : (
-                        <Typography variant="body2" className={classes.text}>
+                        <Typography
+                          variant="body2"
+                          title={value.text}
+                          className={classes.text}>
                           {value.text}
                           {value.lang && (
                             <span className={classes.lang}>
@@ -115,18 +132,26 @@ const Data = ({ data }) => {
                                 className={
                                   classNames(classes.link, {
                                     indent: true,
+                                    smaller: true,
+                                    property: true,
+                                    externalLink: !!value.url,
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
-                                title={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}>
+                                title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={
-                                classNames(classes.text, {
-                                  indent: true,
-                                })
-                              }>
+                              <Typography
+                                variant="body2"
+                                title={qualifier.text}
+                                className={
+                                  classNames(classes.text, {
+                                    indent: true,
+                                    smaller: true,
+                                    property: true,
+                                  })
+                                }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -144,14 +169,26 @@ const Data = ({ data }) => {
                                     <Typography
                                       variant="body2"
                                       component="span"
-                                      className={classes.text}>
-                                      {value.text}&nbsp;
+                                      title={value.text}
+                                      className={
+                                        classNames(classes.text, {
+                                          smaller: true,
+                                        })
+                                      }>
+                                      {value.text}
                                     </Typography>
                                     <Link
                                       variant="body2"
-                                      className={classes.link}
+                                      className={
+                                        classNames(classes.link, {
+                                          property: !!value.ref && value.ref[0] === 'P',
+                                          item: !!value.ref && value.ref[0] === 'Q',
+                                          externalLink: !!value.url,
+                                          smaller: true,
+                                        })
+                                      }
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
-                                      title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                                      title={value.url ? value.url : value.units}>
                                       {value.units}
                                     </Link>
                                   </React.Fragment>
@@ -161,14 +198,25 @@ const Data = ({ data }) => {
                                     className={
                                       classNames(classes.link, {
                                         indent: false,
+                                        smaller: true,
+                                        property: !!value.ref && value.ref[0] === 'P',
+                                        item: !!value.ref && value.ref[0] === 'Q',
+                                        externalLink: !!value.url,
                                       })
                                     }
                                     href={value.url ? value.url : `/kb/item/${value.ref}`}
-                                    title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                                    title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
                                 ) : (
-                                  <Typography variant="body2" className={classes.text}>
+                                  <Typography
+                                    variant="body2"
+                                    title={value.text}
+                                    className={
+                                      classNames(classes.text, {
+                                        smaller: true,
+                                      })
+                                    }>
                                     {value.text}
                                     {value.lang && (
                                       <span className={classes.lang}>
@@ -234,15 +282,24 @@ const Data = ({ data }) => {
                     variant="body2"
                     className={
                       classNames(classes.link, {
-                        main: true,
+                        smaller: true,
+                        identifier: true,
+                        externalLink: !!property.url,
                       })
                     }
                     href={property.url ? property.url : `/?id=${property.ref}`}
-                    title={property.url ? property.url : `/?id=${property.ref}`}>
+                    title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
                 ) : (
-                  <Typography variant="body2" className={classes.text}>
+                  <Typography
+                    variant="body2"
+                    title={property.property}
+                    className={
+                      classNames(classes.text, {
+                        smaller: true,
+                      })
+                    }>
                     {property.property}
                   </Typography>
                 )}
@@ -254,13 +311,25 @@ const Data = ({ data }) => {
                       {value.url || value.ref ? (
                         <Link
                           variant="body2"
-                          className={classes.link}
+                          className={
+                            classNames(classes.link, {
+                              smaller: true,
+                              externalLink: !!value.url,
+                            })
+                          }
                           href={value.url ? value.url : `/?id=${value.ref}`}
-                          title={value.url ? value.url : `/?id=${value.ref}`}>
+                          title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
                       ) : (
-                        <Typography variant="body2" className={classes.text}>
+                        <Typography
+                          variant="body2"
+                          title={value.text}
+                          className={
+                            classNames(classes.text, {
+                              smaller: true,
+                            })
+                          }>
                           {value.text}
                           {value.lang && (
                             <span className={classes.lang}>
@@ -271,21 +340,31 @@ const Data = ({ data }) => {
                       )}
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
                         <Grid container spacing={0} key={index}>
-                          <Grid item xs={4}>
+                          <Grid item xs={6}>
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
-                                className={classes.link}
+                                className={
+                                  classNames(classes.link, {
+                                    indent: true,
+                                    smaller: true,
+                                    externalLink: !!value.url,
+                                  })
+                                }
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
-                                title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
                             ) : (
-                              <Typography variant="body2" className={
-                                classNames(classes.text, {
-                                  indent: true,
-                                })
-                              }>
+                              <Typography
+                                variant="body2"
+                                title={qualifier.text}
+                                className={
+                                  classNames(classes.text, {
+                                    indent: true,
+                                    smaller: true,
+                                  })
+                                }>
                                 {qualifier.text}
                                 {qualifier.lang && (
                                   <span className={classes.lang}>
@@ -295,7 +374,7 @@ const Data = ({ data }) => {
                               </Typography>
                             )}
                           </Grid>
-                          <Grid item xs={8}>
+                          <Grid item xs={6}>
                             {!!qualifier.values && qualifier.values.map((value, index) => (
                               <Grid container key={index}>
                                 {value.url || value.ref ? (
@@ -303,19 +382,23 @@ const Data = ({ data }) => {
                                     variant="body2"
                                     className={
                                       classNames(classes.link, {
-                                        indent: true,
+                                        smaller: true,
+                                        externalLink: !!value.url,
                                       })
                                     }
                                     href={value.url ? value.url : `/?id=${value.ref}`}
-                                    title={value.url ? value.url : `/?id=${value.ref}`}>
+                                    title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
                                 ) : (
-                                  <Typography variant="body2" className={
-                                    classNames(classes.text, {
-                                      indent: true,
-                                    })
-                                  }>
+                                  <Typography
+                                    variant="body2"
+                                    title={value.text}
+                                    className={
+                                      classNames(classes.text, {
+                                        smaller: true,
+                                      })
+                                    }>
                                     {value.text}
                                     {value.lang && (
                                       <span className={classes.lang}>
