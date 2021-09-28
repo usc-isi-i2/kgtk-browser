@@ -270,6 +270,7 @@ const Data = ({ data }) => {
                     variant="body2"
                     className={
                       classNames(classes.link, {
+                        smaller: true,
                         identifier: true,
                         externalLink: !!property.url,
                       })
@@ -279,7 +280,13 @@ const Data = ({ data }) => {
                     {property.property}
                   </Link>
                 ) : (
-                  <Typography variant="body2" className={classes.text}>
+                  <Typography
+                    variant="body2"
+                    className={
+                      classNames(classes.text, {
+                        smaller: true,
+                      })
+                    }>
                     {property.property}
                   </Typography>
                 )}
@@ -293,6 +300,7 @@ const Data = ({ data }) => {
                           variant="body2"
                           className={
                             classNames(classes.link, {
+                              smaller: true,
                               externalLink: !!value.url,
                             })
                           }
@@ -301,7 +309,13 @@ const Data = ({ data }) => {
                           {value.text}
                         </Link>
                       ) : (
-                        <Typography variant="body2" className={classes.text}>
+                        <Typography
+                          variant="body2"
+                          className={
+                            classNames(classes.text, {
+                              smaller: true,
+                            })
+                          }>
                           {value.text}
                           {value.lang && (
                             <span className={classes.lang}>
@@ -318,6 +332,7 @@ const Data = ({ data }) => {
                                 variant="body2"
                                 className={
                                   classNames(classes.link, {
+                                    smaller: true,
                                     externalLink: !!value.url,
                                   })
                                 }
@@ -329,6 +344,7 @@ const Data = ({ data }) => {
                               <Typography variant="body2" className={
                                 classNames(classes.text, {
                                   indent: true,
+                                  smaller: true,
                                 })
                               }>
                                 {qualifier.text}
@@ -349,6 +365,7 @@ const Data = ({ data }) => {
                                     className={
                                       classNames(classes.link, {
                                         indent: true,
+                                        smaller: true,
                                         externalLink: !!value.url,
                                       })
                                     }
@@ -360,6 +377,7 @@ const Data = ({ data }) => {
                                   <Typography variant="body2" className={
                                     classNames(classes.text, {
                                       indent: true,
+                                      smaller: true,
                                     })
                                   }>
                                     {value.text}
