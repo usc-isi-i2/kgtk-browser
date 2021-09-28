@@ -1,5 +1,7 @@
 #! /bin/tcsh
 
+# Run this from the KGTK browser top folder.
+
 setenv FLASK_APP kgtk_browser_app.py
 setenv FLASK_ENV development
 setenv KGTK_BROWSER_CONFIG examples/Arnold_Schwarzenegger/config_on_ckg07.py

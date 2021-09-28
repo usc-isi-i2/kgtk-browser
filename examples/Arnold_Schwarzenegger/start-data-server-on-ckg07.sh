@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# Run this from the KGTK browser top folder.
+
 FLASK_APP=kgtk_browser_app.py
 export FLASK_APP
 
