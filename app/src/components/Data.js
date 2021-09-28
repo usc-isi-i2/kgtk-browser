@@ -51,7 +51,7 @@ const Data = ({ data }) => {
                     variant="body2"
                     className={
                       classNames(classes.link, {
-                        main: true,
+                        property: true,
                         externalLink: !!property.url,
                       })
                     }
@@ -256,7 +256,7 @@ const Data = ({ data }) => {
                     variant="body2"
                     className={
                       classNames(classes.link, {
-                        main: true,
+                        identifier: true,
                         externalLink: !!property.url,
                       })
                     }

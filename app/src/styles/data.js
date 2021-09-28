@@ -55,6 +55,9 @@ const useStyles = makeStyles(theme => ({
     '&.externalLink': {
       textDecoration: 'underline',
     },
+    '&.identifier': {
+      color: '#0077ea',
+    },
     '&.qualifier': {
       color: '#7059e6',
     },
