@@ -5,6 +5,7 @@ Kypher backend support for the KGTK browser.
 import datetime
 import hashlib
 from http import HTTPStatus
+import math
 import os.path
 import random
 import sys
@@ -472,10 +473,16 @@ def rb_format_number_or_quantity(
             if value.fields.low_tolerancestr is not None or value.fields.high_tolerancestr is not None:
                 newnum += "["
                 if value.fields.low_tolerancestr is not None:
-                    newnum += value.fields.low_tolerancestr
+                    lowtolstr: str = value.fields.low_tolerancestr
+                    if lowtolstr.startswith("+"):
+                        lowtolstr = lowtolstr[1:]
+                    newnum += lowtolstr
                 newnum += ","
                 if value.fields.high_tolerancestr is not None:
-                    newnum += value.fields.high_tolerancestr
+                    hitolstr: str = value.fields.high_tolerancestr
+                    if hitolstr.startswith("+"):
+                        hitolstr = hitolstr[1:]
+                    newnum += hitolstr
                 newnum += "]"
 
             if value.fields.si_units is not None:
@@ -569,6 +576,46 @@ def rb_format_time(
         return rb_iso_format_time(target_node, value)
     else:
         return rb_human_format_time(target_node, value)
+
+def rb_dd_to_dms(degs: float)->typing.Tuple[bool, int, int, float]:
+    # Taken from: https://stackoverflow.com/questions/2579535/convert-dd-decimal-degrees-to-dms-degrees-minutes-seconds-in-python
+    neg: bool = degs < 0
+    if neg:
+        degs = - degs
+    d_int: int
+    degs, d_int = math.modf(degs)
+    m_int: int
+    mins, m_int = math.modf(60 * degs)
+    secs: float =           60 * mins
+    return neg, d_int, m_int, secs
+
+def rm_format_dms(degs: float,
+                  is_lat: bool)->str:
+
+    neg: bool
+    d_int: int
+    m_int: int
+    secs: float
+    neg, d_int, m_int, secs = rb_dd_to_dms(degs)
+    degree_sign = u"\N{DEGREE SIGN}"
+    if is_lat:
+        letter: str = "W" if neg else "E"
+        return "%3d%s%2d\"%2.5f'%s" % (d_int, degree_sign, m_int, secs, letter)
+    else:
+        letter: str = "S" if neg else "N"
+        return "%2d%s%2d\"%2.5f'%s" % (d_int, degree_sign, m_int, secs, letter)
+
+def rb_format_geo(latlon: str,
+                  use_decimal_format: bool = False,
+)->str:
+    if use_decimal_format:
+        return latlon
+
+    ddlatstr: str
+    ddlonstr: str
+    ddlatstr, ddlonstr = latlon.split("/")
+    return rm_format_dms(float(ddlatstr), is_lat=True) + ", " + rm_format_dms(float(ddlonstr), is_lat=False)
+    
 
 rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
@@ -731,7 +778,7 @@ def rb_build_current_value(
 
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]
-        current_value["text"] = geoloc # Consider reformatting
+        current_value["text"] = rb_format_geo(geoloc)
         current_value["url"] = "http://maps.google.com/maps?q=" + geoloc.replace("/", ",")
     else:
         print("*** unknown rb_type %s" % repr(rb_type)) # ***
@@ -1311,6 +1358,14 @@ def rb_render_kb_items_and_qualifiers(backend,
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_properties,
+                                   qual_proplist_max_len=qual_proplist_max_len,
+                                   qual_valuelist_max_len=qual_valuelist_max_len,
+                                   qual_query_limit=qual_query_limit,
+                                   lang=lang,
+                                   verbose=verbose)
+    rb_fetch_and_render_qualifiers(backend,
+                                   item,
+                                   response_xrefs,
                                    qual_proplist_max_len=qual_proplist_max_len,
                                    qual_valuelist_max_len=qual_valuelist_max_len,
                                    qual_query_limit=qual_query_limit,
