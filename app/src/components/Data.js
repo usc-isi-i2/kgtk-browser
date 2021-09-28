@@ -56,7 +56,7 @@ const Data = ({ data }) => {
                       })
                     }
                     href={property.url ? property.url : `/kb/item/${property.ref}`}
-                    title={property.url ? property.url : `/kb/item/${property.ref}`}>
+                    title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
                 ) : (
@@ -91,7 +91,7 @@ const Data = ({ data }) => {
                               })
                             }
                             href={value.url ? value.url : `/kb/item/${value.ref}`}
-                            title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                            title={value.url ? value.url : value.text}>
                             {value.units}
                           </Link>
                         </React.Fragment>
@@ -107,7 +107,7 @@ const Data = ({ data }) => {
                             })
                           }
                           href={value.url ? value.url : `/kb/item/${value.ref}`}
-                          title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                          title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
                       ) : (
@@ -138,7 +138,7 @@ const Data = ({ data }) => {
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
-                                title={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}>
+                                title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
                             ) : (
@@ -188,7 +188,7 @@ const Data = ({ data }) => {
                                         })
                                       }
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
-                                      title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                                      title={value.url ? value.url : value.units}>
                                       {value.units}
                                     </Link>
                                   </React.Fragment>
@@ -205,7 +205,7 @@ const Data = ({ data }) => {
                                       })
                                     }
                                     href={value.url ? value.url : `/kb/item/${value.ref}`}
-                                    title={value.url ? value.url : `/kb/item/${value.ref}`}>
+                                    title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
                                 ) : (
@@ -288,7 +288,7 @@ const Data = ({ data }) => {
                       })
                     }
                     href={property.url ? property.url : `/?id=${property.ref}`}
-                    title={property.url ? property.url : `/?id=${property.ref}`}>
+                    title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
                 ) : (
@@ -318,7 +318,7 @@ const Data = ({ data }) => {
                             })
                           }
                           href={value.url ? value.url : `/?id=${value.ref}`}
-                          title={value.url ? value.url : `/?id=${value.ref}`}>
+                          title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
                       ) : (
@@ -352,7 +352,7 @@ const Data = ({ data }) => {
                                   })
                                 }
                                 href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
-                                title={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}>
+                                title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
                             ) : (
@@ -387,7 +387,7 @@ const Data = ({ data }) => {
                                       })
                                     }
                                     href={value.url ? value.url : `/?id=${value.ref}`}
-                                    title={value.url ? value.url : `/?id=${value.ref}`}>
+                                    title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
                                 ) : (
