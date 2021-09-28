@@ -34,25 +34,29 @@ const useStyles = makeStyles(theme => ({
     padding: '0 3px',
     color: '#333',
     cursor: 'pointer',
+    maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     transition: '0.2s background ease',
-    verticalAlign: 'bottom',
-    fontSize: '12px',
+    fontSize: '14px',
     '&:hover': {
       background: '#f3f3f3',
       textDecoration: 'underline',
       color: '#111',
     },
-    '&.main': {
-      color: '#0077ea',
+    '&.smaller': {
+      fontSize: '12px',
     },
     '&.indent': {
       marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
     },
     '&.externalLink': {
       textDecoration: 'underline',
+    },
+    '&.identifier': {
+      color: '#0077ea',
     },
     '&.qualifier': {
       color: '#7059e6',
@@ -66,11 +70,19 @@ const useStyles = makeStyles(theme => ({
   },
   text: {
     display: 'inline-block',
-    padding: '0 3px',
+    paddingLeft: '3px',
     color: '#333',
-    fontSize: '12px',
+    fontSize: '14px',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     '&.indent': {
-      paddingLeft: theme.spacing(3),
+      marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
+    },
+    '&.smaller': {
+      fontSize: '12px',
     },
   },
   lang: {
