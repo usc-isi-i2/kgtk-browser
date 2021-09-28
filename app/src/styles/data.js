@@ -37,8 +37,8 @@ const useStyles = makeStyles(theme => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    width: '100%',
     transition: '0.2s background ease',
+    verticalAlign: 'bottom',
     fontSize: '12px',
     '&:hover': {
       background: 'rgba(0, 0, 0, 0.05)',
@@ -67,7 +67,6 @@ const useStyles = makeStyles(theme => ({
   text: {
     display: 'inline-block',
     color: '#333',
-    width: '100%',
     fontSize: '12px',
     '&.indent': {
       paddingLeft: theme.spacing(3),
