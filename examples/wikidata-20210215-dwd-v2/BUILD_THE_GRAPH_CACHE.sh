@@ -50,7 +50,7 @@ time sqlite3 ${GRAPH_CACHE} \
 
 # *** Load and index graph_2: labels. ***
 echo -e "\n*** Load and index graph_2: labels. ***"
-time kgtk ${KGTK_OPTIONS} q
+time kgtk ${KGTK_OPTIONS} query \
      -i ${GRAPHS}/labels.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as labels --limit 1
