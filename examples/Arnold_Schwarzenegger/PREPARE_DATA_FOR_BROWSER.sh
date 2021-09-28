@@ -170,7 +170,6 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --presorted --report-lists --verbose \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/quals.sorted.tsv.gz \
-     -o ${GRAPHS}/quals.tsv.gz \
-|& tee ${WORKING_FOLDER}/quals-deduplicated.log
+     -o ${GRAPHS}/quals.tsv.gz
  
 echo -e "\n*** The data files are ready to be loaded into the graph cache. ***"
