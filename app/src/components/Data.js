@@ -125,6 +125,7 @@ const Data = ({ data }) => {
                                 className={
                                   classNames(classes.link, {
                                     indent: true,
+                                    smaller: true,
                                     property: true,
                                     externalLink: !!value.url,
                                   })
@@ -137,6 +138,7 @@ const Data = ({ data }) => {
                               <Typography variant="body2" className={
                                 classNames(classes.text, {
                                   indent: true,
+                                  smaller: true,
                                   property: true,
                                 })
                               }>
@@ -157,7 +159,11 @@ const Data = ({ data }) => {
                                     <Typography
                                       variant="body2"
                                       component="span"
-                                      className={classes.text}>
+                                      className={
+                                        classNames(classes.text, {
+                                          smaller: true,
+                                        })
+                                      }>
                                       {value.text}&nbsp;
                                     </Typography>
                                     <Link
@@ -167,6 +173,7 @@ const Data = ({ data }) => {
                                           property: !!value.ref && value.ref[0] === 'P',
                                           item: !!value.ref && value.ref[0] === 'Q',
                                           externalLink: !!value.url,
+                                          smaller: true,
                                         })
                                       }
                                       href={value.url ? value.url : `/kb/item/${value.ref}`}
@@ -180,6 +187,7 @@ const Data = ({ data }) => {
                                     className={
                                       classNames(classes.link, {
                                         indent: false,
+                                        smaller: true,
                                         property: !!value.ref && value.ref[0] === 'P',
                                         item: !!value.ref && value.ref[0] === 'Q',
                                         externalLink: !!value.url,
@@ -190,7 +198,13 @@ const Data = ({ data }) => {
                                     {value.text}
                                   </Link>
                                 ) : (
-                                  <Typography variant="body2" className={classes.text}>
+                                  <Typography
+                                    variant="body2"
+                                    className={
+                                      classNames(classes.text, {
+                                        smaller: true,
+                                      })
+                                    }>
                                     {value.text}
                                     {value.lang && (
                                       <span className={classes.lang}>

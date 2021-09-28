@@ -40,14 +40,14 @@ const useStyles = makeStyles(theme => ({
     whiteSpace: 'nowrap',
     transition: '0.2s background ease',
     verticalAlign: 'bottom',
-    fontSize: '12px',
+    fontSize: '14px',
     '&:hover': {
       background: '#f3f3f3',
       textDecoration: 'underline',
       color: '#111',
     },
-    '&.main': {
-      color: '#0077ea',
+    '&.smaller': {
+      fontSize: '12px',
     },
     '&.indent': {
       marginLeft: theme.spacing(3),
@@ -72,7 +72,7 @@ const useStyles = makeStyles(theme => ({
     display: 'inline-block',
     padding: '0 3px',
     color: '#333',
-    fontSize: '12px',
+    fontSize: '14px',
     maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -80,6 +80,9 @@ const useStyles = makeStyles(theme => ({
     verticalAlign: 'bottom',
     '&.indent': {
       paddingLeft: theme.spacing(3),
+    },
+    '&.smaller': {
+      fontSize: '12px',
     },
   },
   lang: {
