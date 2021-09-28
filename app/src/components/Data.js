@@ -326,12 +326,13 @@ const Data = ({ data }) => {
                       )}
                       {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
                         <Grid container spacing={0} key={index}>
-                          <Grid item xs={4}>
+                          <Grid item xs={6}>
                             {qualifier.url || qualifier.ref ? (
                               <Link
                                 variant="body2"
                                 className={
                                   classNames(classes.link, {
+                                    indent: true,
                                     smaller: true,
                                     externalLink: !!value.url,
                                   })
@@ -356,7 +357,7 @@ const Data = ({ data }) => {
                               </Typography>
                             )}
                           </Grid>
-                          <Grid item xs={8}>
+                          <Grid item xs={6}>
                             {!!qualifier.values && qualifier.values.map((value, index) => (
                               <Grid container key={index}>
                                 {value.url || value.ref ? (
@@ -364,7 +365,6 @@ const Data = ({ data }) => {
                                     variant="body2"
                                     className={
                                       classNames(classes.link, {
-                                        indent: true,
                                         smaller: true,
                                         externalLink: !!value.url,
                                       })
@@ -376,7 +376,6 @@ const Data = ({ data }) => {
                                 ) : (
                                   <Typography variant="body2" className={
                                     classNames(classes.text, {
-                                      indent: true,
                                       smaller: true,
                                     })
                                   }>
