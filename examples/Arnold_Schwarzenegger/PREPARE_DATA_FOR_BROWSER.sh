@@ -36,8 +36,6 @@ mkdir -p ${SORT_TEMP_FOLDER}
 # Also split out "link" records, they shouldn't be there.
 time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
      -i ${INPUT_FILE} \
-     -p ';link;' \
-     -o ${WORKING_FOLDER}/links.tsv.gz \
      -p ';alias;' \
      -o ${WORKING_FOLDER}/aliases.tsv.gz \
      -p ';description;' \
