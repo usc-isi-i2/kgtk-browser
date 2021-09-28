@@ -4,7 +4,7 @@
 
 export INPUT_FILE="./data/Q2685.graph.all.tsv.gz"
 export WORKING_FOLDER="./temp"
-export FINAL_PRODUCTS="./data"
+export GRAPHS="./graphs"
 export KGTK_OPTIONS="--progress"
 export MGZIP_OPTIONS="--use-mgzip --mgzip-threads=5"
 
@@ -22,7 +22,7 @@ export SORT_TEMP_FOLDER="./temp"
 
 # Create the working, final products, and temporary folders:
 mkdir -p ${WORKING_FOLDER}
-mkdir -p ${FINAL_PRODUCTS}
+mkdir -p ${GRAPHS}
 mkdir -p ${SORT_TEMP_FOLDER}
 
 # ******************************************************************
@@ -99,7 +99,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --columns node1 label node2 \
      --keep-first id \
      -i ${WORKING_FOLDER}/aliases.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/aliases.tsv.gz
+     -o ${GRAPHS}/aliases.tsv.gz
  
 echo -e "\n*** Ensure that the descriptions do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
@@ -114,7 +114,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
                       --columns node1 label node2 \
                       --keep-first id \
      -i ${WORKING_FOLDER}/descriptions.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/descriptions.tsv.gz
+     -o ${GRAPHS}/descriptions.tsv.gz
  
 echo -e "\n*** Ensure that the labels do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
@@ -129,7 +129,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --columns node1 label node2 \
      --keep-first id \
      -i ${WORKING_FOLDER}/labels.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/labels.tsv.gz
+     -o ${GRAPHS}/labels.tsv.gz
  
 echo -e "\n*** Ensure that the metadata do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
@@ -144,7 +144,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --columns node1 label node2 \
      --keep-first id \
      -i ${WORKING_FOLDER}/metadata.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/metadata.tsv.gz
+     -o ${GRAPHS}/metadata.tsv.gz
 
 echo -e "\n*** Ensure that the claims do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
@@ -158,7 +158,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --presorted --report-lists --verbose \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/claims.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/claims.tsv.gz
+     -o ${GRAPHS}/claims.tsv.gz
  
 echo -e "\n*** Ensure that the qualifiers do not contain gross duplicates: sorting... ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
@@ -172,7 +172,7 @@ time kgtk ${KGTK_OPTIONS} deduplicate ${MGZIP_OPTIONS} \
      --presorted --report-lists --verbose \
      --columns node1 label node2 id \
      -i ${WORKING_FOLDER}/quals.sorted.tsv.gz \
-     -o ${FINAL_PRODUCTS}/quals.tsv.gz \
+     -o ${GRAPHS}/quals.tsv.gz \
 |& tee ${WORKING_FOLDER}/quals-deduplicated.log
  
 echo -e "\n*** The data files are ready to be loaded into the graph cache. ***"
