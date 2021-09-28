@@ -62,6 +62,7 @@ const Data = ({ data }) => {
                 ) : (
                   <Typography
                     variant="body2"
+                    title={property.property}
                     className={classes.text}>
                     {property.property}
                   </Typography>
@@ -76,6 +77,7 @@ const Data = ({ data }) => {
                           <Typography
                             variant="body2"
                             component="span"
+                            title={value.text}
                             className={classes.text}>
                             {value.text}&nbsp;
                           </Typography>
@@ -111,6 +113,7 @@ const Data = ({ data }) => {
                       ) : (
                         <Typography
                           variant="body2"
+                          title={value.text}
                           className={classes.text}>
                           {value.text}
                           {value.lang && (
@@ -141,6 +144,7 @@ const Data = ({ data }) => {
                             ) : (
                               <Typography
                                 variant="body2"
+                                title={qualifier.text}
                                 className={
                                   classNames(classes.text, {
                                     indent: true,
@@ -165,6 +169,7 @@ const Data = ({ data }) => {
                                     <Typography
                                       variant="body2"
                                       component="span"
+                                      title={value.text}
                                       className={
                                         classNames(classes.text, {
                                           smaller: true,
@@ -206,6 +211,7 @@ const Data = ({ data }) => {
                                 ) : (
                                   <Typography
                                     variant="body2"
+                                    title={value.text}
                                     className={
                                       classNames(classes.text, {
                                         smaller: true,
@@ -288,6 +294,7 @@ const Data = ({ data }) => {
                 ) : (
                   <Typography
                     variant="body2"
+                    title={property.property}
                     className={
                       classNames(classes.text, {
                         smaller: true,
@@ -317,6 +324,7 @@ const Data = ({ data }) => {
                       ) : (
                         <Typography
                           variant="body2"
+                          title={value.text}
                           className={
                             classNames(classes.text, {
                               smaller: true,
@@ -350,6 +358,7 @@ const Data = ({ data }) => {
                             ) : (
                               <Typography
                                 variant="body2"
+                                title={qualifier.text}
                                 className={
                                   classNames(classes.text, {
                                     indent: true,
@@ -384,6 +393,7 @@ const Data = ({ data }) => {
                                 ) : (
                                   <Typography
                                     variant="body2"
+                                    title={value.text}
                                     className={
                                       classNames(classes.text, {
                                         smaller: true,
