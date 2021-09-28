@@ -190,7 +190,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'CREATE INDEX "graph_2_node1upper_idx" on graph_2 ("node1;upper")'
 
 time sqlite3 ${GRAPH_CACHE} \
-    'ANALYZE "graph_2_node2upper_idx"'
+    'ANALYZE "graph_2_node1upper_idx"'
 
 #  Build the "node2;upper" column in the label table:
 time sqlite3 ${GRAPH_CACHE} \
