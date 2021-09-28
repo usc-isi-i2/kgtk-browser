@@ -39,7 +39,6 @@ const useStyles = makeStyles(theme => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     transition: '0.2s background ease',
-    verticalAlign: 'bottom',
     fontSize: '14px',
     '&:hover': {
       background: '#f3f3f3',
@@ -51,6 +50,7 @@ const useStyles = makeStyles(theme => ({
     },
     '&.indent': {
       marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
     },
     '&.externalLink': {
       textDecoration: 'underline',
@@ -70,16 +70,16 @@ const useStyles = makeStyles(theme => ({
   },
   text: {
     display: 'inline-block',
-    padding: '0 3px',
+    paddingLeft: '3px',
     color: '#333',
     fontSize: '14px',
     maxWidth: '100%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    verticalAlign: 'bottom',
     '&.indent': {
-      paddingLeft: theme.spacing(3),
+      marginLeft: theme.spacing(3),
+      maxWidth: `calc(100% - ${theme.spacing(3)}px)`,
     },
     '&.smaller': {
       fontSize: '12px',
