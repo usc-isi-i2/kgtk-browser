@@ -26,8 +26,8 @@ const Data = ({ data }) => {
     let url = `/kb/item/${item.ref}`
 
     // prefix the url with the location of where the app is hosted
-    if ( process.env.PUBLIC_URL ) {
-      url = `${process.env.PUBLIC_URL}${url}`
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
     }
 
     return url
