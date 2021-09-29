@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom'
 import Data from './Data'
 import Header from './Header'
 import ArrowUp from './ArrowUp'
+import fetchInfo from '../utils/fetchInfo'
 import fetchData from '../utils/fetchData'
 
 
@@ -26,10 +27,14 @@ const ItemContent = () => {
 
   const classes = useStyles()
 
+  const [info, setInfo] = useState()
   const [data, setData] = useState()
   const [loading, setLoading] = useState()
 
   useEffect(() => {
+    // get the project configuration information
+    fetchInfo().then(info => setInfo(info))
+
     getData(id)
   }, [])
 
