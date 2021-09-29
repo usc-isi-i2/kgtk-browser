@@ -84,6 +84,7 @@ def get_info():
     """
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
+        'version': app.config.get('VERSION'),
     }
     return flask.jsonify(info), 200
 

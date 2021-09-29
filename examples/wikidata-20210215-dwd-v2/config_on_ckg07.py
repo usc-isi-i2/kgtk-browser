@@ -5,6 +5,7 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
+VERSION               = '0.0.1'
 GRAPH_ID              = 'DWD'
 GRAPH_CACHE           = '/data/rogers/wikidata-20210215-dwd-v2/cache/browser.sqlite3.db'
 LOG_LEVEL             = 1
