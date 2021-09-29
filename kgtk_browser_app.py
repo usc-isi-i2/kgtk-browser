@@ -76,6 +76,18 @@ with get_backend(app) as backend:
     ...
 """
 
+
+@app.route('/kb/info', methods=['GET'])
+def get_info():
+    """
+    Returns project configuration information
+    """
+    info = {
+        'graph': app.config.get('GRAPH_CACHE'),
+    }
+    return flask.jsonify(info), 200
+
+
 # revised browser support:
 
 @app.route('/kb', methods=['GET'])
