@@ -10,6 +10,7 @@ import fetchData from '../utils/fetchData'
 const Content = () => {
 
   const [data, setData] = useState()
+  const [loading, setLoading] = useState()
 
   useEffect(() => {
     const locationQuery = new URLSearchParams(window.location.search)
@@ -19,7 +20,11 @@ const Content = () => {
   }, [])
 
   const getData = id => {
-    fetchData(id).then(data => setData(data))
+    setLoading(true)
+    fetchData(id).then(data => {
+      setLoading(false)
+      setData(data)
+    })
   }
 
   return (
