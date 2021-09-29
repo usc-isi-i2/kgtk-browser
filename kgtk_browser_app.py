@@ -79,7 +79,21 @@ with get_backend(app) as backend:
     ...
 """
 
+
+@app.route('/kb/info', methods=['GET'])
+def get_info():
+    """
+    Returns project configuration information
+    """
+    info = {
+        'graph_id': app.config.get('GRAPH_ID'),
+        'version': app.config.get('VERSION'),
+    }
+    return flask.jsonify(info), 200
+
+
 # revised browser support:
+
 @app.route('/kb', methods=['GET'])
 def rb_get_kb():
     """This is the basic entrypoint for starting the KGTK browser.
@@ -615,7 +629,7 @@ def rb_format_geo(latlon: str,
     ddlonstr: str
     ddlatstr, ddlonstr = latlon.split("/")
     return rm_format_dms(float(ddlatstr), is_lat=True) + ", " + rm_format_dms(float(ddlonstr), is_lat=False)
-    
+
 
 rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
@@ -774,7 +788,7 @@ def rb_build_current_value(
             current_value["ref"] = number_ref
 
     elif rb_type == "/w/time":
-        current_value["text"] = rb_iso_format_time(target_node, value)
+        current_value["text"] = rb_format_time(target_node, value)
 
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]

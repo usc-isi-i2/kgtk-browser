@@ -3,7 +3,11 @@
 # Define some locations and options:
 export GRAPHS="./graphs"
 export GRAPH_CACHE="./cache/browser.sqlite3.db"
-export KGTK_OPTIONS="--progress"
+
+# There's no point in using "--progress", as it doesn't yet work
+# properly with "kgtk query" and this project's data is processed very
+# quickly.
+export KGTK_OPTIONS=""
 
 # *****************************************************************
 # Remove any existing graph cache file:
@@ -50,7 +54,7 @@ time sqlite3 ${GRAPH_CACHE} \
 
 # *** Load and index graph_2: labels. ***
 echo -e "\n*** Load and index graph_2: labels. ***"
-time kgtk ${KGTK_OPTIONS} q
+time kgtk ${KGTK_OPTIONS} query \
      -i ${GRAPHS}/labels.tsv.gz \
      --graph-cache ${GRAPH_CACHE} \
      --as labels --limit 1
@@ -186,7 +190,7 @@ time sqlite3 ${GRAPH_CACHE} \
     'CREATE INDEX "graph_2_node1upper_idx" on graph_2 ("node1;upper")'
 
 time sqlite3 ${GRAPH_CACHE} \
-    'ANALYZE "graph_2_node2upper_idx"'
+    'ANALYZE "graph_2_node1upper_idx"'
 
 #  Build the "node2;upper" column in the label table:
 time sqlite3 ${GRAPH_CACHE} \

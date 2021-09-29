@@ -1,6 +1,6 @@
-const fetchData = id => {
+const fetchInfo = id => {
 
-  let url = `/kb/item?id=${id}`
+  let url = `/kb/info`
   if ( process.env.REACT_APP_BACKEND_URL ) {
     url = `${process.env.REACT_APP_BACKEND_URL}${url}`
   }
@@ -13,4 +13,4 @@ const fetchData = id => {
   })
 }
 
-export default fetchData
+export default fetchInfo

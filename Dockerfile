@@ -21,5 +21,7 @@ ARG KGTK_BROWSER_CONFIG=kgtk_browser_config.py
 ENV KGTK_BROWSER_CONFIG=$KGTK_BROWSER_CONFIG
 
 WORKDIR /src
-EXPOSE 5000
-ENTRYPOINT flask run --host 0.0.0.0 --port 5000
+
+EXPOSE 5006
+
+ENTRYPOINT flask run --host 0.0.0.0 --port 5006

@@ -6,8 +6,8 @@ import kgtk.kypher.api as kapi
 ### Basic configuration section:
 
 VERSION               = '0.0.1'
-GRAPH_ID              = 'knowledge-graph'
-GRAPH_CACHE           = '/data/database/venice.sqlite3.db'
+GRAPH_ID              = 'DWD'
+GRAPH_CACHE           = '/data/rogers/wikidata-20210215-dwd-v2/cache/browser.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
 MAX_RESULTS           = 10000
@@ -16,14 +16,14 @@ MAX_CACHE_SIZE        = 1000
 DEFAULT_LANGUAGE      = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
-KG_EDGES_GRAPH         = '/data/kg_files/venice.tsv'
-KG_QUALIFIERS_GRAPH    = '/data/kg_files/venice.tsv'
-KG_LABELS_GRAPH        = '/data/kg_files/venice.tsv'
-KG_ALIASES_GRAPH       = '/data/kg_files/venice.tsv'
-KG_DESCRIPTIONS_GRAPH  = '/data/kg_files/venice.tsv'
-KG_IMAGES_GRAPH        = '/data/kg_files/venice.tsv'
-KG_FANOUTS_GRAPH       = '/data/kg_files/venice.tsv'
-KG_DATATYPES_GRAPH     = '/data/kg_files/venice.tsv'
+KG_EDGES_GRAPH        = 'claims'
+KG_QUALIFIERS_GRAPH   = 'qualifiers'
+KG_LABELS_GRAPH       = 'labels'
+KG_ALIASES_GRAPH      = 'aliases'
+KG_DESCRIPTIONS_GRAPH = 'descriptions'
+KG_IMAGES_GRAPH       = 'claims'
+KG_FANOUTS_GRAPH      = 'metadata'
+KG_DATATYPES_GRAPH     = 'metadata'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL       = 'label'
@@ -179,7 +179,7 @@ NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1
-    and then all qualifier edges for all such base edges found.  For each
+    and then all qualifier edges for all such base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -202,7 +202,7 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_inverse_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
-    and then all qualifier edges for all such inverse base edges found.  For each
+    and then all qualifier edges for all such inverse base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -382,74 +382,6 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     limit= "$LIMIT"
 )
 
-RB_GET_MORAL_FOUNDATIONS_WITH_P585 = _api.get_query(
-    doc="""
-    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
-    Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
-    the specified language (using 'any' for 'LANG' retrieves all labels).
-    Return 'node1', 'node_label' pairs as the result.
-    Limit the number of return pairs to LIMIT.
-
-    The output from this query is unordered, due to poor perfromance when
-    there are a large number of matches.
-
-    This query implements a case-insensitive search by matching against the
-    'node2;upper' column, which has the 'node' column in the label graph
-    ('graph_2') translated to upper case.  'node2;upper' may be created with
-    `kgtk calc` or `kgtk query`, or with the following SQL:
-
-    alter table graph_2 add column "node2;upper" text;
-    update graph_2 set "node2;upper" = upper(node2);
-
-    For proper performance, the "node2;upper" column in the label graph must be indexed:
-
-    CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
-    ANALYZE "graph_2_node2upper_idx";
-    """,
-    name='RB_GET_MORAL_FOUNDATIONS_WITH_P585',
-    inputs='labels',
-    maxcache=MAX_CACHE_SIZE * 10,
-    match='''$labels:
-      (node)-[:P31]->(:`venice:Sentence`),
-      (node)-[:P585]->(datetime),
-      (node)-[msf1:P1552]->(:Q00_authorityvirtue),
-      (msf1)-[]->(msf1_score),
-      (node)-[msf2:P1552]->(:Q00_authorityvice),
-      (msf2)-[]->(msf2_score),
-      (node)-[msf3:P1552]->(:Q00_fairnessvirtue),
-      (msf3)-[]->(msf3_score),
-      (node)-[msf4:P1552]->(:Q00_fairnessvice),
-      (msf4)-[]->(msf4_score),
-      (node)-[msf5:P1552]->(:Q00_harmvirtue),
-      (msf5)-[]->(msf5_score),
-      (node)-[msf6:P1552]->(:Q00_harmvice),
-      (msf6)-[]->(msf6_score),
-      (node)-[msf7:P1552]->(:Q00_ingroupvirtue),
-      (msf7)-[]->(msf7_score),
-      (node)-[msf8:P1552]->(:Q00_ingroupvice),
-      (msf8)-[]->(msf8_score),
-      (node)-[msf9:P1552]->(:Q00_purityvirtue),
-      (msf9)-[]->(msf9_score),
-      (node)-[msf10:P1552]->(:Q00_purityvice),
-      (msf10)-[]->(msf10_score)
-    ''',
-    ret='''
-        node,
-        datetime,
-        msf1_score,
-        msf2_score,
-        msf3_score,
-        msf4_score,
-        msf5_score,
-        msf6_score,
-        msf7_score,
-        msf8_score,
-        msf9_score,
-        msf10_score
-    ''',
-    limit= "$LIMIT"
-)
-
 RB_NODE_EDGES_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
@@ -459,7 +391,6 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     Parameter 'LANG' controls the language for retrieved labels.
     Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
     and label's 'label_label'.
-    Limit the number of return edges to LIMIT.
 
     """,
     name='rb_node_edges_query',
@@ -482,15 +413,15 @@ RB_NODE_EDGES_QUERY = _api.get_query(
            'n2label as target_label, ' +
            'n2desc as target_description, ' +
            'rlwdt as wikidatatype',
-    order= 'r.label, n2, r, llabel, n2label, n2desc', # For better performance with LIMIT, sort in caller.
-    limit="$LIMIT"
+    order= 'r.label, n2, r, llabel, n2label, n2desc',
+    limit= "$LIMIT"
 )
 
 RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1
-    and then all qualifier edges for all such base edges found.  For each
+    and then all qualifier edges for all such base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -512,15 +443,15 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
            'qllabel as qual_relationship_label, ' +
            'qn2label as qual_node2_label, ' +
            'qd as qual_node2_description',
-    order= 'r, q.label, qn2, q, qllabel, qn2label, qd', # For better performance with LIMIT, sort in caller.
-    limit="$LIMIT"
+    order= 'r, q.label, qn2, q, qllabel, qn2label, qd',
+    limit= "$LIMIT"
 )
 
 RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'EDGE_ID' as their edge ID
-    and then all qualifier edges for all such base edges found.  For each
+    and then all qualifier edges for all such base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -555,16 +486,16 @@ def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
     different approaches to strings with embedded quotes.
     Fortunately, we do not expect embedded quotes in the
     id_list.
+
+    Do not supply a name for these queries.
     """
     return _api.get_query(
         doc="""
         Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers_in()'.
         Given parameter 'ID_LIST' retrieve all edges that have their ID in 'ID_LIST'
-        and then all qualifier edges for all such base edges found.  For each
+        and then all qualifier edges for all such base edges found.  For each 
         qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
         for base edges.
-
-        Do not supply a name for these queries.
         """,
         inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
         match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
@@ -626,7 +557,7 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_inverse_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
-    and then all qualifier edges for all such base edges found.  For each
+    and then all qualifier edges for all such base edges found.  For each 
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -728,8 +659,8 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
        are instances of (P31) Wikisource language edition (Q15156455).
     2) Looking for entries with aliases equal to the language code.
     3) Looking for entries with matching Identifiers.
-    4) Encouraging Wikidata to consistantly mark languages.
-
+    4) Encouraging Wikidata to consistently mark languages.    
+    
     Returns the labels for the node1's.
     Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1` and 'node1_label'.
