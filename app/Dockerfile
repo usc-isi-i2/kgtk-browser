@@ -20,6 +20,10 @@ RUN npm install react-scripts@3.4.1 -g --silent
 ARG REACT_APP_BACKEND_URL=
 ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 
+# set the frontend url environment variable
+ARG REACT_APP_FRONTEND_URL=
+ENV REACT_APP_FRONTEND_URL=$REACT_APP_FRONTEND_URL
+
 # copy the source over
 ADD src /app/src
 ADD public /app/public
