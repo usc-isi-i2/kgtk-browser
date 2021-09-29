@@ -1,6 +1,6 @@
 const fetchData = id => {
 
-  let url = `/kb/item?fmt=cjson&id=${id}`
+  let url = `/kb/item?id=${id}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
     url = `${process.env.REACT_APP_BACKEND_URL}${url}`
   }
