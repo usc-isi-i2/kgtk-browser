@@ -112,6 +112,7 @@ const Header = ({ getData }) => {
           <Typography className={classes.title} variant="h6" noWrap>
             KGTK Browser
           </Typography>
+          <div className={classes.grow} />
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -133,7 +134,6 @@ const Header = ({ getData }) => {
             )}
             {renderSearchResults()}
           </div>
-          <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton
               color="inherit"
