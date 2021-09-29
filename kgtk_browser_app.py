@@ -83,7 +83,7 @@ def get_info():
     Returns project configuration information
     """
     info = {
-        'graph': app.config.get('GRAPH_NAME'),
+        'graph_id': app.config.get('GRAPH_ID'),
     }
     return flask.jsonify(info), 200
 
