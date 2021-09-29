@@ -5,6 +5,7 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
+GRAPH_NAME            = 'DWD'
 GRAPH_CACHE           = './wikidata.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
