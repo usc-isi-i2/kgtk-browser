@@ -59,7 +59,7 @@ const ItemContent = () => {
   return (
     <React.Fragment>
       <div id="top" />
-      <Header getData={getData} />
+      <Header getData={getData} info={info} />
       <Container maxWidth="xl" loading={loading}>
         {!!data && <Data data={data} />}
         {renderLoading()}
