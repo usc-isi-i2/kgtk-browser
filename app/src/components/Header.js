@@ -15,7 +15,7 @@ import search from '../utils/search'
 import useStyles from '../styles/header'
 
 
-const Header = ({ getData }) => {
+const Header = ({ getData, info }) => {
 
   const classes = useStyles()
 
@@ -110,8 +110,9 @@ const Header = ({ getData }) => {
             <Logo/>
           </div>
           <Typography className={classes.title} variant="h6" noWrap>
-            KGTK Browser
+            KGTK Browser{info ? `: ${info.graph_id}` : ''}
           </Typography>
+          <div className={classes.grow} />
           <div className={classes.search}>
             <div className={classes.searchIcon}>
               <SearchIcon />
@@ -133,7 +134,6 @@ const Header = ({ getData }) => {
             )}
             {renderSearchResults()}
           </div>
-          <div className={classes.grow} />
           <div className={classes.sectionDesktop}>
             <IconButton
               color="inherit"
