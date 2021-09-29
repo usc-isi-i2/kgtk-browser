@@ -177,7 +177,7 @@ NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1
-    and then all qualifier edges for all such base edges found.  For each 
+    and then all qualifier edges for all such base edges found.  For each
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -200,7 +200,7 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_inverse_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
-    and then all qualifier edges for all such inverse base edges found.  For each 
+    and then all qualifier edges for all such inverse base edges found.  For each
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -420,7 +420,7 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1
-    and then all qualifier edges for all such base edges found.  For each 
+    and then all qualifier edges for all such base edges found.  For each
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -450,7 +450,7 @@ RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'EDGE_ID' as their edge ID
-    and then all qualifier edges for all such base edges found.  For each 
+    and then all qualifier edges for all such base edges found.  For each
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -490,7 +490,7 @@ def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
         doc="""
         Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers_in()'.
         Given parameter 'ID_LIST' retrieve all edges that have their ID in 'ID_LIST'
-        and then all qualifier edges for all such base edges found.  For each 
+        and then all qualifier edges for all such base edges found.  For each
         qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
         for base edges.
 
@@ -556,7 +556,7 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_inverse_edge_qualifiers()'.
     Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2
-    and then all qualifier edges for all such base edges found.  For each 
+    and then all qualifier edges for all such base edges found.  For each
     qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
     for base edges.
     """,
@@ -658,8 +658,8 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
        are instances of (P31) Wikisource language edition (Q15156455).
     2) Looking for entries with aliases equal to the language code.
     3) Looking for entries with matching Identifiers.
-    4) Encouraging Wikidata to consistantly mark languages.    
-    
+    4) Encouraging Wikidata to consistantly mark languages.
+
     Returns the labels for the node1's.
     Parameter 'LANG' controls the language for retrieved labels.
     Return the category `node1` and 'node1_label'.

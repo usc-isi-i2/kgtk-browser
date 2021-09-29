@@ -77,6 +77,7 @@ with get_backend(app) as backend:
 """
 
 # revised browser support:
+
 @app.route('/kb', methods=['GET'])
 def rb_get_kb():
     """This is the basic entrypoint for starting the KGTK browser.
@@ -124,21 +125,21 @@ def rb_sort_query_results(results: typing.List[typing.List[str]])->typing.List[t
         digits: str = result[0][1:]
         if len(digits) > maxdigits:
             maxdigits = len(digits)
-        
+
     # Build a map from the zero-filled item name to each result pair:
     for result in results:
         item: str = result[0]
         label: str = result[1]
         key: str = item[0] + item[1:].zfill(maxdigits)
         result_map[key] = result
-        
+
     # Sort and return the results.
     sorted_results: typing.List[typing.List[str]] = list()
     key: str
     for key in sorted(result_map.keys()):
         sorted_results.append(result_map[key])
     return sorted_results
-    
+
 
 @app.route('/kb/query', methods=['GET'])
 def rb_get_kb_query():
@@ -196,7 +197,7 @@ def rb_get_kb_query():
     The result returned is:
 
     [
-        { 
+        {
             "ref: "QNODE",
             "text"; "QNODE",
             "description": "LABEL"
@@ -285,7 +286,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_label_exactly:
                 # Query the labels, looking for an exact length match. The
                 # search may be case-sensitive or case-insensitive, according
@@ -340,7 +341,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_item_prefixes:
                 if verbose:
                     print("Searching for node prefix %s" % repr(q), file=sys.stderr, flush=True)
@@ -363,7 +364,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if match_label_prefixes:
                 # Query the labels, looking for a prefix match. The search may
                 # be case-sensitive or case-insensitive, according to
@@ -397,7 +398,7 @@ def rb_get_kb_query():
                             "description": label
                         }
                     )
-    
+
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
@@ -405,7 +406,7 @@ def rb_get_kb_query():
             response_data = {
                 "matches": matches
             }
-            
+
             return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -455,7 +456,7 @@ def rb_format_number_or_quantity(
     number_value: str
     number_units: typing.Optional[str] = None
     number_ref: typing.Optional[str] = None
-    
+
     if datatype == KgtkFormat.DataType.NUMBER:
         numberstr: str = target_node
         if numberstr.startswith("+"): # Remove any leading "+"
@@ -496,7 +497,7 @@ def rb_format_number_or_quantity(
                         rb_units_node_cache[units_node] = rb_unstringify(units_node_label)
                     else:
                         rb_units_node_cache[units_node] = None # Remember the failure.
-                                       
+
                 if rb_units_node_cache[units_node] is not None:
                     number_units = rb_units_node_cache[units_node]
                 else:
@@ -612,7 +613,7 @@ def rb_format_geo(latlon: str,
     ddlonstr: str
     ddlatstr, ddlonstr = latlon.split("/")
     return rm_format_dms(float(ddlatstr), is_lat=True) + ", " + rm_format_dms(float(ddlonstr), is_lat=False)
-    
+
 
 rb_language_name_cache: typing.MutableMapping[str, typing.Optional[str]] = dict()
 
@@ -637,7 +638,7 @@ def rb_get_language_name(backend,
     if language_suffix is not None and len(language_suffix) > 0:
         full_code = language + language_suffix
         if verbose:
-            print("Looking up full language code %s" % repr(full_code), file=sys.stderr, flush=True) 
+            print("Looking up full language code %s" % repr(full_code), file=sys.stderr, flush=True)
         if full_code in rb_language_name_cache:
             name = rb_language_name_cache[full_code]
             if verbose:
@@ -658,7 +659,7 @@ def rb_get_language_name(backend,
 
     short_code: str = language
     if verbose:
-        print("Looking up short language code %s" % repr(short_code), file=sys.stderr, flush=True) 
+        print("Looking up short language code %s" % repr(short_code), file=sys.stderr, flush=True)
     if short_code in rb_language_name_cache:
         name = rb_language_name_cache[short_code]
         if verbose:
@@ -669,7 +670,7 @@ def rb_get_language_name(backend,
                 return full_code
             else:
                 return short_code
-            
+
         if show_code:
             if full_code is not None:
                 name += " (" + full_code + ")"
@@ -681,7 +682,7 @@ def rb_get_language_name(backend,
             rb_language_name_cache[full_code] = name
 
         return name
-    
+
     labels = backend.rb_get_language_labels(KgtkFormat.stringify(short_code), lang=lang)
     if len(labels) > 0 and labels[0][1] is not None and len(labels[0][1]) > 0:
         name = KgtkFormat.unstringify(labels[0][1])
@@ -731,7 +732,7 @@ def rb_build_current_value(
     datatype: KgtkFormat.DataType = value.classify()
 
     text_value: str
-    
+
     if wikidatatype == "external-id":
         text_value = rb_unstringify(target_node)
         current_value["text"] = text_value
@@ -772,7 +773,7 @@ def rb_build_current_value(
 
     elif rb_type == "/w/time":
         current_value["text"] = rb_format_time(target_node, value)
-        
+
     elif rb_type == "/w/geo":
         geoloc = target_node[1:]
         current_value["text"] = rb_format_geo(geoloc)
@@ -792,7 +793,7 @@ def rb_find_type(node2: str, value: KgtkValue)->str:
         else:
             rb_type = "unknown"
             print("*** unknown datatype: no node2") # ***def rb_send_kb_item(item: str):
-            
+
     elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
         rb_type = "/w/text"
     elif datatype == KgtkFormat.DataType.STRING:
@@ -813,7 +814,7 @@ def rb_find_type(node2: str, value: KgtkValue)->str:
 # The following routine was taken from Stack Overflow.
 # https://stackoverflow.com/questions/33689980/get-thumbnail-image-from-wikimedia-commons
 def rb_get_wc_thumb(image: str, width: int = 300): # image = e.g. from Wikidata, width in pixels
-    image = image.replace(' ', '_') # need to replace spaces with underline 
+    image = image.replace(' ', '_') # need to replace spaces with underline
     m = hashlib.md5()
     m.update(image.encode('utf-8'))
     d: str = m.hexdigest()
@@ -849,7 +850,7 @@ def rb_build_gallery(item_edges: typing.List[typing.List[str]],
 
     # print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
 
-    return gallery    
+    return gallery
 
 
 # List the properties in the order that you want them to appear.  All unlisted
@@ -945,7 +946,7 @@ def rb_build_property_priority_map(backend, verbose: bool = False):
                 rb_scan_property_list(initial_priority_map, revised_priority_map, properties_seen, forest[prop], forest, labels)
         else:
             revised_priority_map[prop] = len(revised_priority_map)
-    
+
     rb_property_priority_map = revised_priority_map
     if verbose:
         print("%d entries in the property priority map" % len(rb_property_priority_map), file=sys.stderr, flush=True) # ***
@@ -955,7 +956,7 @@ rb_property_priority_width = 5
 rb_default_property_priority = int("1" + "0".zfill(rb_property_priority_width)) - 1
 
 def rb_get_property_priority(relationship: str)->str:
-    priority: int 
+    priority: int
     if rb_property_priority_map is None:
         priority = rb_default_property_priority
     else:
@@ -1035,7 +1036,7 @@ def rb_build_item_qualifier_map(item_qualifier_edges: typing.List[typing.List[st
             if qual_relationship_key not in keyed_edge_map:
                 keyed_edge_map[qual_relationship_key] = list()
             keyed_edge_map[qual_relationship_key].append(item_qual_edge)
-        
+
         sorted_item_qual_edges: typing.List[typing.List[str]] = list()
         for qual_relationship_key in sorted(keyed_edge_map.keys()):
             item_qual_edges: typing.List[typing.List[str]] = keyed_edge_map[qual_relationship_key]
@@ -1067,14 +1068,14 @@ def rb_render_item_qualifiers(backend,
         qual_node2_label: typing.Optional[str]
         qual_node2_description: typing.Optional[str]
         _, _, qual_edge_id, qual_relationship, qual_node2, qual_relationship_label, qual_node2_label, qual_node2_description = item_qual_edge
-                        
+
         if current_qual_edge_id is not None and current_qual_edge_id == qual_edge_id:
             if verbose:
                 print("*** skipping duplicate qualifier %s" % repr(current_qual_edge_id), file=sys.stderr, flush=True)
             # Skip duplicates (say, multiple labels or descriptions).
             continue
         current_qual_edge_id = qual_edge_id
-                        
+
         qual_value: KgtkValue = KgtkValue(qual_node2)
         qual_rb_type: str = rb_find_type(qual_node2, qual_value)
 
@@ -1090,7 +1091,7 @@ def rb_render_item_qualifiers(backend,
                 "values": current_qual_values
             }
             current_qualifiers.append(current_qual_property_map)
-                    
+
         current_qual_value: typing.MutableMapping[str, any] = rb_build_current_value(backend,
                                                                                      qual_node2,
                                                                                      qual_value,
@@ -1147,7 +1148,7 @@ def rb_render_kb_items(backend,
 
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
-                
+
         # If a relationship has multiple values, they must be next to each
         # other in the sorted list of item_edges.
         if current_relationship is None or relationship != current_relationship:
@@ -1177,7 +1178,7 @@ def rb_render_kb_items(backend,
                                                                                 target_description,
                                                                                 lang,
                                                                                 relationship,
-                                                                                wikidatatype) 
+                                                                                wikidatatype)
 
         current_value["edge_id"] = edge_id # temporarily save the current edge ID.
         current_values.append(current_value)
@@ -1188,7 +1189,7 @@ def rb_render_kb_items(backend,
         print("rb_render_kb_items returns %d response_properties and %d response_xrefs)" % (len(response_properties),
                                                                                             len(response_xrefs)),
               file=sys.stderr, flush=True) # ***
-        
+
     return response_properties, response_xrefs
 
 def rb_build_edge_id_tuple(response_properties: typing.List[typing.MutableMapping[str, any]]):
@@ -1229,7 +1230,7 @@ def rb_fetch_qualifiers_using_id_list(backend,
     edge_id_tuple_results_cache[edge_id_tuple_key] = item_qualifier_edges # Cache the results.
 
     return item_qualifier_edges
-                                      
+
 
 def rb_fetch_qualifiers_using_id_queries(backend,
                                          edge_id_tuple,
@@ -1375,7 +1376,7 @@ def downsample_properties(property_list: typing.MutableMapping[str, any],
                           valuelist_max_len: int,
                           who: str,
                           verbose: bool = False):
-                          
+
     if proplist_max_len > 0 and len(property_list) > proplist_max_len:
         if verbose:
             print("Downsampling the properties for %s" % who, file=sys.stderr, flush=True)
@@ -1468,7 +1469,7 @@ def rb_send_kb_categories(backend,
         if node1 in categories_seen:
             continue
         categories_seen.add(node1)
-        
+
         if node1_label is None:
             node1_label = node1
         category_key = (node1_label + "|" + str(idx + 1000000)).lower()
@@ -1657,7 +1658,7 @@ def rb_get_kb_named_item(item):
     # Parse some optional parameters.
     args = flask.request.args
     params: str = ""
-    
+
     lang: str = args.get("lang", default="en")
     # TODO: encode the language properly, else this is a vulnerability.
     # Note: the first parameter does not have a leading ampersand!
@@ -1671,16 +1672,16 @@ def rb_get_kb_named_item(item):
 
     qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
     params += "&qual_proplist_max_len=%d" % qual_proplist_max_len
-    
+
     qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
     params += "&qual_valuelist_max_len=%d" % qual_valuelist_max_len
-    
+
     query_limit: int = args.get('query_limit', default=300000, type=int)
     params += "&query_limit=%d" % query_limit
-    
+
     qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
     params += "&qual_query_limit=%d" % qual_query_limit
-    
+
     verbose: bool = args.get("verbose", default=False, type=rb_is_true)
     if verbose:
         params += "&verbose"
@@ -1698,7 +1699,7 @@ def rb_get_kb_named_item(item):
 def rb_get_kb_named_item2(item):
     args = flask.request.args
     verbose: bool = args.get("verbose", default=False, type=rb_is_true)
-    
+
     if verbose:
         print("get_kb_named_item2: " + item)
 
@@ -1708,7 +1709,7 @@ def rb_get_kb_named_item2(item):
         except Exception as e:
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-        
+
     elif item.startswith(("Q", "P")):
         try:
             return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
@@ -1726,8 +1727,8 @@ def rb_get_kb_named_item2(item):
     else:
         print("Unrecognized item: %s" % repr(item))
         flask.abort(400, "Unrecognized item %s" % repr(item))
-            
-    
+
+
 
 
 ### Test URL handlers:
