@@ -17,6 +17,7 @@ const ContentRouter = () => (
 	    <Route path='/item/:id' component={ItemContent}/>
 	    <Route exact path='/kb' component={Content}/>
 	    <Route path='/kb/item/:id' component={ItemContent}/>
+	    <Route path='/browser/kb/item/:id' component={ItemContent}/>
 	  </Switch>
 	</BrowserRouter>
 )
