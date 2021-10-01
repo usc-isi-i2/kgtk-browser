@@ -15,6 +15,24 @@ const Data = ({ data }) => {
 
   const classes = useStyles()
 
+  const getURL = item => {
+
+    // if there is an external url, return url that right away
+    if ( item.url ) {
+      return item.url
+    }
+
+    // if there is no external url, link internally to `/kb/item/<node_id>`
+    let url = `/item/${item.ref}`
+
+    // prefix the url with the location of where the app is hosted
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    }
+
+    return url
+  }
+
   const renderDescription = () => {
     return (
       <Grid item xs={12}>
@@ -55,7 +73,7 @@ const Data = ({ data }) => {
                         externalLink: !!property.url,
                       })
                     }
-                    href={property.url ? property.url : `/kb/item/${property.ref}`}
+                    href={getURL(property)}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -90,7 +108,7 @@ const Data = ({ data }) => {
                                 externalLink: !!value.url,
                               })
                             }
-                            href={value.url ? value.url : `/kb/item/${value.ref}`}
+                            href={getURL(value)}
                             title={value.url ? value.url : value.text}>
                             {value.units}
                           </Link>
@@ -106,7 +124,7 @@ const Data = ({ data }) => {
                               externalLink: !!value.url,
                             })
                           }
-                          href={value.url ? value.url : `/kb/item/${value.ref}`}
+                          href={getURL(value)}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -137,7 +155,7 @@ const Data = ({ data }) => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                href={qualifier.url ? qualifier.url : `/kb/item/${qualifier.ref}`}
+                                href={getURL(qualifier)}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -187,7 +205,7 @@ const Data = ({ data }) => {
                                           smaller: true,
                                         })
                                       }
-                                      href={value.url ? value.url : `/kb/item/${value.ref}`}
+                                      href={getURL(value)}
                                       title={value.url ? value.url : value.units}>
                                       {value.units}
                                     </Link>
@@ -204,7 +222,7 @@ const Data = ({ data }) => {
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    href={value.url ? value.url : `/kb/item/${value.ref}`}
+                                    href={getURL(value)}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
@@ -287,7 +305,7 @@ const Data = ({ data }) => {
                         externalLink: !!property.url,
                       })
                     }
-                    href={property.url ? property.url : `/?id=${property.ref}`}
+                    href={getURL(property)}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -317,7 +335,7 @@ const Data = ({ data }) => {
                               externalLink: !!value.url,
                             })
                           }
-                          href={value.url ? value.url : `/?id=${value.ref}`}
+                          href={getURL(value)}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -351,7 +369,7 @@ const Data = ({ data }) => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                href={qualifier.url ? qualifier.url : `/?id=${qualifier.ref}`}
+                                href={getURL(qualifier)}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -386,7 +404,7 @@ const Data = ({ data }) => {
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    href={value.url ? value.url : `/?id=${value.ref}`}
+                                    href={getURL(value)}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
