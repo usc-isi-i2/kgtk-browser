@@ -410,7 +410,7 @@ RB_GET_MORAL_FOUNDATIONS_WITH_P585 = _api.get_query(
     inputs='labels',
     maxcache=MAX_CACHE_SIZE * 10,
     match='''$labels:
-      (node)-[:P31]->(:`venice:Sentence`),
+      (node)-[:P31]->(:`Q00_venice_sentence`),
       (node)-[:P585]->(datetime),
       (node)-[msf1:P1552]->(:Q00_authorityvirtue),
       (msf1)-[]->(msf1_score),
