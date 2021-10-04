@@ -110,7 +110,7 @@ const Header = ({ getData }) => {
             <Logo/>
           </div>
           <Typography className={classes.title} variant="h6" noWrap>
-            KGTK Browser for Wikidata DWD V2
+            KGTK Browser for DWD
           </Typography>
           <div className={classes.search}>
             <div className={classes.searchIcon}>
