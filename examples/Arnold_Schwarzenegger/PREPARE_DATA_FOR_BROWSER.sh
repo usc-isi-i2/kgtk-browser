@@ -5,7 +5,11 @@
 export INPUT_FILE="./data/Q2685.graph.all.tsv.gz"
 export WORKING_FOLDER="./temp"
 export GRAPHS="./graphs"
-export KGTK_OPTIONS="--progress"
+
+# These steps go by fairly fast.
+# export KGTK_OPTIONS="--progress"
+export KGTK_OPTIONS=""
+
 export MGZIP_OPTIONS="--use-mgzip --mgzip-threads=5"
 
 # If pigz is installed, use it for better sorting performance.
@@ -34,6 +38,7 @@ mkdir -p ${SORT_TEMP_FOLDER}
 #    claims and qualifiers
 #
 # Also split out "link" records, they shouldn't be there.
+echo -e "\n*** Split the unified input file into parts. ***"
 time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
      -i ${INPUT_FILE} \
      -p ';alias;' \
