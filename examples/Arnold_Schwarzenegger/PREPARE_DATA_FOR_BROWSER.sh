@@ -44,7 +44,8 @@ time kgtk ${KGTK_OPTIONS} reorder-columns ${MGZIP_OPTIONS} \
 #    metadata (datatypes)
 #    claims and qualifiers
 #
-# Also split out "link" records, they shouldn't be there.
+# Also split out "/vertex_in_degree" and "vertex_out_degree" records,
+# they shouldn't be there.
 echo -e "\n*** Split the unified input file into parts. ***"
 time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
      -i ${WORKING_FOLDER}/all.trimmed.tsv.gz \
@@ -56,6 +57,10 @@ time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
      -o ${WORKING_FOLDER}/labels.tsv.gz \
      -p ';count_distinct_properties,datatype;' \
      -o ${WORKING_FOLDER}/metadata.tsv.gz \
+     -p ';vertex_in_degree;' \
+     -o ${WORKING_FOLDER}/vertex_in_degree.tsv \
+     -p ';vertex_out_degree;' \
+     -o ${WORKING_FOLDER}/vertex_out_degree.tsv \
      --reject-file  ${WORKING_FOLDER}/claims_and_quals.tsv.gz \
      --use-mgzip --mgzip-threads 5
 
