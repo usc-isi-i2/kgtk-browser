@@ -804,27 +804,30 @@ def rb_find_type(node2: str, value: KgtkValue)->str:
     rb_type: str
 
     if datatype == KgtkFormat.DataType.SYMBOL:
-        if node2 is not None and node2.startswith(("P", "Q")):
-            rb_type = "/w/item"
-        else:
-            rb_type = "unknown"
-            print("*** unknown datatype: no node2") # ***def rb_send_kb_item(item: str):
+        rb_type = "/w/item"
 
     elif datatype == KgtkFormat.DataType.LANGUAGE_QUALIFIED_STRING:
         rb_type = "/w/text"
+
     elif datatype == KgtkFormat.DataType.STRING:
         rb_type = "/w/string"
+
     elif datatype == KgtkFormat.DataType.QUANTITY:
         rb_type = "/w/quantity"
+
     elif datatype == KgtkFormat.DataType.NUMBER:
         rb_type = "/w/quantity"
+
     elif datatype == KgtkFormat.DataType.DATE_AND_TIMES:
         rb_type = "/w/time"
+
     elif datatype == KgtkFormat.DataType.LOCATION_COORDINATES:
         rb_type = "/w/geo"
+
     else:
         rb_type = "/w/unknown" # Includes EMPTY, LIST, EXTENSION, BOOLEAN
         print("*** unknown datatype") # ***def rb_send_kb_item(item: str):
+
     return rb_type
 
 # The following routine was taken from Stack Overflow.
@@ -1726,13 +1729,6 @@ def rb_get_kb_named_item2(item):
             print('ERROR: ' + str(e))
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
-    elif item.startswith(("Q", "P")):
-        try:
-            return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
     elif item in [ "kb.js", "kb.html" ]:
         try:
             return flask.send_from_directory('web/static', item)
@@ -1741,10 +1737,11 @@ def rb_get_kb_named_item2(item):
             flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
     else:
-        print("Unrecognized item: %s" % repr(item))
-        flask.abort(400, "Unrecognized item %s" % repr(item))
-
-
+        try:
+            return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
+        except Exception as e:
+            print('ERROR: ' + str(e))
+            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
 ### Test URL handlers:
