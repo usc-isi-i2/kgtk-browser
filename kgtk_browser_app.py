@@ -22,8 +22,6 @@ import browser.backend.kypher as kybe
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 
-from datetime import datetime
-
 
 # How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
@@ -1928,7 +1926,7 @@ def get_mf_scores_by_date():
         with get_backend(app) as backend:
 
             if debug:
-                start = datetime.now()
+                start = datetime.datetime.now()
 
             matches = []
             items_seen: typing.Set[str] = set()
@@ -1967,14 +1965,14 @@ def get_mf_scores_by_date():
                     )
 
             if debug:
-                print('finished sql part, duration: ', str(datetime.now() - start ))
-                start = datetime.now()
+                print('finished sql part, duration: ', str(datetime.datetime.now() - start ))
+                start = datetime.datetime.now()
 
             df = pd.DataFrame(matches)
             out_df = df.groupby('datetime').sum()
 
             if debug:
-                print('finished pandas part, duration: ', str(datetime.now() - start ))
+                print('finished pandas part, duration: ', str(datetime.datetime.now() - start ))
 
             return flask.jsonify(out_df.to_dict()), 200
     except Exception as e:
