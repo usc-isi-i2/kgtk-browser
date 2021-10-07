@@ -22,6 +22,8 @@ import browser.backend.kypher as kybe
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 
+from datetime import datetime
+
 
 # How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
@@ -1916,6 +1918,7 @@ def get_mf_scores_by_date():
     args = flask.request.args
     lang = args.get("lang", default="en")
 
+    debug = args.get("debug", default=False, type=rb_is_true)
     verbose = args.get("verbose", default=False, type=rb_is_true)
     match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
     match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=100000, type=int)
@@ -1923,6 +1926,10 @@ def get_mf_scores_by_date():
 
     try:
         with get_backend(app) as backend:
+
+            if debug:
+                start = datetime.now()
+
             matches = []
             items_seen: typing.Set[str] = set()
 
@@ -1959,8 +1966,15 @@ def get_mf_scores_by_date():
                         }
                     )
 
+            if debug:
+                print('finished sql part, duration: ', str(datetime.now() - start ))
+                start = datetime.now()
+
             df = pd.DataFrame(matches)
             out_df = df.groupby('datetime').sum()
+
+            if debug:
+                print('finished pandas part, duration: ', str(datetime.now() - start ))
 
             return flask.jsonify(out_df.to_dict()), 200
     except Exception as e:
