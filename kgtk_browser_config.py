@@ -450,6 +450,77 @@ RB_GET_MORAL_FOUNDATIONS_WITH_P585 = _api.get_query(
     limit= "$LIMIT"
 )
 
+RB_GET_MORAL_FOUNDATIONS_AND_CONCRETENESS_WITH_P585 = _api.get_query(
+    doc="""
+    Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_labels_starting_with()'.
+    Given parameters 'LABEL' (which should end with '.*') and 'LANG' retrieve labels for 'LABEL' in
+    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Return 'node1', 'node_label' pairs as the result.
+    Limit the number of return pairs to LIMIT.
+
+    The output from this query is unordered, due to poor perfromance when
+    there are a large number of matches.
+
+    This query implements a case-insensitive search by matching against the
+    'node2;upper' column, which has the 'node' column in the label graph
+    ('graph_2') translated to upper case.  'node2;upper' may be created with
+    `kgtk calc` or `kgtk query`, or with the following SQL:
+
+    alter table graph_2 add column "node2;upper" text;
+    update graph_2 set "node2;upper" = upper(node2);
+
+    For proper performance, the "node2;upper" column in the label graph must be indexed:
+
+    CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
+    ANALYZE "graph_2_node2upper_idx";
+    """,
+    name='RB_GET_MORAL_FOUNDATIONS_AND_CONCRETENESS_WITH_P585',
+    inputs='labels',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match='''$labels:
+      (node)-[:P31]->(:`Q00_venice_sentence`),
+      (node)-[:P585]->(datetime),
+      (node)-[msf1:P1552]->(:Q00_authorityvirtue),
+      (msf1)-[]->(msf1_score),
+      (node)-[msf2:P1552]->(:Q00_authorityvice),
+      (msf2)-[]->(msf2_score),
+      (node)-[msf3:P1552]->(:Q00_fairnessvirtue),
+      (msf3)-[]->(msf3_score),
+      (node)-[msf4:P1552]->(:Q00_fairnessvice),
+      (msf4)-[]->(msf4_score),
+      (node)-[msf5:P1552]->(:Q00_harmvirtue),
+      (msf5)-[]->(msf5_score),
+      (node)-[msf6:P1552]->(:Q00_harmvice),
+      (msf6)-[]->(msf6_score),
+      (node)-[msf7:P1552]->(:Q00_ingroupvirtue),
+      (msf7)-[]->(msf7_score),
+      (node)-[msf8:P1552]->(:Q00_ingroupvice),
+      (msf8)-[]->(msf8_score),
+      (node)-[msf9:P1552]->(:Q00_purityvirtue),
+      (msf9)-[]->(msf9_score),
+      (node)-[msf10:P1552]->(:Q00_purityvice),
+      (msf10)-[]->(msf10_score),
+      (node)-[concreteness:P1552]->(:Q00_concreteness),
+      (concreteness)-[]->(concreteness_score)
+    ''',
+    ret='''
+        node,
+        datetime,
+        msf1_score,
+        msf2_score,
+        msf3_score,
+        msf4_score,
+        msf5_score,
+        msf6_score,
+        msf7_score,
+        msf8_score,
+        msf9_score,
+        msf10_score,
+        concreteness_score
+    ''',
+    limit= "$LIMIT"
+)
+
 RB_NODE_EDGES_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.

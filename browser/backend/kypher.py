@@ -354,7 +354,7 @@ class BrowserBackend(object):
             query = self.get_config('RB_UPPER_NODE_LABELS_QUERY')
         else:
             query = self.get_config('NODE_LABELS_QUERY')
-            
+
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
@@ -444,6 +444,19 @@ class BrowserBackend(object):
         """
 
         query = self.get_config('RB_GET_MORAL_FOUNDATIONS_WITH_P585')
+
+        return self.execute_query(query, LIMIT=limit, fmt=fmt)
+
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
+    def rb_get_moral_foundations_and_concreteness_with_p585(self, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
+        """Retrieve nodes and labels for all nodes with labels starting with 'prefix'.
+
+        This search method supports rb_get_kb_query(), which generates a list of
+        candidate nodes. The node label is searched for a complete match, which
+        may or may not be case-insensitive. The search must be fast.
+        """
+
+        query = self.get_config('RB_GET_MORAL_FOUNDATIONS_AND_CONCRETENESS_WITH_P585')
 
         return self.execute_query(query, LIMIT=limit, fmt=fmt)
 

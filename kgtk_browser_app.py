@@ -1935,8 +1935,10 @@ def get_mf_scores_by_date():
                 results = backend.rb_get_moral_foundations_with_p585(lang=lang,
                                                                     ignore_case=match_label_ignore_case,
                                                                     limit=match_label_prefixes_limit)
+
                 if verbose:
                     print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
+
                 for result in rb_sort_query_results(results):
                     event_id = result[0]
                     if event_id in items_seen:
@@ -1961,6 +1963,79 @@ def get_mf_scores_by_date():
                             "ingroup/vice": round(float(result[9]), 3),
                             "purity/virtue": round(float(result[10]), 3),
                             "purity/vice": round(float(result[11]), 3),
+                        }
+                    )
+
+            if debug:
+                print('finished sql part, duration: ', str(datetime.datetime.now() - start ))
+                start = datetime.datetime.now()
+
+            df = pd.DataFrame(matches)
+            out_df = df.groupby('datetime').sum()
+
+            if debug:
+                print('finished pandas part, duration: ', str(datetime.datetime.now() - start ))
+
+            return flask.jsonify(out_df.to_dict()), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route('/kb/get_mf_and_concreteness_scores_by_date', methods=['GET'])
+def get_mf_scores_and_concreteness_by_date():
+
+    args = flask.request.args
+    lang = args.get("lang", default="en")
+
+    debug = args.get("debug", default=False, type=rb_is_true)
+    verbose = args.get("verbose", default=False, type=rb_is_true)
+    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
+    match_label_prefixes_limit: intl = args.get("match_label_prefixes_limit", default=100000, type=int)
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
+
+    try:
+        with get_backend(app) as backend:
+
+            if debug:
+                start = datetime.datetime.now()
+
+            matches = []
+            items_seen: typing.Set[str] = set()
+
+            if match_label_prefixes:
+                results = backend.rb_get_moral_foundations_and_concreteness_with_p585(lang=lang,
+                                                                    ignore_case=match_label_ignore_case,
+                                                                    limit=match_label_prefixes_limit)
+
+                if verbose:
+                    print("match_label_prefixes: Got %d matches" % len(results), file=sys.stderr, flush=True)
+
+                for result in rb_sort_query_results(results):
+                    event_id = result[0]
+                    if event_id in items_seen:
+                        continue
+                    items_seen.add(event_id)
+
+                    datetime_str = result[1]
+                    datetime_pattern = re.compile('\^(\d+-\d+-\d+T\d+:\d+:\d+Z)\/11')
+                    datetime_match = re.match(datetime_pattern, result[1])[1]
+
+                    matches.append(
+                        {
+                            "id": event_id,
+                            "datetime": datetime_match,
+                            "authority/virtue": round(float(result[2]), 3),
+                            "authority/vice": round(float(result[3]), 3),
+                            "fairness/virtue": round(float(result[4]), 3),
+                            "fairness/vice": round(float(result[5]), 3),
+                            "harm/virtue": round(float(result[6]), 3),
+                            "harm/vice": round(float(result[7]), 3),
+                            "ingroup/virtue": round(float(result[8]), 3),
+                            "ingroup/vice": round(float(result[9]), 3),
+                            "purity/virtue": round(float(result[10]), 3),
+                            "purity/vice": round(float(result[11]), 3),
+                            "concreteness": round(float(result[12]), 3),
                         }
                     )
 
