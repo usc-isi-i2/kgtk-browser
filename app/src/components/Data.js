@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography'
 import ImageList from '@material-ui/core/ImageList'
 import ImageListItem from '@material-ui/core/ImageListItem'
 import ImageListItemBar from '@material-ui/core/ImageListItemBar'
+import CircularProgress from '@material-ui/core/CircularProgress'
 
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
@@ -19,9 +20,12 @@ const Data = () => {
   const classes = useStyles()
 
   const [data, setData] = useState({})
+  const [loading, setLoading] = useState()
 
   useEffect(() => {
+    setLoading(true)
     fetchData(id).then(data => {
+      setLoading(false)
       setData(data)
     })
   }, [id])
@@ -42,6 +46,16 @@ const Data = () => {
     }
 
     return url
+  }
+
+  const renderLoading = () => {
+    if ( !loading ) { return }
+    return (
+      <CircularProgress
+        size={50}
+        color="inherit"
+        className={classes.loading} />
+    )
   }
 
   const renderDescription = () => {
@@ -446,6 +460,7 @@ const Data = () => {
 
   return (
     <Grid container spacing={1}>
+      {renderLoading()}
       <Grid item xs={8}>
         <Grid container spacing={1}>
           {renderDescription()}
