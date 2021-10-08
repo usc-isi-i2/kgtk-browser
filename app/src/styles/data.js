@@ -29,6 +29,10 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 'bold',
   },
   description: {},
+  breadcrumbArrow: {
+    color: '#333',
+    verticalAlign: 'top',
+  },
   link: {
     display: 'inline-block',
     padding: '0 3px',
