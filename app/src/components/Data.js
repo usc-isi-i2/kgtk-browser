@@ -99,7 +99,8 @@ const Data = () => {
                         externalLink: !!property.url,
                       })
                     }
-                    to={getURL(property)}
+                    to={{ pathname: getURL(property) }}
+                    target={!!property.url ? '_blank' : ''}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -133,7 +134,8 @@ const Data = () => {
                                 externalLink: !!value.url,
                               })
                             }
-                            to={getURL(value)}
+                            to={{ pathname: getURL(value) }}
+                            target={!!value.url ? '_blank' : ''}
                             title={value.url ? value.url : value.text}>
                             {value.units}
                           </Link>
@@ -148,7 +150,8 @@ const Data = () => {
                               externalLink: !!value.url,
                             })
                           }
-                          to={getURL(value)}
+                          to={{ pathname: getURL(value) }}
+                          target={!!value.url ? '_blank' : ''}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -178,7 +181,8 @@ const Data = () => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                to={getURL(qualifier)}
+                                to={{ pathname: getURL(qualifier) }}
+                                target={!!qualifier.url ? '_blank' : ''}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -227,7 +231,8 @@ const Data = () => {
                                           smaller: true,
                                         })
                                       }
-                                      to={getURL(value)}
+                                      to={{ pathname: getURL(value) }}
+                                      target={!!value.url ? '_blank' : ''}
                                       title={value.url ? value.url : value.units}>
                                       {value.units}
                                     </Link>
@@ -243,7 +248,8 @@ const Data = () => {
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    to={getURL(value)}
+                                    to={{ pathname: getURL(value) }}
+                                    target={!!value.url ? '_blank' : ''}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
@@ -325,7 +331,8 @@ const Data = () => {
                         externalLink: !!property.url,
                       })
                     }
-                    to={getURL(property)}
+                    to={{ pathname: getURL(property) }}
+                    target={!!property.url ? '_blank' : ''}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -354,7 +361,8 @@ const Data = () => {
                               externalLink: !!value.url,
                             })
                           }
-                          to={getURL(value)}
+                          to={{ pathname: getURL(value) }}
+                          target={!!value.url ? '_blank' : ''}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -387,7 +395,8 @@ const Data = () => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                to={getURL(qualifier)}
+                                to={{ pathname: getURL(qualifier) }}
+                                target={!!qualifier.url ? '_blank' : ''}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -421,7 +430,8 @@ const Data = () => {
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    to={getURL(value)}
+                                    to={{ pathname: getURL(value) }}
+                                    target={!!value.url ? '_blank' : ''}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
