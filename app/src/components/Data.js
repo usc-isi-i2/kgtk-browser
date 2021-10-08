@@ -54,13 +54,17 @@ const Data = () => {
 
   const renderBreadcrumbs = () => {
     return (
-      <React.Fragment>
+      <Grid item xs={12}>
         {breadcrumbs.map(({ match, breadcrumb }) => (
-          <span key={match.url}>
+          <span key={match.url} className={
+            classNames(classes.link, {
+              breadcrumb: true,
+            })
+          }>
             <Link to={match.url}>{breadcrumb}</Link>
           </span>
         ))}
-      </React.Fragment>
+      </Grid>
     )
   }
 

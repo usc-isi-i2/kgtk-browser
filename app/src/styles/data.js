@@ -46,6 +46,11 @@ const useStyles = makeStyles(theme => ({
       textDecoration: 'underline',
       color: '#111',
     },
+    '&.breadcrumb': {
+      '& > a': {
+        color: '#de6720',
+      },
+    },
     '&.smaller': {
       fontSize: '12px',
     },
