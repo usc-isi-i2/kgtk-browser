@@ -82,6 +82,7 @@ const Header = ({ info }) => {
         onClose={closeMenu}>
         {results.map(item => (
           <MenuItem key={item.ref}
+            onClick={closeMenu}
             component={Link}
             to={`/browser/${item.ref}`}
             className={classes.menuItem}>

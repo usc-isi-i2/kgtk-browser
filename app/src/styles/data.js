@@ -29,6 +29,10 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 'bold',
   },
   description: {},
+  breadcrumbArrow: {
+    color: '#333',
+    verticalAlign: 'top',
+  },
   link: {
     display: 'inline-block',
     padding: '0 3px',
@@ -45,6 +49,11 @@ const useStyles = makeStyles(theme => ({
       background: '#f3f3f3',
       textDecoration: 'underline',
       color: '#111',
+    },
+    '&.breadcrumb': {
+      '& > a': {
+        color: '#de6720',
+      },
     },
     '&.smaller': {
       fontSize: '12px',
