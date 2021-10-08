@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import AppBar from '@material-ui/core/AppBar'
@@ -81,6 +82,8 @@ const Header = ({ info }) => {
         onClose={closeMenu}>
         {results.map(item => (
           <MenuItem key={item.ref}
+            component={Link}
+            to={`/browser/${item.ref}`}
             className={classes.menuItem}>
             <Typography variant="body1">
               <b>{item.ref}</b>
