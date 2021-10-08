@@ -39,6 +39,7 @@ const useStyles = makeStyles(theme => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     transition: '0.2s background ease',
+    textDecoration: 'none',
     fontSize: '14px',
     '&:hover': {
       background: '#f3f3f3',
