@@ -20,7 +20,7 @@ const ItemContent = () => {
   return (
     <React.Fragment>
       <div id="top" />
-      <Header getData={() => {}} info={info} />
+      <Header info={info} />
       <Container maxWidth="xl">
         <Data />
         <ArrowUp/>
