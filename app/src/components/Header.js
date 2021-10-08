@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import AppBar from '@material-ui/core/AppBar'
@@ -15,7 +16,7 @@ import search from '../utils/search'
 import useStyles from '../styles/header'
 
 
-const Header = ({ getData, info }) => {
+const Header = ({ info }) => {
 
   const classes = useStyles()
 
@@ -27,11 +28,6 @@ const Header = ({ getData, info }) => {
 
   const closeMenu = () => {
     setAnchorElement()
-  }
-
-  const selectResult = item => {
-    setAnchorElement()
-    getData(item.ref)
   }
 
   const handleOnChange = event => {
@@ -58,15 +54,12 @@ const Header = ({ getData, info }) => {
     const value = event.target.value
     if (event.key === 'Enter') {
       if ( !!results.length ) {
-        const item = results[0]
         setResults([])
         closeMenu()
-        selectResult(item)
       } else if (value.length > 0) {
         setResults([])
         closeMenu()
         setAnchorElement()
-        getData(value)
       }
     }
   }
@@ -89,8 +82,9 @@ const Header = ({ getData, info }) => {
         onClose={closeMenu}>
         {results.map(item => (
           <MenuItem key={item.ref}
-            className={classes.menuItem}
-            onClick={() => selectResult(item)}>
+            component={Link}
+            to={`/browser/${item.ref}`}
+            className={classes.menuItem}>
             <Typography variant="body1">
               <b>{item.ref}</b>
               <br/>

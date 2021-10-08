@@ -1,19 +1,34 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
-import Link from '@material-ui/core/Link'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
 import ImageList from '@material-ui/core/ImageList'
 import ImageListItem from '@material-ui/core/ImageListItem'
 import ImageListItemBar from '@material-ui/core/ImageListItemBar'
+import CircularProgress from '@material-ui/core/CircularProgress'
 
 import useStyles from '../styles/data'
+import fetchData from '../utils/fetchData'
 import classNames from '../utils/classNames'
 
 
-const Data = ({ data }) => {
+const Data = () => {
+
+  const { id } = useParams()
 
   const classes = useStyles()
+
+  const [data, setData] = useState({})
+  const [loading, setLoading] = useState()
+
+  useEffect(() => {
+    setLoading(true)
+    fetchData(id).then(data => {
+      setLoading(false)
+      setData(data)
+    })
+  }, [id])
 
   const getURL = item => {
 
@@ -23,7 +38,7 @@ const Data = ({ data }) => {
     }
 
     // if there is no external url, link internally to `/kb/item/<node_id>`
-    let url = `/item/${item.ref}`
+    let url = `/browser/${item.ref}`
 
     // prefix the url with the location of where the app is hosted
     if ( process.env.REACT_APP_FRONTEND_URL ) {
@@ -31,6 +46,16 @@ const Data = ({ data }) => {
     }
 
     return url
+  }
+
+  const renderLoading = () => {
+    if ( !loading ) { return }
+    return (
+      <CircularProgress
+        size={50}
+        color="inherit"
+        className={classes.loading} />
+    )
   }
 
   const renderDescription = () => {
@@ -43,9 +68,11 @@ const Data = ({ data }) => {
           <Typography variant="subtitle1" className={classes.nodeId}>
             ({data.ref})
           </Typography>
-          <Typography variant="subtitle2" className={classes.aliases}>
-            {data.aliases.join(' | ')}
-          </Typography>
+          {data.aliases && (
+            <Typography variant="subtitle2" className={classes.aliases}>
+              {data.aliases.join(' | ')}
+            </Typography>
+          )}
           <Typography variant="subtitle1" className={classes.description}>
             {data.description}
           </Typography>
@@ -61,19 +88,19 @@ const Data = ({ data }) => {
           <Typography variant="h6" className={classes.heading}>
             Properties
           </Typography>
-          {data.properties.map((property, index) => (
+          {data.properties && data.properties.map((property, index) => (
             <Grid container key={index} className={classes.row} spacing={0}>
               <Grid item xs={3}>
                 {property.url || property.ref ? (
                   <Link
-                    variant="body2"
                     className={
                       classNames(classes.link, {
                         property: true,
                         externalLink: !!property.url,
                       })
                     }
-                    href={getURL(property)}
+                    to={{ pathname: getURL(property) }}
+                    target={!!property.url ? '_blank' : ''}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -100,7 +127,6 @@ const Data = ({ data }) => {
                             {value.text}
                           </Typography>
                           <Link
-                            variant="body2"
                             className={
                               classNames(classes.link, {
                                 property: !!value.ref && value.ref[0] === 'P',
@@ -108,14 +134,14 @@ const Data = ({ data }) => {
                                 externalLink: !!value.url,
                               })
                             }
-                            href={getURL(value)}
+                            to={{ pathname: getURL(value) }}
+                            target={!!value.url ? '_blank' : ''}
                             title={value.url ? value.url : value.text}>
                             {value.units}
                           </Link>
                         </React.Fragment>
                       ) : value.url || value.ref ? (
                         <Link
-                          variant="body2"
                           className={
                             classNames(classes.link, {
                               indent: false,
@@ -124,7 +150,8 @@ const Data = ({ data }) => {
                               externalLink: !!value.url,
                             })
                           }
-                          href={getURL(value)}
+                          to={{ pathname: getURL(value) }}
+                          target={!!value.url ? '_blank' : ''}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -146,7 +173,6 @@ const Data = ({ data }) => {
                           <Grid item xs={4}>
                             {qualifier.url || qualifier.ref ? (
                               <Link
-                                variant="body2"
                                 className={
                                   classNames(classes.link, {
                                     indent: true,
@@ -155,7 +181,8 @@ const Data = ({ data }) => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                href={getURL(qualifier)}
+                                to={{ pathname: getURL(qualifier) }}
+                                target={!!qualifier.url ? '_blank' : ''}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -196,7 +223,6 @@ const Data = ({ data }) => {
                                       {value.text}
                                     </Typography>
                                     <Link
-                                      variant="body2"
                                       className={
                                         classNames(classes.link, {
                                           property: !!value.ref && value.ref[0] === 'P',
@@ -205,14 +231,14 @@ const Data = ({ data }) => {
                                           smaller: true,
                                         })
                                       }
-                                      href={getURL(value)}
+                                      to={{ pathname: getURL(value) }}
+                                      target={!!value.url ? '_blank' : ''}
                                       title={value.url ? value.url : value.units}>
                                       {value.units}
                                     </Link>
                                   </React.Fragment>
                                 ) : value.url || value.ref ? (
                                   <Link
-                                    variant="body2"
                                     className={
                                       classNames(classes.link, {
                                         indent: false,
@@ -222,7 +248,8 @@ const Data = ({ data }) => {
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    href={getURL(value)}
+                                    to={{ pathname: getURL(value) }}
+                                    target={!!value.url ? '_blank' : ''}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
@@ -267,7 +294,7 @@ const Data = ({ data }) => {
             rowHeight={350}
             cols={1.25} gap={15}
             className={classes.imageList}>
-            {data.gallery.map((image, index) => (
+            {data.gallery && data.gallery.map((image, index) => (
               <ImageListItem key={index}>
                 <img src={image.url} alt={image.text} />
                 <ImageListItemBar
@@ -292,12 +319,11 @@ const Data = ({ data }) => {
           <Typography variant="h4" className={classes.heading}>
             Identifiers
           </Typography>
-          {data.xrefs.map((property, index) => (
+          {data.xrefs && data.xrefs.map((property, index) => (
             <Grid container key={index} className={classes.row}>
               <Grid item xs={6}>
                 {property.url || property.ref ? (
                   <Link
-                    variant="body2"
                     className={
                       classNames(classes.link, {
                         smaller: true,
@@ -305,7 +331,8 @@ const Data = ({ data }) => {
                         externalLink: !!property.url,
                       })
                     }
-                    href={getURL(property)}
+                    to={{ pathname: getURL(property) }}
+                    target={!!property.url ? '_blank' : ''}
                     title={property.url ? property.url : property.property}>
                     {property.property}
                   </Link>
@@ -328,14 +355,14 @@ const Data = ({ data }) => {
                     <Grid item xs={12}>
                       {value.url || value.ref ? (
                         <Link
-                          variant="body2"
                           className={
                             classNames(classes.link, {
                               smaller: true,
                               externalLink: !!value.url,
                             })
                           }
-                          href={getURL(value)}
+                          to={{ pathname: getURL(value) }}
+                          target={!!value.url ? '_blank' : ''}
                           title={value.url ? value.url : value.text}>
                           {value.text}
                         </Link>
@@ -361,7 +388,6 @@ const Data = ({ data }) => {
                           <Grid item xs={6}>
                             {qualifier.url || qualifier.ref ? (
                               <Link
-                                variant="body2"
                                 className={
                                   classNames(classes.link, {
                                     indent: true,
@@ -369,7 +395,8 @@ const Data = ({ data }) => {
                                     externalLink: !!value.url,
                                   })
                                 }
-                                href={getURL(qualifier)}
+                                to={{ pathname: getURL(qualifier) }}
+                                target={!!qualifier.url ? '_blank' : ''}
                                 title={qualifier.url ? qualifier.url : qualifier.property}>
                                 {qualifier.property}
                               </Link>
@@ -397,14 +424,14 @@ const Data = ({ data }) => {
                               <Grid container key={index}>
                                 {value.url || value.ref ? (
                                   <Link
-                                    variant="body2"
                                     className={
                                       classNames(classes.link, {
                                         smaller: true,
                                         externalLink: !!value.url,
                                       })
                                     }
-                                    href={getURL(value)}
+                                    to={{ pathname: getURL(value) }}
+                                    target={!!value.url ? '_blank' : ''}
                                     title={value.url ? value.url : value.text}>
                                     {value.text}
                                   </Link>
@@ -443,6 +470,7 @@ const Data = ({ data }) => {
 
   return (
     <Grid container spacing={1}>
+      {renderLoading()}
       <Grid item xs={8}>
         <Grid container spacing={1}>
           {renderDescription()}
