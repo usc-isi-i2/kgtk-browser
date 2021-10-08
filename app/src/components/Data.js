@@ -1,5 +1,5 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
@@ -8,12 +8,23 @@ import ImageListItem from '@material-ui/core/ImageListItem'
 import ImageListItemBar from '@material-ui/core/ImageListItemBar'
 
 import useStyles from '../styles/data'
+import fetchData from '../utils/fetchData'
 import classNames from '../utils/classNames'
 
 
-const Data = ({ data }) => {
+const Data = () => {
+
+  const { id } = useParams()
 
   const classes = useStyles()
+
+  const [data, setData] = useState({})
+
+  useEffect(() => {
+    fetchData(id).then(data => {
+      setData(data)
+    })
+  }, [id])
 
   const getURL = item => {
 
@@ -43,9 +54,11 @@ const Data = ({ data }) => {
           <Typography variant="subtitle1" className={classes.nodeId}>
             ({data.ref})
           </Typography>
-          <Typography variant="subtitle2" className={classes.aliases}>
-            {data.aliases.join(' | ')}
-          </Typography>
+          {data.aliases && (
+            <Typography variant="subtitle2" className={classes.aliases}>
+              {data.aliases.join(' | ')}
+            </Typography>
+          )}
           <Typography variant="subtitle1" className={classes.description}>
             {data.description}
           </Typography>
@@ -61,7 +74,7 @@ const Data = ({ data }) => {
           <Typography variant="h6" className={classes.heading}>
             Properties
           </Typography>
-          {data.properties.map((property, index) => (
+          {data.properties && data.properties.map((property, index) => (
             <Grid container key={index} className={classes.row} spacing={0}>
               <Grid item xs={3}>
                 {property.url || property.ref ? (
@@ -261,7 +274,7 @@ const Data = ({ data }) => {
             rowHeight={350}
             cols={1.25} gap={15}
             className={classes.imageList}>
-            {data.gallery.map((image, index) => (
+            {data.gallery && data.gallery.map((image, index) => (
               <ImageListItem key={index}>
                 <img src={image.url} alt={image.text} />
                 <ImageListItemBar
@@ -286,7 +299,7 @@ const Data = ({ data }) => {
           <Typography variant="h4" className={classes.heading}>
             Identifiers
           </Typography>
-          {data.xrefs.map((property, index) => (
+          {data.xrefs && data.xrefs.map((property, index) => (
             <Grid container key={index} className={classes.row}>
               <Grid item xs={6}>
                 {property.url || property.ref ? (
