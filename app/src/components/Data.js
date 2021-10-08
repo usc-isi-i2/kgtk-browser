@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import useBreadcrumbs from 'use-react-router-breadcrumbs'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
@@ -18,6 +19,8 @@ const Data = () => {
   const { id } = useParams()
 
   const classes = useStyles()
+
+  const breadcrumbs = useBreadcrumbs()
 
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
@@ -46,6 +49,14 @@ const Data = () => {
     }
 
     return url
+  }
+
+  const renderBreadcrumbs = () => {
+    return (
+      <React.Fragment>
+        {breadcrumbs.map(({ breadcrumb }) => breadcrumb)}
+      </React.Fragment>
+    )
   }
 
   const renderLoading = () => {
@@ -473,6 +484,7 @@ const Data = () => {
       {renderLoading()}
       <Grid item xs={8}>
         <Grid container spacing={1}>
+          {renderBreadcrumbs()}
           {renderDescription()}
           {renderProperties()}
         </Grid>
