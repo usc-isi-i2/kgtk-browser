@@ -9,6 +9,7 @@ import ImageListItem from '@material-ui/core/ImageListItem'
 import ImageListItemBar from '@material-ui/core/ImageListItemBar'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
+import routes from '../utils/routes'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
 import classNames from '../utils/classNames'
@@ -20,7 +21,7 @@ const Data = () => {
 
   const classes = useStyles()
 
-  const breadcrumbs = useBreadcrumbs()
+  const breadcrumbs = useBreadcrumbs(routes)
 
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
@@ -54,7 +55,11 @@ const Data = () => {
   const renderBreadcrumbs = () => {
     return (
       <React.Fragment>
-        {breadcrumbs.map(({ breadcrumb }) => breadcrumb)}
+        {breadcrumbs.map(({ match, breadcrumb }) => (
+          <span key={match.url}>
+            <Link to={match.url}>{breadcrumb}</Link>
+          </span>
+        ))}
       </React.Fragment>
     )
   }
