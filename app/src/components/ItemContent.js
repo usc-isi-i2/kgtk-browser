@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import Container from '@material-ui/core/Container'
-import { useParams } from 'react-router-dom'
 
 import Data from './Data'
 import Header from './Header'
