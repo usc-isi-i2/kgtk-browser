@@ -327,25 +327,35 @@ const Data = () => {
   const renderGallery = () => {
     return (
       <Grid item xs={12}>
-        <Paper className={classes.paper}>
-          <ImageList
-            rowHeight={350}
-            cols={1.25} gap={15}
-            className={classes.imageList}>
-            {data.gallery && data.gallery.map((image, index) => (
-              <ImageListItem key={index}>
-                <img src={image.url} alt={image.text} />
-                <ImageListItemBar
-                  title={image.text}
-                  classes={{
-                    root: classes.imageTitleBar,
-                    title: classes.imageTitle,
-                  }}
-                />
-              </ImageListItem>
-            ))}
-          </ImageList>
-        </Paper>
+        <ExpansionPanel
+          square={true}
+          defaultExpanded={true}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" className={classes.heading}>
+              Gallery
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+            <ImageList
+              rowHeight={350}
+              cols={1.25} gap={15}
+              className={classes.imageList}>
+              {data.gallery && data.gallery.map((image, index) => (
+                <ImageListItem key={index}>
+                  <img src={image.url} alt={image.text} />
+                  <ImageListItemBar
+                    title={image.text}
+                    classes={{
+                      root: classes.imageTitleBar,
+                      title: classes.imageTitle,
+                    }}
+                  />
+                </ImageListItem>
+              ))}
+            </ImageList>
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
       </Grid>
     )
   }
