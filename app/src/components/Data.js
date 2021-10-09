@@ -498,9 +498,13 @@ const Data = () => {
   return (
     <Grid container spacing={1}>
       {renderLoading()}
-      <Grid item xs={8}>
+      <Grid item xs={12}>
         <Grid container spacing={1}>
           {renderBreadcrumbs()}
+        </Grid>
+      </Grid>
+      <Grid item xs={8}>
+        <Grid container spacing={1}>
           {renderDescription()}
           {renderProperties()}
         </Grid>
