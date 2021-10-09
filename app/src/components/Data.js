@@ -117,7 +117,8 @@ const Data = () => {
       <Grid item xs={12}>
         <ExpansionPanel
           square={true}
-          defaultExpanded={true}>
+          defaultExpanded={true}
+          TransitionProps={{ timeout: 0 }}>
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" className={classes.heading}>
               Properties
