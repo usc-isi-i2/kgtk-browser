@@ -498,18 +498,18 @@ const Data = () => {
   return (
     <Grid container spacing={1}>
       {renderLoading()}
-      <Grid item xs={12}>
+      <Grid item xs={12} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderBreadcrumbs()}
         </Grid>
       </Grid>
-      <Grid item xs={8}>
+      <Grid item xs={8} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderDescription()}
           {renderProperties()}
         </Grid>
       </Grid>
-      <Grid item xs={4}>
+      <Grid item xs={4} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderGallery()}
           {renderIdentifiers()}

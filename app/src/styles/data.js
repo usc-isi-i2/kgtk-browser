@@ -125,7 +125,7 @@ const useStyles = makeStyles(theme => ({
     position: 'absolute',
     top: 'calc(50% - 25px)',
     left: 'calc(50% - 25px)',
-    color: '#777',
+    color: '#de6720',
     zIndex: 99999,
   },
 }))
