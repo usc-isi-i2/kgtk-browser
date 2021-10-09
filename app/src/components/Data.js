@@ -363,155 +363,162 @@ const Data = () => {
   const renderIdentifiers = () => {
     return (
       <Grid item xs={12}>
-        <Paper className={classes.paper}>
-          <Typography variant="h4" className={classes.heading}>
-            Identifiers
-          </Typography>
-          {data.xrefs && data.xrefs.map((property, index) => (
-            <Grid container key={index} className={classes.row}>
-              <Grid item xs={6}>
-                {property.url || property.ref ? (
-                  <Link
-                    className={
-                      classNames(classes.link, {
-                        smaller: true,
-                        identifier: true,
-                        externalLink: !!property.url,
-                      })
-                    }
-                    to={{ pathname: getURL(property) }}
-                    target={!!property.url ? '_blank' : ''}
-                    title={property.url ? property.url : property.property}>
-                    {property.property}
-                  </Link>
-                ) : (
-                  <Typography
-                    variant="body2"
-                    title={property.property}
-                    className={
-                      classNames(classes.text, {
-                        smaller: true,
-                      })
-                    }>
-                    {property.property}
-                  </Typography>
-                )}
-              </Grid>
-              <Grid item xs={6}>
-                {!!property.values && property.values.map((value, index) => (
-                  <Grid container key={index}>
-                    <Grid item xs={12}>
-                      {value.url || value.ref ? (
-                        <Link
-                          className={
-                            classNames(classes.link, {
-                              smaller: true,
-                              externalLink: !!value.url,
-                            })
-                          }
-                          to={{ pathname: getURL(value) }}
-                          target={!!value.url ? '_blank' : ''}
-                          title={value.url ? value.url : value.text}>
-                          {value.text}
-                        </Link>
-                      ) : (
-                        <Typography
-                          variant="body2"
-                          title={value.text}
-                          className={
-                            classNames(classes.text, {
-                              smaller: true,
-                            })
-                          }>
-                          {value.text}
-                          {value.lang && (
-                            <span className={classes.lang}>
-                              [{value.lang}]
-                            </span>
-                          )}
-                        </Typography>
-                      )}
-                      {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
-                        <Grid container spacing={0} key={index}>
-                          <Grid item xs={6}>
-                            {qualifier.url || qualifier.ref ? (
-                              <Link
-                                className={
-                                  classNames(classes.link, {
-                                    indent: true,
-                                    smaller: true,
-                                    externalLink: !!value.url,
-                                  })
-                                }
-                                to={{ pathname: getURL(qualifier) }}
-                                target={!!qualifier.url ? '_blank' : ''}
-                                title={qualifier.url ? qualifier.url : qualifier.property}>
-                                {qualifier.property}
-                              </Link>
-                            ) : (
-                              <Typography
-                                variant="body2"
-                                title={qualifier.text}
-                                className={
-                                  classNames(classes.text, {
-                                    indent: true,
-                                    smaller: true,
-                                  })
-                                }>
-                                {qualifier.text}
-                                {qualifier.lang && (
-                                  <span className={classes.lang}>
-                                    [{qualifier.lang}]
-                                  </span>
-                                )}
-                              </Typography>
+        <ExpansionPanel
+          square={true}
+          defaultExpanded={true}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" className={classes.heading}>
+              Identifiers
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+            {data.xrefs && data.xrefs.map((property, index) => (
+              <Grid container key={index} className={classes.row}>
+                <Grid item xs={6}>
+                  {property.url || property.ref ? (
+                    <Link
+                      className={
+                        classNames(classes.link, {
+                          smaller: true,
+                          identifier: true,
+                          externalLink: !!property.url,
+                        })
+                      }
+                      to={{ pathname: getURL(property) }}
+                      target={!!property.url ? '_blank' : ''}
+                      title={property.url ? property.url : property.property}>
+                      {property.property}
+                    </Link>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      title={property.property}
+                      className={
+                        classNames(classes.text, {
+                          smaller: true,
+                        })
+                      }>
+                      {property.property}
+                    </Typography>
+                  )}
+                </Grid>
+                <Grid item xs={6}>
+                  {!!property.values && property.values.map((value, index) => (
+                    <Grid container key={index}>
+                      <Grid item xs={12}>
+                        {value.url || value.ref ? (
+                          <Link
+                            className={
+                              classNames(classes.link, {
+                                smaller: true,
+                                externalLink: !!value.url,
+                              })
+                            }
+                            to={{ pathname: getURL(value) }}
+                            target={!!value.url ? '_blank' : ''}
+                            title={value.url ? value.url : value.text}>
+                            {value.text}
+                          </Link>
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            title={value.text}
+                            className={
+                              classNames(classes.text, {
+                                smaller: true,
+                              })
+                            }>
+                            {value.text}
+                            {value.lang && (
+                              <span className={classes.lang}>
+                                [{value.lang}]
+                              </span>
                             )}
+                          </Typography>
+                        )}
+                        {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
+                          <Grid container spacing={0} key={index}>
+                            <Grid item xs={6}>
+                              {qualifier.url || qualifier.ref ? (
+                                <Link
+                                  className={
+                                    classNames(classes.link, {
+                                      indent: true,
+                                      smaller: true,
+                                      externalLink: !!value.url,
+                                    })
+                                  }
+                                  to={{ pathname: getURL(qualifier) }}
+                                  target={!!qualifier.url ? '_blank' : ''}
+                                  title={qualifier.url ? qualifier.url : qualifier.property}>
+                                  {qualifier.property}
+                                </Link>
+                              ) : (
+                                <Typography
+                                  variant="body2"
+                                  title={qualifier.text}
+                                  className={
+                                    classNames(classes.text, {
+                                      indent: true,
+                                      smaller: true,
+                                    })
+                                  }>
+                                  {qualifier.text}
+                                  {qualifier.lang && (
+                                    <span className={classes.lang}>
+                                      [{qualifier.lang}]
+                                    </span>
+                                  )}
+                                </Typography>
+                              )}
+                            </Grid>
+                            <Grid item xs={6}>
+                              {!!qualifier.values && qualifier.values.map((value, index) => (
+                                <Grid container key={index}>
+                                  {value.url || value.ref ? (
+                                    <Link
+                                      className={
+                                        classNames(classes.link, {
+                                          smaller: true,
+                                          externalLink: !!value.url,
+                                        })
+                                      }
+                                      to={{ pathname: getURL(value) }}
+                                      target={!!value.url ? '_blank' : ''}
+                                      title={value.url ? value.url : value.text}>
+                                      {value.text}
+                                    </Link>
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      title={value.text}
+                                      className={
+                                        classNames(classes.text, {
+                                          smaller: true,
+                                        })
+                                      }>
+                                      {value.text}
+                                      {value.lang && (
+                                        <span className={classes.lang}>
+                                          [{value.lang}]
+                                        </span>
+                                      )}
+                                    </Typography>
+                                  )}
+                                </Grid>
+                              ))}
+                            </Grid>
                           </Grid>
-                          <Grid item xs={6}>
-                            {!!qualifier.values && qualifier.values.map((value, index) => (
-                              <Grid container key={index}>
-                                {value.url || value.ref ? (
-                                  <Link
-                                    className={
-                                      classNames(classes.link, {
-                                        smaller: true,
-                                        externalLink: !!value.url,
-                                      })
-                                    }
-                                    to={{ pathname: getURL(value) }}
-                                    target={!!value.url ? '_blank' : ''}
-                                    title={value.url ? value.url : value.text}>
-                                    {value.text}
-                                  </Link>
-                                ) : (
-                                  <Typography
-                                    variant="body2"
-                                    title={value.text}
-                                    className={
-                                      classNames(classes.text, {
-                                        smaller: true,
-                                      })
-                                    }>
-                                    {value.text}
-                                    {value.lang && (
-                                      <span className={classes.lang}>
-                                        [{value.lang}]
-                                      </span>
-                                    )}
-                                  </Typography>
-                                )}
-                              </Grid>
-                            ))}
-                          </Grid>
-                        </Grid>
-                      ))}
+                        ))}
+                      </Grid>
                     </Grid>
-                  </Grid>
-                ))}
+                  ))}
+                </Grid>
               </Grid>
-            </Grid>
-          ))}
-        </Paper>
+            ))}
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
       </Grid>
     )
   }
