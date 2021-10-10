@@ -324,6 +324,25 @@ const Data = () => {
     )
   }
 
+  const renderRelatedItems = () => {
+    return (
+      <Grid item xs={12}>
+        <ExpansionPanel
+          square={true}
+          defaultExpanded={false}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" className={classes.heading}>
+              From Related Items
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+      </Grid>
+    )
+  }
+
   const renderGallery = () => {
     return (
       <Grid item xs={12}>
@@ -535,6 +554,7 @@ const Data = () => {
         <Grid container spacing={1}>
           {renderDescription()}
           {renderProperties()}
+          {renderRelatedItems()}
         </Grid>
       </Grid>
       <Grid item xs={4} style={{ 'opacity': loading ? '0.25' : '1' }}>
