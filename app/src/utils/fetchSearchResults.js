@@ -1,4 +1,4 @@
-const search = q => {
+const fetchSearchResults = q => {
 
   let url = `/kb/query?q=${q}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
@@ -13,4 +13,4 @@ const search = q => {
   })
 }
 
-export default search
+export default fetchSearchResults
