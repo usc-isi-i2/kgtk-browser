@@ -65,28 +65,27 @@ const InstanceOfSearch = () => {
       fetchSearchResults(inputValue).then((results) => {
         setLoading(false)
         setOptions(results)
+        setOpen(true)
       })
     }, 500)
 
   }, [inputValue])
 
-  useEffect(() => {
-    if (!open) {
-      setOptions([])
-    }
-  }, [open])
+  const onSelect = node => {
+    window.location = `/browser/${node.ref}`
+  }
 
   return (
     <Autocomplete
       id="search"
       open={open}
       onOpen={() => {
-        setOpen(true)
+        setOpen(!!options.length)
       }}
       onClose={() => {
         setOpen(false)
       }}
-      onChange={(event, value) => console.log(value)}
+      onChange={(event, value) => onSelect(value)}
       getOptionSelected={(option, value) => option.description === value.name}
       getOptionLabel={(option) => option.description}
       onInputChange={(event, newInputValue) => {
