@@ -57,7 +57,7 @@ const InstanceOfSearch = () => {
   const [inputValue, setInputValue] = useState('')
 
   useEffect(() => {
-    if ( !inputValue ) { return }
+    if ( !inputValue || inputValue.length < 2 ) { return }
 
     clearTimeout(timeoutID.current)
     timeoutID.current = setTimeout(() => {
