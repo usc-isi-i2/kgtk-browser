@@ -29,6 +29,10 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 'bold',
   },
   description: {},
+  breadcrumbArrow: {
+    color: '#333',
+    verticalAlign: 'top',
+  },
   link: {
     display: 'inline-block',
     padding: '0 3px',
@@ -39,11 +43,17 @@ const useStyles = makeStyles(theme => ({
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     transition: '0.2s background ease',
+    textDecoration: 'none',
     fontSize: '14px',
     '&:hover': {
       background: '#f3f3f3',
       textDecoration: 'underline',
       color: '#111',
+    },
+    '&.breadcrumb': {
+      '& > a': {
+        color: '#de6720',
+      },
     },
     '&.smaller': {
       fontSize: '12px',
@@ -110,6 +120,13 @@ const useStyles = makeStyles(theme => ({
   imageTitleBar: {
     background:
       'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)',
+  },
+  loading: {
+    position: 'absolute',
+    top: 'calc(50% - 25px)',
+    left: 'calc(50% - 25px)',
+    color: '#de6720',
+    zIndex: 99999,
   },
 }))
 
