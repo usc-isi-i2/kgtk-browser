@@ -6,6 +6,7 @@ import Typography from '@material-ui/core/Typography'
 import GitHubIcon from '@material-ui/icons/GitHub'
 
 import Logo from './Logo'
+import Search from './Search'
 import useStyles from '../styles/header'
 
 
@@ -24,6 +25,7 @@ const Header = ({ info }) => {
             KGTK Browser{info ? `: ${info.graph_id}` : ''}
           </Typography>
           <div className={classes.grow} />
+          <Search />
           <div className={classes.sectionDesktop}>
             <IconButton
               color="inherit"
