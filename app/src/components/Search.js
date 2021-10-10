@@ -4,7 +4,7 @@ import Typography from '@material-ui/core/Typography'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import ListItemText from '@material-ui/core/ListItemText'
 import CircularProgress from '@material-ui/core/CircularProgress'
-import { alpha, makeStyles, withStyles} from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 
 import fetchSearchResults from '../utils/fetchSearchResults'
 

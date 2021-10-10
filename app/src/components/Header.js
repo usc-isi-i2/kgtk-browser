@@ -25,7 +25,7 @@ const Header = ({ info }) => {
             KGTK Browser{info ? `: ${info.graph_id}` : ''}
           </Typography>
           <div className={classes.grow} />
-          <Search />
+            <Search />
           <div className={classes.sectionDesktop}>
             <IconButton
               color="inherit"
