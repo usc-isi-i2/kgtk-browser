@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import useBreadcrumbs from 'use-react-router-breadcrumbs'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
@@ -13,7 +12,6 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
-import routes from '../utils/routes'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
 import classNames from '../utils/classNames'
@@ -24,8 +22,6 @@ const Data = () => {
   const { id } = useParams()
 
   const classes = useStyles()
-
-  const breadcrumbs = useBreadcrumbs(routes)
 
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
@@ -54,29 +50,6 @@ const Data = () => {
     }
 
     return url
-  }
-
-  const renderBreadcrumbs = () => {
-    return (
-      <Grid item xs={12}>
-        {breadcrumbs.map(({ match, breadcrumb }) => {
-          return (
-            <React.Fragment>
-              {match.url !== '/' && (
-                <span className={classes.breadcrumbArrow}> > </span>
-              )}
-              <span key={match.url} className={
-                classNames(classes.link, {
-                  breadcrumb: true,
-                })
-              }>
-                <Link to={match.url}>{breadcrumb}</Link>
-              </span>
-            </React.Fragment>
-          )
-        })}
-      </Grid>
-    )
   }
 
   const renderLoading = () => {
@@ -545,11 +518,6 @@ const Data = () => {
   return (
     <Grid container spacing={1}>
       {renderLoading()}
-      <Grid item xs={12} style={{ 'opacity': loading ? '0.25' : '1' }}>
-        <Grid container spacing={1}>
-          {renderBreadcrumbs()}
-        </Grid>
-      </Grid>
       <Grid item xs={8} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderDescription()}
