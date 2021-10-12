@@ -62,8 +62,7 @@ time kgtk ${KGTK_OPTIONS} filter ${MGZIP_OPTIONS} \
      -o ${WORKING_FOLDER}/vertex_in_degree.tsv \
      -p ';vertex_out_degree;' \
      -o ${WORKING_FOLDER}/vertex_out_degree.tsv \
-     --reject-file  ${WORKING_FOLDER}/claims_and_quals.tsv.gz \
-     --use-mgzip --mgzip-threads 5
+     --reject-file  ${WORKING_FOLDER}/claims_and_quals.tsv.gz
 
 echo -e "\n*** Sort the claims and qualifiers file on the id column: ***"
 time kgtk ${KGTK_OPTIONS} sort ${GZIP_CMD} ${MGZIP_OPTIONS} \
