@@ -2,7 +2,8 @@
 
 # Define some locations and options:
 
-export INPUT_FILE="./data/arnold.all.tsv.gz"
+# export INPUT_FILE="./data/arnold.all.tsv.gz"
+export INPUT_FILE="./kgtk-tutorial-files/datasets/arnold-profiled/all.tsv.gz"
 export WORKING_FOLDER="./temp"
 export GRAPHS="./graphs"
 

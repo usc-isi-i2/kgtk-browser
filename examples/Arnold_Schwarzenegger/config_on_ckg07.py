@@ -31,6 +31,10 @@ KG_IMAGES_LABEL       = 'P18'
 KG_FANOUTS_LABEL      = 'count_distinct_properties'
 KG_DATATYPES_LABEL     = 'datatype'
 
+# configuration for display in the browser:
+GRAPH_ID = "Tutorial"
+VERSION = "20211011"
+
 
 ### Query configuration section:
 
