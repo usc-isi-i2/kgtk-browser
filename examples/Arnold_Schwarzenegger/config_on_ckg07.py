@@ -2,7 +2,6 @@
 
 import kgtk.kypher.api as kapi
 
-
 ### Basic configuration section:
 
 GRAPH_CACHE           = '/data/rogers/Arnold_Schwarzenegger/cache/browser.sqlite3.db'
@@ -35,6 +34,8 @@ KG_DATATYPES_LABEL     = 'datatype'
 GRAPH_ID = "Tutorial"
 VERSION = "20211011"
 
+# data server limits:
+VALUELIST_MAX_LEN: int = 100
 
 ### Query configuration section:
 
