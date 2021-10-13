@@ -6,6 +6,7 @@ import datetime
 import hashlib
 from http import HTTPStatus
 import math
+import os
 import os.path
 import random
 import sys
@@ -57,8 +58,45 @@ DEFAULT_LANGUAGE = 'en'
 ID_SEARCH_THRESHOLD: int = 40
 ID_SEARCH_USING_IN: bool = False
 
+DEFAULT_MATCH_ITEM_EXACTLY: bool = True
+DEFAULT_MATCH_ITEM_PREFIXES: bool = True
+DEFAULT_MATCH_ITEM_PREFIXES_LIMIT: int = 20
+DEFAULT_MATCH_ITEM_IGNORE_CASE: bool = True
+
+DEFAULT_MATCH_LABEL_EXACTLY: bool = True
+DEFAULT_MATCH_LABEL_PREFIXES: bool = True
+DEFAULT_MATCH_LABEL_PREFIXES_LIMIT: int = 20
+DEFAULT_MATCH_LABEL_IGNORE_CASE: bool = True
+
+DEFAULT_PROPLIST_MAX_LEN: int = 2000
+DEFAULT_VALUELIST_MAX_LEN: int = 20
+DEFAULT_QUAL_PROPLIST_MAX_LEN: int = 50
+DEFAULT_QUAL_VALUELIST_MAX_LEN: int = 20
+DEFAULT_QUERY_LIMIT: int = 300000
+DEFAULT_QUAL_QUERY_LIMIT: int = 300000
+DEFAULT_VERBOSE: bool = False
+
+
 app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
 app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
+
+app.config['MATCH_ITEM_EXACTLY'] = app.config.get('MATCH_ITEM_EXACTLY', DEFAULT_MATCH_ITEM_EXACTLY)
+app.config['MATCH_ITEM_PREFIXES'] = app.config.get('MATCH_ITEM_PREFIXES', DEFAULT_MATCH_ITEM_PREFIXES)
+app.config['MATCH_ITEM_PREFIXES_LIMIT'] = app.config.get('MATCH_ITEM_PREFIXES_LIMIT', DEFAULT_MATCH_ITEM_PREFIXES_LIMIT)
+app.config['MATCH_ITEM_IGNORE_CASE'] = app.config.get('MATCH_ITEM_IGNORE_CSE', DEFAULT_MATCH_ITEM_IGNORE_CASE)
+
+app.config['MATCH_LABEL_EXACTLY'] = app.config.get('MATCH_LABEL_EXACTLY', DEFAULT_MATCH_LABEL_EXACTLY)
+app.config['MATCH_LABEL_PREFIXES'] = app.config.get('MATCH_LABEL_PREFIXES', DEFAULT_MATCH_LABEL_PREFIXES)
+app.config['MATCH_LABEL_PREFIXES_LIMIT'] = app.config.get('MATCH_LABEL_PREFIXES_LIMIT', DEFAULT_MATCH_LABEL_PREFIXES_LIMIT)
+app.config['MATCH_LABEL_IGNORE_CASE'] = app.config.get('MATCH_LABEL_IGNORE_CASE', DEFAULT_MATCH_LABEL_IGNORE_CASE)
+
+app.config['PROPLIST_MAX_LEN'] = app.config.get('PROPLIST_MAX_LEN', DEFAULT_PROPLIST_MAX_LEN)
+app.config['VALUELIST_MAX_LEN'] = app.config.get('VALUELIST_MAX_LEN', DEFAULT_VALUELIST_MAX_LEN)
+app.config['QUAL_PROPLIST_MAX_LEN'] = app.config.get('QUAL_PROPLIST_MAX_LEN', DEFAULT_QUAL_PROPLIST_MAX_LEN)
+app.config['QUAL_VALUELIST_MAX_LEN'] = app.config.get('QUAL_VALUELIST_MAX_LEN', DEFAULT_QUAL_VALUELIST_MAX_LEN)
+app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
+app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
+app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
 
 app.kgtk_backend = kybe.BrowserBackend(app)
 
@@ -236,21 +274,29 @@ def rb_get_kb_query():
     args = flask.request.args
     q = args.get('q')
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true) or True # ***
+    verbose: bool = args.get("verbose", default=app.config['VERBOSE'], type=rb_is_true)
     if verbose:
         print("rb_get_kb_query: " + q)
 
-    lang: str = args.get("lang", default="en")
+    lang: str = args.get("lang", app.config['DEFAULT_LANGUAGE'])
 
-    match_item_exactly: bool = args.get("match_item_exactly", default=True, type=rb_is_true)
-    match_item_prefixes: bool = args.get("match_item_prefixes", default=True, type=rb_is_true)
-    match_item_prefixes_limit: int = args.get("match_item_prefixes_limit", default=20, type=int)
-    match_item_ignore_case: bool = args.get("match_item_ignore_case", default=True, type=rb_is_true)
+    match_item_exactly: bool = args.get("match_item_exactly", type=rb_is_true,
+                                        default=app.config['MATCH_ITEM_EXACTLY'])
+    match_item_prefixes: bool = args.get("match_item_prefixes", type=rb_is_true,
+                                         default=app.config['MATCH_ITEM_PREFIXES'])
+    match_item_prefixes_limit: int = args.get("match_item_prefixes_limit", type=int,
+                                              default=app.config['MATCH_ITEM_PREFIXES_LIMIT'])
+    match_item_ignore_case: bool = args.get("match_item_ignore_case", type=rb_is_true,
+                                            default=app.config['MATCH_ITEM_IGNORE_CASE'])
 
-    match_label_exactly: bool = args.get("match_label_exactly", default=True, type=rb_is_true)
-    match_label_prefixes: bool = args.get("match_label_prefixes", default=True, type=rb_is_true)
-    match_label_prefixes_limit: int = args.get("match_label_prefixes_limit", default=20, type=int)
-    match_label_ignore_case: bool = args.get("match_label_ignore_case", default=True, type=rb_is_true)
+    match_label_exactly: bool = args.get("match_label_exactly", type=rb_is_true,
+                                         default=app.config['MATCH_LABEL_EXACTLY'])
+    match_label_prefixes: bool = args.get("match_label_prefixes", type=rb_is_true,
+                                          default=app.config['MATCH_LABEL_PREFIXES'])
+    match_label_prefixes_limit: int = args.get("match_label_prefixes_limit", type=int,
+                                               default=int(os.environ.get("KGTK_BROWSER_MATCH_LABEL_PREFIXES_LIMIT", "20")))
+    match_label_ignore_case: bool = args.get("match_label_ignore_case", type=rb_is_true,
+                                             default=app.config['MATCH_LABEL_IGNORE_CASE'])
 
     try:
         with get_backend(app) as backend:
@@ -1614,16 +1660,31 @@ def rb_get_kb_item():
     """
     args = flask.request.args
     item: str  = args.get('id')
-    lang: str = args.get("lang", default="en")
-    proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
-    valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
-    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
-    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
-    query_limit: int = args.get('query_limit', default=300000, type=int)
-    qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    verbose: bool = args.get("verbose", type=rb_is_true,
+                             default=app.config['VERBOSE'])
+
     if verbose:
-        print("rb_get_kb_item: " + item)
+        print("rb_get_kb_item: %s" % repr(item))
+        print("lang: %s" % repr(lang))
+        print("proplist_max_len: %s" % repr(proplist_max_len))
+        print("valuelist_max_len: %s" % repr(valuelist_max_len))
+        print("qual_proplist_max_len: %s" % repr(qual_proplist_max_len))
+        print("qual_valuelist_max_len: %s" % repr(qual_valuelist_max_len))
+        print("query_limit: %s" % repr(query_limit))
+        print("qual_query_limit: %s" % repr(qual_query_limit))
     return rb_send_kb_item(item,
                            lang=lang,
                            proplist_max_len=proplist_max_len,
@@ -1675,30 +1736,36 @@ def rb_get_kb_named_item(item):
     args = flask.request.args
     params: str = ""
 
-    lang: str = args.get("lang", default="en")
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
     # TODO: encode the language properly, else this is a vulnerability.
     # Note: the first parameter does not have a leading ampersand!
     params += "lang=%s" % lang
 
-    proplist_max_len: int = args.get('proplist_max_len', default=2000, type=int)
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
     params += "&proplist_max_len=%d" % proplist_max_len
 
-    valuelist_max_len: int = args.get('valuelist_max_len', default=20, type=int)
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
     params += "&valuelist_max_len=%d" % valuelist_max_len
 
-    qual_proplist_max_len: int = args.get('qual_proplist_max_len', default=50, type=int)
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
     params += "&qual_proplist_max_len=%d" % qual_proplist_max_len
 
-    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', default=20, type=int)
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
     params += "&qual_valuelist_max_len=%d" % qual_valuelist_max_len
 
-    query_limit: int = args.get('query_limit', default=300000, type=int)
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
     params += "&query_limit=%d" % query_limit
 
-    qual_query_limit: int = args.get('qual_query_limit', default=300000, type=int)
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
     params += "&qual_query_limit=%d" % qual_query_limit
 
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
+    verbose: bool = args.get("verbose", default=app.config['VERBOSE'], type=rb_is_true)
     if verbose:
         params += "&verbose"
 
