@@ -45,7 +45,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const InstanceOfSearch = () => {
+const Search = () => {
 
   const classes = useStyles()
 
@@ -133,4 +133,4 @@ const InstanceOfSearch = () => {
   )
 }
 
-export default InstanceOfSearch
+export default Search
