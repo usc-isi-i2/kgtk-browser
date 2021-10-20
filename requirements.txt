@@ -1,2 +1,2 @@
 Flask==2.0.1
-git+https://github.com/usc-isi-i2/kgtk.git@dev#egg=kgtk
+kgtk==0.8.4b
