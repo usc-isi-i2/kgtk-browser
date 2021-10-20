@@ -64,7 +64,7 @@ class BrowserBackend(object):
 
 
     ### Query wrappers:
-    
+
     FORMAT_FAST_DF = 'fdf'
 
     def execute_query(self, query, fmt=None, **kwds):
@@ -75,7 +75,7 @@ class BrowserBackend(object):
         if fmt == self.FORMAT_FAST_DF:
             result = FastDataFrame(query.get_result_header(), result)
         return result
-    
+
     def get_node_labels(self, node, lang=None, fmt=None):
         """Retrieve all labels for 'node'.
         """
@@ -93,13 +93,13 @@ class BrowserBackend(object):
         """
         query = self.get_config('NODE_DESCRIPTIONS_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
-    
+
     def get_node_images(self, node, fmt=None):
         """Retrieve all images for 'node'.
         """
         query = self.get_config('NODE_IMAGES_QUERY')
         return self.execute_query(query, NODE=node, fmt=fmt)
-    
+
     def get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node1.
         """
@@ -170,9 +170,9 @@ class BrowserBackend(object):
 
 
     ### Collecting node data:
-    
+
     def collect_edges(self, edges_df):
-        """Given a full edges dataframe 'edges_df' including target node info columns, 
+        """Given a full edges dataframe 'edges_df' including target node info columns,
         project out the core edge columns and remove any duplicates.
         """
         if edges_df is not None:
@@ -196,10 +196,10 @@ class BrowserBackend(object):
             labels = [self.get_node_labels(label, lang=lang, fmt='list') for label in df]
             return FastDataFrame(columns, itertools.chain(*labels))
         return None
-    
+
     def collect_edge_node_labels(self, edges_df, inverse=False):
         """Given a full edges dataframe 'edges_df', project out the target node and
-        node label columns and remove any duplicates.  'inverse' indicates that 
+        node label columns and remove any duplicates.  'inverse' indicates that
         'edges_df' is an inverse edge frame.
         """
         if edges_df is not None:
@@ -209,10 +209,10 @@ class BrowserBackend(object):
             df.drop_duplicates(inplace=True)
             return df
         return None
-    
+
     def collect_edge_node_images(self, edges_df, inverse=False):
         """Given a full edges dataframe 'edges_df', project out the target node and
-        node image columns and remove any duplicates.  'inverse' indicates that 
+        node image columns and remove any duplicates.  'inverse' indicates that
         'edges_df' is an inverse edge frame.
         """
         if edges_df is not None:
@@ -222,7 +222,7 @@ class BrowserBackend(object):
             df.drop_duplicates(inplace=True)
             return df
         return None
-    
+
     def collect_edge_node_fanouts(self, edges_df, inverse=False):
         """Given a full edges dataframe 'edges_df', project out the target node and
         node fanout columns and remove any duplicates.  'inverse' indicates that
@@ -258,7 +258,7 @@ class BrowserBackend(object):
         node_descs = self.get_node_descriptions(node, lang=lang, fmt=result_fmt)
         # the 'images' switch only controls 'node2' images, not images for 'node':
         node_images = self.get_node_images(node, fmt=result_fmt)
-        
+
         edges = self.get_node_edges(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
         quals = self.get_node_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
 
@@ -266,7 +266,7 @@ class BrowserBackend(object):
         if inverse:
             inv_edges = self.get_node_inverse_edges(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
             inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
-            
+
         if (node_labels.empty() and node_aliases.empty() and node_descs.empty() and
             edges.empty() and (inv_edges is None or inv_edges.empty())):
             # 'node' doesn't exist or nothing is known about it:
@@ -299,7 +299,7 @@ class BrowserBackend(object):
                 self.collect_edge_node_fanouts(inv_edges, inverse=True),
                 self.collect_edge_node_fanouts(quals),
                 self.collect_edge_node_fanouts(inv_quals))
-        
+
         node_data = {
             'node': node,
             'labels': node_labels,
@@ -314,12 +314,12 @@ class BrowserBackend(object):
         }
         return node_data
 
-    
+
     ### Top level:
 
     # We do LRU-cache this one also, since conversion from cached query results
     # to data frames and JSON takes about 20% of overall query time.
-    
+
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def get_all_node_data(self, node, lang=None, images=False, fanouts=False, inverse=False, formatter=None):
         """Return all graph and label data for 'node' and return it as a
@@ -354,7 +354,7 @@ class BrowserBackend(object):
             query = self.get_config('RB_UPPER_NODE_LABELS_QUERY')
         else:
             query = self.get_config('NODE_LABELS_QUERY')
-            
+
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
@@ -373,7 +373,7 @@ class BrowserBackend(object):
         else:
             # This query relies on making an exact match for the label.
             query = self.get_config('RB_NODES_WITH_LABEL_QUERY')
-            
+
         return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
@@ -397,7 +397,7 @@ class BrowserBackend(object):
 
         # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
         safe_node: str = node.translate({ord(i): None for i in '*[?'})
-        
+
         # We have to append the wildcard "*" here because kypher currently
         # does not accept the SQL concatenation operator ('||') in the query definition.
         #
@@ -409,7 +409,7 @@ class BrowserBackend(object):
         """Retrieve nodes and labels for all nodes with labels starting with 'label'.
 
         This search method supports rb_get_kb_query(), which generates a list of
-        candidate nodes. The label is searched for a complete match, which                                                                                       
+        candidate nodes. The label is searched for a complete match, which
         may or may not be case-insensitive.  The search must be fast.
         """
 
