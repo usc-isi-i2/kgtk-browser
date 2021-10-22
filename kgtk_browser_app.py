@@ -48,8 +48,8 @@ from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 ### Flask application
 
 app = flask.Flask(__name__,
-                  static_url_path='',
-                  static_folder='web/static',
+                  static_url_path='/browser',
+                  static_folder='app/build',
                   template_folder='web/templates')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
@@ -134,7 +134,7 @@ def rb_get_kb():
     """This is the basic entrypoint for starting the KGTK browser.
        It sends the initial HTML file, "kb.html".
     """
-    return flask.send_from_directory('web/static', 'kb.html')
+    return flask.send_from_directory('app/build', 'index.html')
 
 def rb_is_true(value: str)->bool:
     """String to bool conversion function for use with args.get(...).
