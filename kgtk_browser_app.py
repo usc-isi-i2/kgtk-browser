@@ -129,8 +129,8 @@ def get_info():
 
 # revised browser support:
 
-@app.route('/kb', methods=['GET'])
-def rb_get_kb():
+@app.route('/browser/<string:node>', methods=['GET'])
+def rb_get_kb(node):
     """This is the basic entrypoint for starting the KGTK browser.
        It sends the initial HTML file, "kb.html".
     """
