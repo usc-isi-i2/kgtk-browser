@@ -6,7 +6,7 @@ import kgtk.kypher.api as kapi
 ### Basic configuration section:
 
 VERSION               = '0.0.1'
-GRAPH_ID              = 'knowledge-graph'
+GRAPH_ID              = 'my-knowledge-graph'
 GRAPH_CACHE           = './wikidata.sqlite3.db'
 LOG_LEVEL             = 1
 INDEX_MODE            = 'auto'
