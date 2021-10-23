@@ -33,6 +33,8 @@ KG_IMAGES_LABEL       = 'P18'
 KG_FANOUTS_LABEL      = 'count_distinct_properties'
 KG_DATATYPES_LABEL     = 'datatype'
 
+# Data server limits
+VALUELIST_MAX_LEN: int = 100
 
 ### Query configuration section:
 
