@@ -1,13 +1,14 @@
 version: "3"
 services:
-  kgtk-browser-app:
-    image: docker-reg.ads.isi.edu:443/kgtk-browser-app
-    container_name: kgtk-browser-app
+  kgtk-browser-iswc:
+    image: docker-reg.ads.isi.edu:443/kgtk-browser:iswc
+    command: sh -c "flask run --host 0.0.0.0 --port 5007"
+    container_name: kgtk-browser-iswc
     restart: always
-    expose:
-      - "80"
     ports:
-      - "1776:80"
+      - "5007:5007"
+    volumes:
+      - /data:/data
     logging:
       options:
         max-size: "10m"
