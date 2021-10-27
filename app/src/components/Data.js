@@ -41,15 +41,8 @@ const Data = () => {
       return item.url
     }
 
-    // if there is no external url, link internally to `/browser/item/<node_id>`
-    let url = `/iswc/browser/${item.ref}`
-
-    // prefix the url with the location of where the app is hosted
-    if ( process.env.REACT_APP_FRONTEND_URL ) {
-      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
-    }
-
-    return url
+    // if there is no external url, link internally to `/iswc/browser/<node_id>`
+    return `/iswc/browser/${item.ref}`
   }
 
   const renderLoading = () => {
