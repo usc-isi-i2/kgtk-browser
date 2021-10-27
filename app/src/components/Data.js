@@ -41,8 +41,8 @@ const Data = () => {
       return item.url
     }
 
-    // if there is no external url, link internally to `/kb/item/<node_id>`
-    let url = `/browser/${item.ref}`
+    // if there is no external url, link internally to `/browser/item/<node_id>`
+    let url = `/iswc/browser/${item.ref}`
 
     // prefix the url with the location of where the app is hosted
     if ( process.env.REACT_APP_FRONTEND_URL ) {
