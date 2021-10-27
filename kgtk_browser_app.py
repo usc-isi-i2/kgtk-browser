@@ -53,6 +53,9 @@ app = flask.Flask(__name__,
                   template_folder='web/templates')
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
+# Allow urls with trailing slashes
+app.url_map.strict_slashes = False
+
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
 ID_SEARCH_THRESHOLD: int = 40
