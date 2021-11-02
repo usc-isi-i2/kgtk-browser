@@ -72,7 +72,7 @@ const Search = () => {
   }, [inputValue])
 
   const onSelect = node => {
-    let url = `/browser/${node.ref}`
+    let url = `/${node.ref}`
 
     // prefix the url with the location of where the app is hosted
     if ( process.env.REACT_APP_FRONTEND_URL ) {
