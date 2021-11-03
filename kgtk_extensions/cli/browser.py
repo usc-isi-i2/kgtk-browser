@@ -7,6 +7,9 @@ Optional params:
     - port number (-p, --port)
     - kgtk browser config file (-c, --config)
     - kgtk browser flask app file (-a, --app)
+
+Example usage:
+    kgtk browser --host 0.0.0.0 --port 1234 --app flask_app.py --config config.py
 """
 
 from argparse import Namespace, SUPPRESS
