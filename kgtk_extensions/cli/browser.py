@@ -1,7 +1,12 @@
 """
 Run the KGTK-Browser Flask server
+Open a browser window with the kgtk-browser location
 
-Optional: open a browser window with kgtk-browser url
+Optional params:
+    - hostname (--host)
+    - port number (-p, --port)
+    - kgtk browser config file (-c, --config)
+    - kgtk browser flask app file (-a, --app)
 """
 
 from argparse import Namespace, SUPPRESS
