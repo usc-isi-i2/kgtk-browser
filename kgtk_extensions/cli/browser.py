@@ -45,8 +45,27 @@ def add_arguments_extended(parser: KGTKArgumentParser, parsed_shared_args: Names
         else:
             return SUPPRESS
 
+    # KGTK Browser hostname
+    parser.add_argument(
+        '--host',
+        dest="kgtk_browser_host",
+        help="Hostname used to launch flask server, defaults to localhost",
+        default="localhost",
+    )
+
+    # KGTK Browser port number
+    parser.add_argument(
+        '-p', '--port',
+        dest="kgtk_browser_port",
+        help="Port number used to launch flask server, defaults to 5000",
+        default="5000",
+    )
+
 
 def run(
+        kgtk_browser_host: str = 'localhost',
+        kgtk_browser_port: str = '5000',
+
         errors_to_stdout: bool = False,
         errors_to_stderr: bool = True,
         show_options: bool = False,
@@ -80,7 +99,13 @@ def run(
         os.environ["FLASK_ENV"] = "development"
         os.environ["KGTK_BROWSER_CONFIG"] = "kgtk_browser_config.py"
 
-        os.system("flask run --host 0.0.0.0 --port 5000")
+        # Run flask app using the selected host and port
+        os.system(
+            "flask run --host {} --port {}".format(
+                kgtk_browser_host,
+                kgtk_browser_port,
+            )
+        )
 
         return 0
 
