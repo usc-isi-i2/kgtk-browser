@@ -95,6 +95,7 @@ def run(
     # import modules locally
     from pathlib import Path
     import simplejson as json
+    import webbrowser
     import os, sys
     import typing
 
@@ -116,6 +117,10 @@ def run(
         # Set the flask app and configuration file settings
         os.environ["FLASK_APP"] = kgtk_browser_app
         os.environ["KGTK_BROWSER_CONFIG"] = kgtk_browser_config
+
+        # Open the default web browser at the kgtk-browser location
+        url = "http://{}:{}/browser".format(kgtk_browser_host, kgtk_browser_port)
+        webbrowser.open(url)
 
         # Run flask app using the selected host and port
         os.system(
