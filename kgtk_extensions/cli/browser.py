@@ -104,6 +104,7 @@ def run(
     from pathlib import Path
     import simplejson as json
     import webbrowser
+    import threading
     import os, sys
     import typing
 
@@ -128,7 +129,7 @@ def run(
 
         # Open the default web browser at the kgtk-browser location
         url = "http://{}:{}/browser".format(kgtk_browser_host, kgtk_browser_port)
-        webbrowser.open(url)
+        threading.Timer(2.5, lambda: webbrowser.open(url)).start()
 
         # Run flask app using the selected host and port
         os.system(
