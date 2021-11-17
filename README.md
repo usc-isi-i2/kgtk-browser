@@ -36,6 +36,7 @@
   ```
   * From the python shell, run the following code
   ```
+    import sqlite3
     conn = sqlite3.connect('./wikidata.sqlite3.db')
     conn.execute('ALTER TABLE graph_2 ADD COLUMN "node1;upper" text')
     conn.commit()
