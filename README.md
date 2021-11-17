@@ -3,15 +3,64 @@
 ## Requirements
 
 * you need to install the kgtk and flask Python packages
-* download wikidata-20210215-dwd-browser.sqlite3.db.gz  (about 16GB) from the KGTK shared drive
-  in the KGTK > datasets > wikidata-20210215-dwd folder; this database has been
-  preloaded and indexed and should work out-of-the-box without requiring
-  any of the data files it was constructed from
-  `rclone copy kgtk:datasets/wikidata-20210215-dwd/wikidata-20210215-dwd-browser.sqlite3.db.gz .`
-* uncompress the DB somewhere on your system which will require about 60GB
-  of space; for best performance this should be on an SSD drive
-* edit DB_GRAPH_CACHE in kgtk_browser_config.py to point to that location,
-  or copy (or move) the uncompressed file to `./wikidata.sqlite3.db`.
+* You can EITHER download pre built graph cache ,
+  * download wikidata-20210215-dwd-browser.sqlite3.db.gz  (about 16GB) from the KGTK shared drive
+    in the KGTK > datasets > wikidata-20210215-dwd folder; this database has been
+    preloaded and indexed and should work out-of-the-box without requiring
+    any of the data files it was constructed from
+    `rclone copy kgtk:datasets/wikidata-20210215-dwd/wikidata-20210215-dwd-browser.sqlite3.db.gz .`
+  * uncompress the DB somewhere on your system which will require about 60GB
+    of space; for best performance this should be on an SSD drive
+  edit DB_GRAPH_CACHE in kgtk_browser_config.py to point to that location,
+    or copy (or move) the uncompressed file to `./wikidata.sqlite3.db`.
+* OR, build a graph cache using existing KGTK files
+  * The following files are required ,
+    * aliases.tsv.gz
+    * claims.tsv.gz
+    * descriptions.tsv.gz
+    * labels.tsv.gz
+    * metadata.tsv.gz
+    * qualifiers.tsv.gz
+  * Run the following command,
+  ```
+    cd kgtk-browser
+    kgtk query --graph-cache ./wikidata.sqlite3.db 
+         -i claims.tsv.gz --as claims  
+         -i labels.tsv.gz --as labels  
+         -i aliases.tsv.gz --as aliases  
+         -i descriptions.tsv.gz --as descriptions  
+         -i qualifiers.tsv.gz --as qualifiers
+         -i metadata.tsv.gz --as metadata 
+         --limit 3
+
+  ```
+  * From the python shell, run the following code
+  ```
+    conn = sqlite3.connect('./wikidata.sqlite3.db')
+    conn.execute('ALTER TABLE graph_2 ADD COLUMN "node1;upper" text')
+    conn.commit()
+
+    conn.execute('UPDATE graph_2 SET "node1;upper" = upper(node1)')
+    conn.commit()
+
+    conn.execute('CREATE INDEX "graph_2_node1upper_idx" on graph_2 ("node1;upper")')
+    conn.commit()
+
+    conn.execute('ANALYZE "graph_2_node1upper_idx"')
+    conn.commit()
+
+    conn.execute('ALTER TABLE graph_2 ADD COLUMN "node2;upper" text')
+    conn.commit()
+
+    conn.execute('UPDATE graph_2 SET "node2;upper" = upper(node2)')
+    conn.commit()
+
+    conn.execute('CREATE INDEX "graph_2_node2upper_idx" on graph_2 ("node2;upper")')
+    conn.commit()
+
+    conn.execute('ANALYZE "graph_2_node2upper_idx"')
+    conn.commit()
+  ```
 
 
 ## Running the web app
@@ -1076,6 +1125,12 @@ cd app/
 npm install
 
 This will install files in "app/node_modules/" as directed by "app/package.json"
+
+in the shell , for running locally ,
+```
+export REACT_APP_FRONTEND_URL=http://localhost:5000/browser
+export REACT_APP_BACKEND_URL=http://localhost:5000
+```
 
 3) Ensure that the HOST envar is not incorrecty set
 
