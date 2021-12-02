@@ -94,7 +94,7 @@ const Search = () => {
       }}
       onChange={(event, value) => onSelect(value)}
       getOptionSelected={(option, value) => option.description === value.name}
-      getOptionLabel={(option) => option.description}
+      getOptionLabel={(option) => option.description + ' ' + option.ref}
       onInputChange={(event, newInputValue) => {
         setInputValue(newInputValue)
       }}
