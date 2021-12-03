@@ -23,9 +23,9 @@ KG_ALIASES_GRAPH = 'alias'
 KG_DESCRIPTIONS_GRAPH = 'description'
 KG_IMAGES_GRAPH = 'claims'
 # KG_FANOUTS_GRAPH = 'metadata'
-KG_FANOUTS_GRAPH = 'types'
+KG_FANOUTS_GRAPH = 'datatypes'
 # KG_DATATYPES_GRAPH = 'metadata'
-KG_DATATYPES_GRAPH = 'types'
+KG_DATATYPES_GRAPH = 'datatypes'
 
 # edge labels for various edges referenced in query section below:
 KG_LABELS_LABEL = 'label'
