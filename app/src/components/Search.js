@@ -110,6 +110,9 @@ const Search = () => {
           <Typography variant="body1">
             {option.description}
           </Typography>
+          <Typography variant="body1">
+            {option.ref_description}
+          </Typography>
         </ListItemText>
       )}
       options={options}

@@ -10,8 +10,8 @@ import sys
 
 import kgtk.kypher.query as kyquery
 import kgtk.kypher.sqlstore as sqlstore
-from   kgtk.exceptions import KGTKException
-from   browser.backend.fastdf import FastDataFrame
+from kgtk.exceptions import KGTKException
+from browser.backend.fastdf import FastDataFrame
 import browser.backend.format as fmt
 
 
@@ -62,7 +62,6 @@ class BrowserBackend(object):
     def __exit__(self, *_exc):
         self.api.__exit__()
 
-
     ### Query wrappers:
 
     FORMAT_FAST_DF = 'fdf'
@@ -104,26 +103,29 @@ class BrowserBackend(object):
         """Retrieve all edges that have 'node' as their node1.
         """
         query = self.get_config('NODE_EDGES_QUERY')
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
+                                  FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node2.
         """
         query = self.get_config('NODE_INVERSE_EDGES_QUERY')
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
+                                  FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node1.
         """
         query = self.get_config('NODE_EDGE_QUALIFIERS_QUERY')
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
+                                  FETCH_FANOUTS=fanouts, fmt=fmt)
 
     def get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node2.
         """
         query = self.get_config('NODE_INVERSE_EDGE_QUALIFIERS_QUERY')
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images, FETCH_FANOUTS=fanouts, fmt=fmt)
-
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
+                                  FETCH_FANOUTS=fanouts, fmt=fmt)
 
     ### Utilities:
 
@@ -167,7 +169,6 @@ class BrowserBackend(object):
             pp.pprint(result)
         output.write('</pre>\n')
         return output.getvalue()
-
 
     ### Collecting node data:
 
@@ -235,7 +236,7 @@ class BrowserBackend(object):
             df.drop_nulls(inplace=True)
             df.drop_duplicates(inplace=True)
             # deferred to JSON conversion for now:
-            #df.coerce_type(fmt.NODE_FANOUT_COLUMN, int, inplace=True)
+            # df.coerce_type(fmt.NODE_FANOUT_COLUMN, int, inplace=True)
             return df
         return None
 
@@ -265,10 +266,11 @@ class BrowserBackend(object):
         inv_edges, inv_quals = None, None
         if inverse:
             inv_edges = self.get_node_inverse_edges(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
-            inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts, fmt=result_fmt)
+            inv_quals = self.get_node_inverse_edge_qualifiers(node, lang=lang, images=images, fanouts=fanouts,
+                                                              fmt=result_fmt)
 
         if (node_labels.empty() and node_aliases.empty() and node_descs.empty() and
-            edges.empty() and (inv_edges is None or inv_edges.empty())):
+                edges.empty() and (inv_edges is None or inv_edges.empty())):
             # 'node' doesn't exist or nothing is known about it:
             return None
 
@@ -314,7 +316,6 @@ class BrowserBackend(object):
         }
         return node_data
 
-
     ### Top level:
 
     # We do LRU-cache this one also, since conversion from cached query results
@@ -338,7 +339,7 @@ class BrowserBackend(object):
             return formatter.format_node_data(node_data)
 
     ### Support for the revised browser:
-    def rb_get_node_labels(self, node, lang=None, fmt=None, ignore_case: bool = False):
+    def rb_get_node_labels(self, node, fmt=None):
         """Retrieve all labels for 'node'.
 
         Node names are assumed to always be in upper case in the database and
@@ -348,14 +349,12 @@ class BrowserBackend(object):
         This search method supports rb_get_kb_query(), which generates a list of
         candidate nodes.  The search must be fast.
         """
-        if ignore_case:
-            # Raise the case of the label to implement a case-insensitive search.
-            node = node.upper()
-            query = self.get_config('RB_UPPER_NODE_LABELS_QUERY')
-        else:
-            query = self.get_config('NODE_LABELS_QUERY')
 
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        # Raise the case of the label to implement a case-insensitive search.
+        node = node.upper()
+        query = self.get_config('MATCH_ITEMS_EXACTLY_QUERY')
+
+        return self.execute_query(query, NODE=node, fmt=fmt)
 
     def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
         """Retrieve all nodes with label 'label'.
@@ -377,7 +376,7 @@ class BrowserBackend(object):
         return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
+    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes starting with 'node'.
 
         Node names are assumed to always be in upper case in the database and
@@ -388,24 +387,17 @@ class BrowserBackend(object):
         candidate nodes.  The search must be fast.
         """
 
-        if ignore_case:
-            # Raise the case of the label to implement a case-insensitive search.
-            node = node.upper()
-            query = self.get_config('RB_UPPER_NODES_STARTING_WITH_QUERY')
-        else:
-            query = self.get_config('RB_NODES_STARTING_WITH_QUERY')
+        # Raise the case of the label to implement a case-insensitive search.
+        node = node.upper()
+        query = self.get_config('MATCH_ITEM_TEXTSEARCH_QUERY')
 
         # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
         safe_node: str = node.translate({ord(i): None for i in '*[?'})
 
-        # We have to append the wildcard "*" here because kypher currently
-        # does not accept the SQL concatenation operator ('||') in the query definition.
-        #
-        # TODO: migrate the "*" to the SQL query definition.
-        return self.execute_query(query, NODE=safe_node + '*', LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        return self.execute_query(query, NODE=safe_node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_with_labels_starting_with(self, label, limit: int = 20, lang=None, fmt=None, ignore_case: bool = False):
+    def search_labels_exactly(self, label, limit: int = 20, lang=None, fmt=None):
         """Retrieve nodes and labels for all nodes with labels starting with 'label'.
 
         This search method supports rb_get_kb_query(), which generates a list of
@@ -413,23 +405,57 @@ class BrowserBackend(object):
         may or may not be case-insensitive.  The search must be fast.
         """
 
-        if ignore_case:
-            # Raise the case of the label to implement a case-insensitive search.
-            label = label.upper()
-            query = self.get_config('RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY')
+        # Raise the case of the label to implement a case-insensitive search.
 
-        else:
-            query = self.get_config('RB_NODES_WITH_LABELS_STARTING_WITH_QUERY')
+        _lang = self.get_lang(lang)
+
+        query = self.get_config('MATCH_UPPER_LABELS_EXACTLY_QUERY')
 
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        # We have to append the wildcard "*" here because kypher currently
-        # does not accept SQL concatenation operator ('||') in the query definition.
-        #
-        # TODO: migrate the "*" to the query definition.
+        search_label = f"'{safe_label}'@{_lang}".upper()
+
         return self.execute_query(query,
-                                  LABEL=safe_label + '*',
+                                  LABEL=search_label,
+                                  LIMIT=limit,
+                                  fmt=fmt)
+
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
+    def search_labels_textlike(self, label, limit: int = 20, lang=None, fmt=None):
+        """Retrieve nodes and labels for all nodes with labels like 'label'.
+
+         The label is searched for a like match, which is case-insensitive.
+           The search must be fast.
+        """
+
+        query = self.get_config('MATCH_LABELS_TEXTLIKE_QUERY')
+
+        # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
+        safe_label: str = label.translate({ord(i): None for i in '*[?'})
+
+        return self.execute_query(query,
+                                  LABEL=safe_label,
+                                  LANG=self.get_lang(lang),
+                                  LIMIT=limit,
+                                  fmt=fmt)
+
+    @lru_cache(maxsize=LRU_CACHE_SIZE)
+    def search_labels(self, label, limit: int = 20, lang=None, fmt=None):
+        """Retrieve nodes and labels for all nodes with labels starting with 'label'.
+
+        This search method supports rb_get_kb_query(), which generates a list of
+        candidate nodes. The label is searched for a complete match, which
+        may or may not be case-insensitive.  The search must be fast.
+        """
+
+        query = self.get_config('MATCH_LABELS_TEXTSEARCH_QUERY')
+
+        # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
+        safe_label: str = label.translate({ord(i): None for i in '*[?'})
+
+        return self.execute_query(query,
+                                  LABEL=safe_label,
                                   LIMIT=limit,
                                   LANG=self.get_lang(lang),
                                   fmt=fmt)
@@ -440,27 +466,27 @@ class BrowserBackend(object):
         query = self.get_config('RB_NODE_EDGES_QUERY')
         return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
-
     def rb_get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have 'node' as their node1.
         """
         query = self.get_config('RB_NODE_EDGE_QUALIFIERS_QUERY')
         return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
-    def rb_get_node_edge_qualifiers_by_edge_id(self, edge_id, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
+    def rb_get_node_edge_qualifiers_by_edge_id(self, edge_id, lang=None, images=False, fanouts=False, fmt=None,
+                                               limit: int = 10000):
         """Retrieve all edge qualifiers for the edge with edge ID edge_id..
         """
         query = self.get_config('RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY')
         return self.execute_query(query, EDGE_ID=edge_id, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
-    def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
+    def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None,
+                                       limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have their id in ID_LIST.
         """
         query = self.get_config('GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY')(id_list)
         results = self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
-        query.clear() # Since we don't plan to re-issue this query, release its resources.
+        query.clear()  # Since we don't plan to re-issue this query, release its resources.
         return results
-
 
     def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node2.
@@ -468,13 +494,11 @@ class BrowserBackend(object):
         query = self.get_config('RB_NODE_INVERSE_EDGES_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
-
     def rb_get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edge qualifiers for edges that have 'node' as their node2.
         """
         query = self.get_config('RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY')
         return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
-
 
     def rb_get_node_categories(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all categories that have 'node' as their node2.
@@ -499,4 +523,3 @@ class BrowserBackend(object):
         """
         query = self.get_config('RB_LANGUAGE_LABELS_QUERY')
         return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
-

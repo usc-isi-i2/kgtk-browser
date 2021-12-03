@@ -2,41 +2,43 @@
 
 import kgtk.kypher.api as kapi
 
-
 ### Basic configuration section:
 
-VERSION               = '0.0.1'
-GRAPH_ID              = 'my-knowledge-graph'
-GRAPH_CACHE           = './wikidata.sqlite3.db'
-LOG_LEVEL             = 1
-INDEX_MODE            = 'auto'
-MAX_RESULTS           = 10000
-MAX_CACHE_SIZE        = 1000
-#DEFAULT_FANOUT        = 10       # not yet implemented
-DEFAULT_LANGUAGE      = 'en'
+VERSION = '0.0.1'
+GRAPH_ID = 'my-knowledge-graph'
+GRAPH_CACHE = './wikidata.sqlite3.db'
+# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-5/temp.kgtk-search-5/wikidata.sqlite3.db'
+LOG_LEVEL = 1
+INDEX_MODE = 'auto'
+MAX_RESULTS = 10000
+MAX_CACHE_SIZE = 1000
+# DEFAULT_FANOUT        = 10       # not yet implemented
+DEFAULT_LANGUAGE = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
-KG_EDGES_GRAPH        = 'claims'
-KG_QUALIFIERS_GRAPH   = 'qualifiers'
-KG_LABELS_GRAPH       = 'labels'
-KG_ALIASES_GRAPH      = 'aliases'
-KG_DESCRIPTIONS_GRAPH = 'descriptions'
-KG_IMAGES_GRAPH       = 'claims'
-KG_FANOUTS_GRAPH      = 'metadata'
-KG_DATATYPES_GRAPH     = 'metadata'
+KG_EDGES_GRAPH = 'claims'
+KG_QUALIFIERS_GRAPH = 'qualifiers'
+KG_LABELS_GRAPH = 'label'
+KG_ALIASES_GRAPH = 'alias'
+KG_DESCRIPTIONS_GRAPH = 'description'
+KG_IMAGES_GRAPH = 'claims'
+# KG_FANOUTS_GRAPH = 'metadata'
+KG_FANOUTS_GRAPH = 'types'
+# KG_DATATYPES_GRAPH = 'metadata'
+KG_DATATYPES_GRAPH = 'types'
 
 # edge labels for various edges referenced in query section below:
-KG_LABELS_LABEL       = 'label'
-KG_ALIASES_LABEL      = 'alias'
+KG_LABELS_LABEL = 'label'
+KG_ALIASES_LABEL = 'alias'
 KG_DESCRIPTIONS_LABEL = 'description'
-KG_IMAGES_LABEL       = 'P18'
-KG_FANOUTS_LABEL      = 'count_distinct_properties'
-KG_DATATYPES_LABEL     = 'datatype'
+KG_IMAGES_LABEL = 'P18'
+KG_FANOUTS_LABEL = 'count_distinct_properties'
+KG_DATATYPES_LABEL = 'datatype'
 
 # Data server limits
 VALUELIST_MAX_LEN: int = 100
 
-### Query configuration section:
+# Query configuration section:
 
 # The queries defined below are used by the backend to retrieve and
 # aggregate information about nodes.  It should generally not be
@@ -85,7 +87,7 @@ NODE_LABELS_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='n=$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    ret='distinct n as node1, l as node_label',
 )
 
 NODE_ALIASES_QUERY = _api.get_query(
@@ -99,7 +101,7 @@ NODE_ALIASES_QUERY = _api.get_query(
     inputs='aliases',
     match='$aliases: (n)-[r:`%s`]->(a)' % KG_ALIASES_LABEL,
     where='n=$NODE and ($LANG="any" or kgtk_lqstring_lang(a)=$LANG)',
-    ret=  'distinct n as node1, a as node_alias',
+    ret='distinct n as node1, a as node_alias',
 )
 
 NODE_DESCRIPTIONS_QUERY = _api.get_query(
@@ -113,7 +115,7 @@ NODE_DESCRIPTIONS_QUERY = _api.get_query(
     inputs='descriptions',
     match='$descriptions: (n)-[r:`%s`]->(d)' % KG_DESCRIPTIONS_LABEL,
     where='n=$NODE and ($LANG="any" or kgtk_lqstring_lang(d)=$LANG)',
-    ret=  'distinct n as node1, d as node_description',
+    ret='distinct n as node1, d as node_description',
 )
 
 NODE_IMAGES_QUERY = _api.get_query(
@@ -126,7 +128,7 @@ NODE_IMAGES_QUERY = _api.get_query(
     inputs='images',
     match='$images: (n)-[r:`%s`]->(i)' % KG_IMAGES_LABEL,
     where='n=$NODE',
-    ret=  'distinct n as node1, i as node_image',
+    ret='distinct n as node1, i as node_image',
 )
 
 NODE_EDGES_QUERY = _api.get_query(
@@ -144,16 +146,16 @@ NODE_EDGES_QUERY = _api.get_query(
     """,
     name='node_edges_query',
     inputs=('edges', 'labels', 'images', 'fanouts'),
-    match= '$edges: (n1)-[r]->(n2)',
-    where= 'n1=$NODE',
-    opt=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(n2)',
+    where='n1=$NODE',
+    opt='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
-    opt2=  '$images: (n2)-[:`%s`]->(n2image)' % KG_IMAGES_LABEL,
+    opt2='$images: (n2)-[:`%s`]->(n2image)' % KG_IMAGES_LABEL,
     owhere2='$FETCH_IMAGES',
-    opt3=  '$fanouts: (n2)-[:`%s`]->(n2fanout)' % KG_FANOUTS_LABEL,
+    opt3='$fanouts: (n2)-[:`%s`]->(n2fanout)' % KG_FANOUTS_LABEL,
     owhere3='$FETCH_FANOUTS',
-    ret=   'r as id, n1 as node1, r.label as label, n2 as node2, ' +
-           'n2label as node_label, n2image as node_image, n2fanout as node_fanout',
+    ret='r as id, n1 as node1, r.label as label, n2 as node2, ' +
+        'n2label as node_label, n2image as node_image, n2fanout as node_fanout',
 )
 
 NODE_INVERSE_EDGES_QUERY = _api.get_query(
@@ -165,16 +167,16 @@ NODE_INVERSE_EDGES_QUERY = _api.get_query(
     """,
     name='node_inverse_edges_query',
     inputs=('edges', 'labels', 'images', 'fanouts'),
-    match= '$edges: (n1)-[r]->(n2)',
-    where= 'n2=$NODE',
-    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(n2)',
+    where='n2=$NODE',
+    opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    opt2=  '$images: (n1)-[:`%s`]->(n1image)' % KG_IMAGES_LABEL,
+    opt2='$images: (n1)-[:`%s`]->(n1image)' % KG_IMAGES_LABEL,
     owhere2='$FETCH_IMAGES',
-    opt3=  '$fanouts: (n1)-[:`%s`]->(n1fanout)' % KG_FANOUTS_LABEL,
+    opt3='$fanouts: (n1)-[:`%s`]->(n1fanout)' % KG_FANOUTS_LABEL,
     owhere3='$FETCH_FANOUTS',
-    ret=   'r as id, n1 as node1, r.label as label, n2 as node2, ' +
-           'n1label as node_label, n1image as node_image, n1fanout as node_fanout',
+    ret='r as id, n1 as node1, r.label as label, n2 as node2, ' +
+        'n1label as node_label, n1image as node_image, n1fanout as node_fanout',
 )
 
 NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
@@ -187,17 +189,17 @@ NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     """,
     name='node_edge_qualifiers_query',
     inputs=('edges', 'qualifiers', 'labels', 'images', 'fanouts'),
-    match= '$edges: (n1)-[r]->(), $qualifiers: (r)-[q]->(qn2)',
-    where= 'n1=$NODE',
-    opt=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(), $qualifiers: (r)-[q]->(qn2)',
+    where='n1=$NODE',
+    opt='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-    opt2=  '$images: (qn2)-[:`%s`]->(qn2image)' % KG_IMAGES_LABEL,
+    opt2='$images: (qn2)-[:`%s`]->(qn2image)' % KG_IMAGES_LABEL,
     owhere2='$FETCH_IMAGES',
-    opt3=  '$fanouts: (qn2)-[:`%s`]->(qn2fanout)' % KG_FANOUTS_LABEL,
+    opt3='$fanouts: (qn2)-[:`%s`]->(qn2fanout)' % KG_FANOUTS_LABEL,
     owhere3='$FETCH_FANOUTS',
-    ret=   'q, r as node1, q.label as label, qn2 as node2, '+
-           'qn2label as node_label, qn2image as node_image, qn2fanout as node_fanout',
-    order= 'r, qn2 desc',
+    ret='q, r as node1, q.label as label, qn2 as node2, ' +
+        'qn2label as node_label, qn2image as node_image, qn2fanout as node_fanout',
+    order='r, qn2 desc',
 )
 
 NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
@@ -210,34 +212,33 @@ NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     """,
     name='node_inverse_edge_qualifiers_query',
     inputs=('edges', 'qualifiers', 'labels', 'images', 'fanouts'),
-    match= '$edges: ()-[r]->(n2), $qualifiers: (r)-[q]->(qn2)',
-    where= 'n2=$NODE',
-    opt=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    match='$edges: ()-[r]->(n2), $qualifiers: (r)-[q]->(qn2)',
+    where='n2=$NODE',
+    opt='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-    opt2=  '$images: (qn2)-[:`%s`]->(qn2image)' % KG_IMAGES_LABEL,
+    opt2='$images: (qn2)-[:`%s`]->(qn2image)' % KG_IMAGES_LABEL,
     owhere2='$FETCH_IMAGES',
-    opt3=  '$fanouts: (qn2)-[:`%s`]->(qn2fanout)' % KG_FANOUTS_LABEL,
+    opt3='$fanouts: (qn2)-[:`%s`]->(qn2fanout)' % KG_FANOUTS_LABEL,
     owhere3='$FETCH_FANOUTS',
-    ret=   'q, r as node1, q.label as label, qn2 as node2, '+
-           'qn2label as node_label, qn2image as node_image, qn2fanout as node_fanout',
-    order= 'r, qn2 desc',
+    ret='q, r as node1, q.label as label, qn2 as node2, ' +
+        'qn2label as node_label, qn2image as node_image, qn2fanout as node_fanout',
+    order='r, qn2 desc',
 )
 
-RB_UPPER_NODE_LABELS_QUERY = _api.get_query(
+MATCH_ITEMS_EXACTLY_QUERY = _api.get_query(
     doc="""
     Create the Kypher query used by 'BrowserBackend.get_node_labels()'
     for case_independent searches.
-    Given parameters 'NODE' and 'LANG' retrieve labels for 'NODE' in
-    the specified language (using 'any' for 'LANG' retrieves all labels).
+    Given parameters 'NODE' retrieve labels for 'NODE'.
     Return distinct 'node1', 'node_label' pairs as the result (we include
     'NODE' as an output to make it easier to union result frames).
     """,
-    name='rb_upper_node_labels_query',
-    inputs='labels',
+    name='rb_upper_node_labels_query_v2',
+    inputs='l_d_pgr_ud',
     maxcache=MAX_CACHE_SIZE * 10,
-    match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
-    where='un=$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
+    where='n=$NODE',
+    ret='distinct n as node1, l as node_label, r.`node1;description` as description',
 )
 
 RB_NODES_WITH_LABEL_QUERY = _api.get_query(
@@ -257,7 +258,7 @@ RB_NODES_WITH_LABEL_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='l=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    ret='distinct n as node1, l as node_label',
 )
 
 RB_NODES_WITH_UPPER_LABEL_QUERY = _api.get_query(
@@ -285,7 +286,7 @@ RB_NODES_WITH_UPPER_LABEL_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
     where='ul=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'distinct n as node1, l as node_label',
+    ret='distinct n as node1, l as node_label',
 )
 
 RB_NODES_STARTING_WITH_QUERY = _api.get_query(
@@ -301,9 +302,9 @@ RB_NODES_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, n) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'n as node1, l as node_label',
-    order= "n, l", # Questionable performance due to poor interaction with limit
-    limit= "$LIMIT"
+    ret='n as node1, l as node_label',
+    order="n, l",  # Questionable performance due to poor interaction with limit
+    limit="$LIMIT"
 )
 
 RB_UPPER_NODES_STARTING_WITH_QUERY = _api.get_query(
@@ -319,9 +320,9 @@ RB_UPPER_NODES_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n {upper: un})-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($NODE, un) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'n as node1, l as node_label',
-    order= "n, l", # Questionable performance due to poor interaction with limit
-    limit= "$LIMIT"
+    ret='n as node1, l as node_label',
+    order="n, l",  # Questionable performance due to poor interaction with limit
+    limit="$LIMIT"
 )
 
 RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
@@ -345,9 +346,9 @@ RB_NODES_WITH_LABELS_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
     where='glob($LABEL, l) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'n as node1, l as node_label',
+    ret='n as node1, l as node_label',
     # order= "n, l", # This kills performance when there is a large number of matches
-    limit= "$LIMIT"
+    limit="$LIMIT"
 )
 
 RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
@@ -379,9 +380,54 @@ RB_NODES_WITH_UPPER_LABELS_STARTING_WITH_QUERY = _api.get_query(
     maxcache=MAX_CACHE_SIZE * 10,
     match='$labels: (n)-[r:`%s`]->(l {upper: ul})' % KG_LABELS_LABEL,
     where='glob($LABEL, ul) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
-    ret=  'n as node1, l as node_label',
+    ret='n as node1, l as node_label',
     # order= "n, l", # This kills performance when there is a large number of matches
-    limit= "$LIMIT"
+    limit="$LIMIT"
+)
+
+MATCH_UPPER_LABELS_EXACTLY_QUERY = _api.get_query(
+    doc="""
+     Exact Match case insensitive query
+    """,
+    name='match_upper_labels_exactly_query',
+    inputs='l_d_pgr_ud',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
+    where='r.`node2;upper`=$LABEL',
+    ret='distinct n as node1, l as node_label, cast("-1.0", float) as score, cast(r.`node1;pagerank`, float) as prank,'
+        ' r.`node1;description` as description',
+    order='score*prank',
+    limit='$LIMIT'
+)
+
+MATCH_LABELS_TEXTSEARCH_QUERY = _api.get_query(
+    doc="""
+     Text Search query
+    """,
+    name='match_labels_textsearch_query',
+    inputs='l_d_pgr_ud',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
+    where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+        ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+    order='score*prank',
+    limit='$LIMIT'
+)
+
+MATCH_LABELS_TEXTLIKE_QUERY = _api.get_query(
+    doc="""
+     Text Like Query
+    """,
+    name='match_labels_textlike_query',
+    inputs='l_d_pgr_ud',
+    maxcache=MAX_CACHE_SIZE * 10,
+    match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
+    where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+    ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+        ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+    order='score*prank',
+    limit='$LIMIT'
 )
 
 RB_NODE_EDGES_QUERY = _api.get_query(
@@ -398,25 +444,25 @@ RB_NODE_EDGES_QUERY = _api.get_query(
     """,
     name='rb_node_edges_query',
     inputs=('edges', 'labels', 'descriptions', 'datatypes'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2)',
-    where= 'n1=$NODE',
-    opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r {label: rl}]->(n2)',
+    where='n1=$NODE',
+    opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
-    opt2=   '$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
+    opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
-    opt3=   '$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
+    opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
-    opt4=   '$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
-    ret=   'r as id, ' +
-           'n1 as node1, ' +
-           'r.label as relationship, ' +
-           'n2 as node2, ' +
-           'llabel as relationship_label, ' +
-           'n2 as target_node, ' +
-           'n2label as target_label, ' +
-           'n2desc as target_description, ' +
-           'rlwdt as wikidatatype',
-    order= 'r.label, n2, r, llabel, n2label, n2desc', # For better performance with LIMIT, sort in caller.
+    opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
+    ret='r as id, ' +
+        'n1 as node1, ' +
+        'r.label as relationship, ' +
+        'n2 as node2, ' +
+        'llabel as relationship_label, ' +
+        'n2 as target_node, ' +
+        'n2label as target_label, ' +
+        'n2desc as target_description, ' +
+        'rlwdt as wikidatatype',
+    order='r.label, n2, r, llabel, n2label, n2desc',  # For better performance with LIMIT, sort in caller.
     limit="$LIMIT"
 )
 
@@ -430,23 +476,23 @@ RB_NODE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     """,
     name='rb_node_edge_qualifiers_query',
     inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-    where= 'n1=$NODE',
-    opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    where='n1=$NODE',
+    opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
-    opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-    opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+    opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
-    ret=   'r as id, ' +
-           'n1 as node1, ' +
-           'q as qual_id, ' +
-           'q.label as qual_relationship, ' +
-           'qn2 as qual_node2, ' +
-           'qllabel as qual_relationship_label, ' +
-           'qn2label as qual_node2_label, ' +
-           'qd as qual_node2_description',
-    order= 'r, q.label, qn2, q, qllabel, qn2label, qd', # For better performance with LIMIT, sort in caller.
+    ret='r as id, ' +
+        'n1 as node1, ' +
+        'q as qual_id, ' +
+        'q.label as qual_relationship, ' +
+        'qn2 as qual_node2, ' +
+        'qllabel as qual_relationship_label, ' +
+        'qn2label as qual_node2_label, ' +
+        'qd as qual_node2_description',
+    order='r, q.label, qn2, q, qllabel, qn2label, qd',  # For better performance with LIMIT, sort in caller.
     limit="$LIMIT"
 )
 
@@ -460,25 +506,26 @@ RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY = _api.get_query(
     """,
     name='rb_node_edge_qualifiers_by_edge_id_query',
     inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-    where= 'r=$EDGE_ID',
-    opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    where='r=$EDGE_ID',
+    opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
-    opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-    opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+    opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
-    ret=   'r as id, ' +
-           'n1 as node1, ' +
-           'q as qual_id, ' +
-           'q.label as qual_relationship, ' +
-           'qn2 as qual_node2, ' +
-           'qllabel as qual_relationship_label, ' +
-           'qn2label as qual_node2_label, ' +
-           'qd as qual_node2_description',
-    order= 'r, q.label, qn2, q, qllabel, qn2label, qd', # For better performance with LIMIT, sort in caller.
+    ret='r as id, ' +
+        'n1 as node1, ' +
+        'q as qual_id, ' +
+        'q.label as qual_relationship, ' +
+        'qn2 as qual_node2, ' +
+        'qllabel as qual_relationship_label, ' +
+        'qn2label as qual_node2_label, ' +
+        'qd as qual_node2_description',
+    order='r, q.label, qn2, q, qllabel, qn2label, qd',  # For better performance with LIMIT, sort in caller.
     limit="$LIMIT"
 )
+
 
 def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
     """This code generates a new name for each query, thus
@@ -501,25 +548,26 @@ def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list):
         Do not supply a name for these queries.
         """,
         inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
-        match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-        where= 'r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
-        opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+        match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+        where='r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
+        opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
         owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
-        opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+        opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
         owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-        opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+        opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
         owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
-        ret=   'r as id, ' +
-        'n1 as node1, ' +
-        'q as qual_id, ' +
-        'q.label as qual_relationship, ' +
-        'qn2 as qual_node2, ' +
-        'qllabel as qual_relationship_label, ' +
-        'qn2label as qual_node2_label, ' +
-        'qd as qual_node2_description',
-        order= 'r, q.label, qn2, q, qllabel, qn2label, qd',
-        limit= "$LIMIT"
+        ret='r as id, ' +
+            'n1 as node1, ' +
+            'q as qual_id, ' +
+            'q.label as qual_relationship, ' +
+            'qn2 as qual_node2, ' +
+            'qllabel as qual_relationship_label, ' +
+            'qn2label as qual_node2_label, ' +
+            'qd as qual_node2_description',
+        order='r, q.label, qn2, q, qllabel, qn2label, qd',
+        limit="$LIMIT"
     )
+
 
 RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     doc="""
@@ -535,25 +583,25 @@ RB_NODE_INVERSE_EDGES_QUERY = _api.get_query(
     """,
     name='rb_node_inverse_edges_query',
     inputs=('edges', 'labels', 'descriptions', 'datatypes'),
-    match= '$edges: (n1)-[r {label: rl}]->(n2)',
-    where= 'n2=$NODE',
-    opt=   '$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r {label: rl}]->(n2)',
+    where='n2=$NODE',
+    opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
-    opt2=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    opt2='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    opt3=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
+    opt3='$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
-    opt4=   '$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
-    ret=   'r as id, ' +
-           'n1 as node1, ' +
-           'r.label as relationship, ' +
-           'n2 as node2, ' +
-           'llabel as relationship_label, ' +
-           'n1 as target_node, ' +
-           'n1label as target_label, ' +
-           'n1desc as target_description, ' +
-           'rlwdt as wikidatatype',
-    order= 'r.label, n2, r, llabel, n1label, n1desc'
+    opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
+    ret='r as id, ' +
+        'n1 as node1, ' +
+        'r.label as relationship, ' +
+        'n2 as node2, ' +
+        'llabel as relationship_label, ' +
+        'n1 as target_node, ' +
+        'n1label as target_label, ' +
+        'n1desc as target_description, ' +
+        'rlwdt as wikidatatype',
+    order='r.label, n2, r, llabel, n1label, n1desc'
 )
 
 RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
@@ -566,23 +614,23 @@ RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY = _api.get_query(
     """,
     name='rb_node_inverse_edge_qualifiers_query',
     inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-    where= 'n2=$NODE',
-    opt=   '$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
+    where='n2=$NODE',
+    opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
-    opt2=   '$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
+    opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
-    opt3=   '$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
+    opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
     owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
-    ret=   'r as id, ' +
-           'n1 as node1, ' +
-           'q as qual_id, ' +
-           'q.label as qual_relationship, ' +
-           'qn2 as qual_node2, ' +
-           'qllabel as qual_relationship_label, ' +
-           'qn2label as qual_node2_label, ' +
-           'qd as qual_node2_description',
-    order= 'r, q.label, qn2, q, qllabel, qn2label, qd'
+    ret='r as id, ' +
+        'n1 as node1, ' +
+        'q as qual_id, ' +
+        'q.label as qual_relationship, ' +
+        'qn2 as qual_node2, ' +
+        'qllabel as qual_relationship_label, ' +
+        'qn2label as qual_node2_label, ' +
+        'qd as qual_node2_description',
+    order='r, q.label, qn2, q, qllabel, qn2label, qd'
 )
 
 RB_NODE_CATEGORIES_QUERY = _api.get_query(
@@ -601,18 +649,17 @@ RB_NODE_CATEGORIES_QUERY = _api.get_query(
     """,
     name='rb_node_categories_query',
     inputs=('edges', 'labels', 'descriptions'),
-    match= '$edges: (n1)-[:P301]->(n2)',
-    where= 'n2=$NODE',
-    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[:P301]->(n2)',
+    where='n2=$NODE',
+    opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    opt2=   '$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
+    opt2='$descriptions: (n1)-[r:`%s`]->(n1desc)' % KG_DESCRIPTIONS_LABEL,
     owhere2='$LANG="any" or kgtk_lqstring_lang(n1desc)=$LANG',
-    ret=   'n1 as node1, ' +
-           'n1label as node1_label, ' +
-           'n1desc as node1_description',
-    order= 'n1, n1label, n1desc'
+    ret='n1 as node1, ' +
+        'n1label as node1_label, ' +
+        'n1desc as node1_description',
+    order='n1, n1label, n1desc'
 )
-
 
 RB_IMAGE_FORMATTER_QUERY = _api.get_query(
     doc="""
@@ -623,10 +670,10 @@ RB_IMAGE_FORMATTER_QUERY = _api.get_query(
     """,
     name='rb_image_formatter_query',
     inputs=('edges'),
-    match= '$edges: (n1)-[:P1630]->(n2)',
-    where= 'n1=$NODE',
-    ret=   'n2 as node2 ',
-    limit= 1
+    match='$edges: (n1)-[:P1630]->(n2)',
+    where='n1=$NODE',
+    ret='n2 as node2 ',
+    limit=1
 )
 
 RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
@@ -636,10 +683,10 @@ RB_SUBPROPERTY_RELATIONSHIPS_QUERY = _api.get_query(
     """,
     name='rb_subproperty_relationships_query',
     inputs=('edges', 'labels'),
-    match= '$edges: (n1)-[:P1647]->(n2)',
-    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    match='$edges: (n1)-[:P1647]->(n2)',
+    opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    ret=   'n1 as node1, n2 as node2, n1label as node1_label',
+    ret='n1 as node1, n2 as node2, n1label as node1_label',
 )
 
 RB_LANGUAGE_LABELS_QUERY = _api.get_query(
@@ -670,10 +717,10 @@ RB_LANGUAGE_LABELS_QUERY = _api.get_query(
     """,
     name='rb_language_labels_query',
     inputs=('edges', 'labels'),
-    match= '$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
-    where= 'n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]',
-    opt=   '$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+    match='$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
+    where='n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]',
+    opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
     owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
-    ret=   'n1 as node1, n1label as node1_label',
-    order= 'n1, n1label'
+    ret='n1 as node1, n1label as node1_label',
+    order='n1, n1label'
 )
