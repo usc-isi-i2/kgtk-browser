@@ -93,8 +93,8 @@ const Search = () => {
         setOpen(false)
       }}
       onChange={(event, value) => onSelect(value)}
-      getOptionSelected={(option, value) => option.description === value.name}
-      getOptionLabel={(option) => option.description + ' ' + option.ref}
+      getOptionLabel={option => option.description + ' ' + option.ref}
+      filterOptions={options => options}
       onInputChange={(event, newInputValue) => {
         setInputValue(newInputValue)
       }}
@@ -109,6 +109,9 @@ const Search = () => {
           </Typography>
           <Typography variant="body1">
             {option.description}
+          </Typography>
+          <Typography variant="body1">
+            {option.ref_description}
           </Typography>
         </ListItemText>
       )}
