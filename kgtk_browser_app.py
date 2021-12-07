@@ -308,7 +308,7 @@ def rb_get_kb_query():
     q = args.get('q')
 
     verbose: bool = args.get("verbose", default=app.config['VERBOSE'], type=rb_is_true)
-
+    
     if verbose:
         print("rb_get_kb_query: " + q)
 
@@ -358,11 +358,81 @@ def rb_get_kb_query():
                 # query.  Should we?  The underlying code imposes a default
                 # limit, currently 1000.
                 if verbose:
-                    print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
+                    print("Searching for item %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
 
                 results = backend.rb_get_node_labels(q)
 
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    description = KgtkFormat.unstringify(result[2]) if result[2].strip() != "" else ""
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label,
+                            "ref_description": description
+                        }
+                    )
+
+            query_text_like = True
+            if match_label_prefixes and len(q) >= 3:
+                # Query the labels, looking for a prefix match. The search may
+                # be case-sensitive or case-insensitive, according to
+                # "match_label_ignore_case".
+                #
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do a prefix match, so
+                # we stringify to a plain string, replace the leading '"' with
+                # "'", and remove the trailing '"'
+                #
+
+                if verbose:
+                    print("Searching for label prefix, textmatch %s (ignore_case=%s)" % (
+                        repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+
+                results = backend.search_labels(q,
+                                                lang=lang,
+                                                limit=match_label_prefixes_limit)
+
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                if len(results) > 0:
+
+                    query_text_like = False
+                    for result in rb_sort_query_results(results):
+                        item = result[0]
+                        if item in items_seen:
+                            continue
+                        items_seen.add(item)
+                        label = KgtkFormat.unstringify(result[1])
+                        description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
+                        matches.append(
+                            {
+                                "ref": item,
+                                "text": item,
+                                "description": label,
+                                "ref_description": description
+                            }
+                        )
+
+            if match_label_text_like and query_text_like and len(q) >= 3:
+                # Query the labels, using the %like% match in sqlite FTS5.
+                # split the input string at space and insert % between every token
+
+                search_label = f"%{'%'.join(q.split(' '))}%"
+                if verbose:
+                    print("Searching for label, textlike %s " % (repr(q)), file=sys.stderr, flush=True)
+
+                results = backend.search_labels_textlike(search_label,
+                                                         lang=lang,
+                                                         limit=match_label_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
                 for result in rb_sort_query_results(results):
@@ -371,7 +441,7 @@ def rb_get_kb_query():
                         continue
                     items_seen.add(item)
                     label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[2]) if result[2].strip() != "" else ""
+                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
                     matches.append(
                         {
                             "ref": item,
@@ -398,7 +468,8 @@ def rb_get_kb_query():
                 # We will use kgtk_lqstring_text() function to get the text part of the language qualified string,
                 # and kgtk_lqstring_lang() to get the language.
                 if verbose:
-                    print("Searching for label %s (ignore_case=%s)" % (repr(q), repr(match_label_ignore_case)),
+                    print("Searching for label, exact match %s (ignore_case=%s)" %
+                          (repr(q), repr(match_label_ignore_case)),
                           file=sys.stderr, flush=True)
 
                 results = backend.search_labels_exactly(q,
@@ -423,73 +494,6 @@ def rb_get_kb_query():
                             "ref_description": description
                         }
                     )
-
-            if match_label_text_like:
-                # Query the labels, using the %like% match in sqlite FTS5.
-                # split the input string at space and insert % between every token
-
-                search_label = f"%{'%'.join(q.split(' '))}%"
-                if verbose:
-                    print("Searching for label like %s " % (repr(q)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels_textlike(search_label,
-                                                         lang=lang,
-                                                         limit=match_label_prefixes_limit)
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
-            if match_label_prefixes:
-                # Query the labels, looking for a prefix match. The search may
-                # be case-sensitive or case-insensitive, according to
-                # "match_label_ignore_case".
-                #
-                # Labels are assumed to be encoded as language-qualified
-                # strings in the database.  We want to do a prefix match, so
-                # we stringify to a plain string, replace the leading '"' with
-                # "'", and remove the trailing '"'
-                #
-
-                if verbose:
-                    print("Searching for label prefix %s (ignore_case=%s)" % (
-                        repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels(q,
-                                                lang=lang,
-                                                limit=match_label_prefixes_limit)
-
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
