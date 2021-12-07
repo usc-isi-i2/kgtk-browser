@@ -4,15 +4,13 @@ import kgtk.kypher.api as kapi
 
 ### Basic configuration section:
 
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
-# GRAPH_CACHE = './wikidata.sqlite3.db'
-GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
+GRAPH_CACHE = './wikidata.sqlite3.db'
 LOG_LEVEL = 1
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
 MAX_CACHE_SIZE = 1000
-# DEFAULT_FANOUT        = 10       # not yet implemented
 DEFAULT_LANGUAGE = 'en'
 
 # input names for various aspects of the KG referenced in query section below:
@@ -22,9 +20,7 @@ KG_LABELS_GRAPH = 'label'
 KG_ALIASES_GRAPH = 'alias'
 KG_DESCRIPTIONS_GRAPH = 'description'
 KG_IMAGES_GRAPH = 'claims'
-# KG_FANOUTS_GRAPH = 'metadata'
 KG_FANOUTS_GRAPH = 'datatypes'
-# KG_DATATYPES_GRAPH = 'metadata'
 KG_DATATYPES_GRAPH = 'datatypes'
 
 # edge labels for various edges referenced in query section below:
