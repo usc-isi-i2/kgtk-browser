@@ -72,7 +72,7 @@ DEFAULT_MATCH_LABEL_EXACTLY: bool = True
 DEFAULT_MATCH_LABEL_PREFIXES: bool = True
 DEFAULT_MATCH_LABEL_PREFIXES_LIMIT: int = 20
 DEFAULT_MATCH_LABEL_IGNORE_CASE: bool = True
-DEFAULT_MATCH_LABEL_TEXT_LIKE: bool = True
+DEFAULT_MATCH_LABEL_TEXT_LIKE: bool = False
 
 DEFAULT_PROPLIST_MAX_LEN: int = 2000
 DEFAULT_VALUELIST_MAX_LEN: int = 20
@@ -308,7 +308,7 @@ def rb_get_kb_query():
     q = args.get('q')
 
     verbose: bool = args.get("verbose", default=app.config['VERBOSE'], type=rb_is_true)
-    
+
     if verbose:
         print("rb_get_kb_query: " + q)
 
@@ -406,7 +406,7 @@ def rb_get_kb_query():
                 if len(results) > 0:
 
                     query_text_like = False
-                    for result in rb_sort_query_results(results):
+                    for result in results:
                         item = result[0]
                         if item in items_seen:
                             continue
@@ -435,7 +435,7 @@ def rb_get_kb_query():
                                                          limit=match_label_prefixes_limit)
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
+                for result in results:
                     item = result[0]
                     if item in items_seen:
                         continue
@@ -479,7 +479,7 @@ def rb_get_kb_query():
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
 
-                for result in rb_sort_query_results(results):
+                for result in results:
                     item = result[0]
                     if item in items_seen:
                         continue
