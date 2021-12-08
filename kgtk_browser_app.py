@@ -52,7 +52,6 @@ app = flask.Flask(__name__,
                   static_folder='app/build',
                   template_folder='web/templates')
 
-# os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 # Allow urls with trailing slashes
