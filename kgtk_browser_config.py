@@ -32,6 +32,9 @@ KG_IMAGES_LABEL = 'P18'
 KG_FANOUTS_LABEL = 'count_distinct_properties'
 KG_DATATYPES_LABEL = 'datatype'
 
+# number of parallel kypher api objects
+KYPHER_OBJECTS_NUM = 5
+
 # Data server limits
 VALUELIST_MAX_LEN: int = 100
 
