@@ -19,7 +19,10 @@ import browser.backend.kypher as kybe
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 
+from kgtk_browser_config import KypherAPIObject
+
 import re
+import time
 
 # How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
@@ -80,6 +83,7 @@ DEFAULT_QUAL_VALUELIST_MAX_LEN: int = 20
 DEFAULT_QUERY_LIMIT: int = 300000
 DEFAULT_QUAL_QUERY_LIMIT: int = 300000
 DEFAULT_VERBOSE: bool = False
+DEFAULT_KYPHER_OBJECTS_NUM: int = 5
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -126,14 +130,22 @@ app.config['QUAL_VALUELIST_MAX_LEN'] = app.config.get('QUAL_VALUELIST_MAX_LEN', 
 app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
 app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
 app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
+app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
 
-app.kgtk_backend = kybe.BrowserBackend(app)
+kgtk_backends = {}
+for i in range(app.config['KYPHER_OBJECTS_NUM']):
+    k_api = KypherAPIObject()
+    _api = kybe.BrowserBackend(api=k_api)
+    _api.set_app_config(app)
+    kgtk_backends[i] = _api
 
 item_regex = re.compile(f"^[q|Q|p|P]\d+$")
 
 
-def get_backend(app):
-    return app.kgtk_backend
+def get_backend():
+    epoch = int(time.time())
+    key = epoch % 5
+    return kgtk_backends[key]
 
 
 # Multi-threading
@@ -330,7 +342,7 @@ def rb_get_kb_query():
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
     try:
-        with get_backend(app) as backend:
+        with get_backend() as backend:
             matches = []
 
             # We keep track of the matches we've seen and produce only one match per node.
@@ -1624,7 +1636,7 @@ def rb_send_kb_item(item: str,
                     qual_query_limit: int = 10000,
                     verbose: bool = False):
     try:
-        with get_backend(app) as backend:
+        with get_backend() as backend:
             rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
 
             verbose2: bool = verbose  # ***
@@ -1639,7 +1651,8 @@ def rb_send_kb_item(item: str,
                 print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True)  # ***
 
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
-            # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
+            # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_
+            # qualifiers(item, lang=lang)
             # if verbose:
             #     print("Fetching category edges", file=sys.stderr, flush=True) # ***
             # item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
