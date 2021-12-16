@@ -7,6 +7,7 @@ git clone https://github.com/usc-isi-i2/kgtk-browser
 cd kgtk-browser
 git checkout dev
 conda create -n kgtk-env python=3.9
+conda activate kgtk-env
 pip install -r requirements.txt
 ```
 
