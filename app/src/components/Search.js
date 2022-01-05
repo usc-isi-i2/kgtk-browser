@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import { makeStyles } from '@material-ui/core/styles'
 
 import fetchSearchResults from '../utils/fetchSearchResults'
+import fetchESSearchResults from '../utils/fetchESSearchResults'
 
 
 const useStyles = makeStyles(theme => ({
@@ -62,11 +63,19 @@ const Search = () => {
     clearTimeout(timeoutID.current)
     timeoutID.current = setTimeout(() => {
       setLoading(true)
-      fetchSearchResults(inputValue).then((results) => {
-        setLoading(false)
-        setOptions(results)
-        setOpen(true)
-      })
+      if ( process.env.USE_KGTK_KYPHER_BACKEND ) {
+        fetchSearchResults(inputValue).then((results) => {
+          setLoading(false)
+          setOptions(results)
+          setOpen(true)
+        })
+      } else {
+        fetchESSearchResults(inputValue).then((results) => {
+          setLoading(false)
+          setOptions(results)
+          setOpen(true)
+        })
+      }
     }, 500)
 
   }, [inputValue])
