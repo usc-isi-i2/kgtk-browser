@@ -2,8 +2,8 @@ const fetchESSearchResults = q => {
 
   let url = `/api?&q=${ q }&type=ngram&extra_info=true&language=en&item=qnode`
 
-  if (process.env.KGTK_SEARCH_ES_URL) {
-    url = `${ process.env.KGTK_SEARCH_ES_URL }${ url }`
+  if (process.env.REACT_APP_KGTK_SEARCH_ES_URL) {
+    url = `${process.env.REACT_APP_KGTK_SEARCH_ES_URL}${ url }`
   } else {
     url = `https://kgtk.isi.edu${ url }`
   }
