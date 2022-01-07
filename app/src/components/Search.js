@@ -63,7 +63,7 @@ const Search = () => {
     clearTimeout(timeoutID.current)
     timeoutID.current = setTimeout(() => {
       setLoading(true)
-      if ( process.env.USE_KGTK_KYPHER_BACKEND ) {
+      if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
         fetchSearchResults(inputValue).then((results) => {
           setLoading(false)
           setOptions(results)
