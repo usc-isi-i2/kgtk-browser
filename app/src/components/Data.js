@@ -12,6 +12,7 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
 
+import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
 import classNames from '../utils/classNames'
@@ -310,6 +311,7 @@ const Data = () => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
+            <ClassGraphViz />
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
