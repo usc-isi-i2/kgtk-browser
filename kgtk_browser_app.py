@@ -2067,4 +2067,4 @@ def get_all_node_data():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3233)
+    app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
