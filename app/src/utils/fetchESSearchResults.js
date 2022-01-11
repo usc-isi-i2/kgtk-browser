@@ -9,10 +9,10 @@ const fetchESSearchResults = q => {
   }
 
   return new Promise((resolve, reject) => {
-    fetch(url, { method: 'GET' }).
-      then(response => response.json()).
-      then(response => resolve(response.map(result => createDict(result)))).
-      catch(err => reject(err))
+    fetch(url, { method: 'GET' })
+      .then(response => response.json())
+      .then(response => resolve(response.map(result => createDict(result))))
+      .catch(err => reject(err))
   })
 }
 
