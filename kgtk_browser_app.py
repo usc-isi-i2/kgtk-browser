@@ -1859,36 +1859,6 @@ def rb_get_kb_named_item(item):
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-@app.route('/kb/<string:item>', methods=['GET'])
-def rb_get_kb_named_item2(item):
-    args = flask.request.args
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
-
-    if verbose:
-        print("get_kb_named_item2: " + item)
-
-    if item is None or len(item) == 0:
-        try:
-            return flask.send_from_directory('web/static', "kb.html")
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-    elif item in ["kb.js", "kb.html"]:
-        try:
-            return flask.send_from_directory('web/static', item)
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-    else:
-        try:
-            return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
 ### Test URL handlers:
 
 # These all call the corresponding backend query method with the same name.
