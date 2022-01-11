@@ -297,6 +297,25 @@ const Data = () => {
     )
   }
 
+  const renderClassGraph = () => {
+    return (
+      <Grid item xs={12}>
+        <ExpansionPanel
+          square={true}
+          defaultExpanded={false}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" className={classes.heading}>
+              Class Graph Visualization
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+      </Grid>
+    )
+  }
+
   const renderRelatedItems = () => {
     return (
       <Grid item xs={12}>
@@ -522,6 +541,7 @@ const Data = () => {
         <Grid container spacing={1}>
           {renderDescription()}
           {renderProperties()}
+          {renderClassGraph()}
           {renderRelatedItems()}
         </Grid>
       </Grid>
