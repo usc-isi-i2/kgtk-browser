@@ -55,6 +55,8 @@ app = flask.Flask(__name__,
                   static_folder='app/build',
                   template_folder='web/templates')
 
+if 'KGTK_BROWSER_CONFIG' not in os.environ:
+    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 # Allow urls with trailing slashes
@@ -2065,5 +2067,4 @@ def get_all_node_data():
 
 
 if __name__ == '__main__':
-    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
     app.run(host='0.0.0.0', port=3233)
