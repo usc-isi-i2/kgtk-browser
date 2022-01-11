@@ -13,6 +13,7 @@ import sys
 import traceback
 import typing
 
+import json
 import flask
 import browser.backend.kypher as kybe
 
@@ -179,6 +180,37 @@ def rb_get_kb(node=None):
        It sends the initial HTML file, "kb.html".
     """
     return flask.send_from_directory('app/build', 'index.html')
+
+
+@app.route('/kb/get_class_graph_data/<string:node>', methods=['GET'])
+def get_class_graph_data(node=None):
+    """
+    Get the data for your class graph visualization here!
+    This endpoint takes in a node id to look up the class
+    And returns a json object representing a graph, like so:
+    {
+        "nodes": [{
+            "id":      <str: qnode>,
+            "label":   <str: label>,
+            "tooltip": <str: description>,
+            "color":   <int: color>,
+            "size":    <float: value>
+        }, {
+            ...
+        }],
+        "links": [{
+            "source":     <str: source qnode>,
+            "target":     <str: target qnode>,
+            "label":      <str: edge label>,
+            "color":      <int: color>,
+            "width_orig": <int: width>
+        }, {
+            ...
+        }]
+    }
+    """
+    data = json.load(open('class_graph_data.json', 'r'))
+    return flask.jsonify(data), 200
 
 
 def rb_is_true(value: str) -> bool:
