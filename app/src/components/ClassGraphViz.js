@@ -11,9 +11,12 @@ const ClassGraphViz = () => {
   const { id } = useParams()
 
   const [data, setData] = useState({})
+  const [loading, setLoading] = useState()
 
   useEffect(() => {
+    setLoading(true)
     fetchClassGraphData(id).then(data => {
+      setLoading(false)
       setData(data)
     })
   }, [])
