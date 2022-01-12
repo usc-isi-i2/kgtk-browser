@@ -99,6 +99,7 @@ const Search = () => {
         setOpen(!!options.length)
       }}
       onClose={() => {
+        setOptions([])
         setOpen(false)
       }}
       onChange={(event, value) => onSelect(value)}
