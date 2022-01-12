@@ -15,7 +15,7 @@ const ClassGraphViz = () => {
 
   const classes = useStyles()
 
-  const [data, setData] = useState({})
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState()
 
   useEffect(() => {
