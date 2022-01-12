@@ -18,6 +18,14 @@ const ClassGraphViz = () => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState()
 
+  const [graphWidth, setGraphWidth] = useState(window.innerWidth / 12 * 8)
+  const [graphHeight, setGraphHeight] = useState(window.innerHeight / 12 * 8)
+
+  window.addEventListener('resize', () => {
+    setGraphWidth(window.innerWidth / 12 * 8)
+    setGraphHeight(window.innerHeight / 12 * 8)
+  })
+
   useEffect(() => {
     setLoading(true)
     fetchClassGraphData(id).then(data => {
@@ -34,6 +42,9 @@ const ClassGraphViz = () => {
         nodeId={'id'}
         nodeLabel={'tooltip'}
         nodeVal={'size'}
+
+        width={graphWidth}
+        height={graphHeight}
 
         nodeColor={node => {
           if ( node.color[0] === '#' ) {
