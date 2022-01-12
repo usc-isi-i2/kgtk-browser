@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
@@ -10,6 +10,8 @@ import fetchClassGraphData from '../utils/fetchClassGraphData'
 
 
 const ClassGraphViz = () => {
+
+  const fgRef = useRef()
 
   const { id } = useParams()
 
@@ -45,6 +47,10 @@ const ClassGraphViz = () => {
 
         width={graphWidth}
         height={graphHeight}
+
+        ref={fgRef}
+        onEngineStop={() => fgRef.current.zoomToFit(2500, 75)}
+        cooldownTime={5000}
 
         nodeColor={node => {
           if ( node.color[0] === '#' ) {
