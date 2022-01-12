@@ -56,7 +56,7 @@ const ClassGraphViz = () => {
           if ( node.color[0] === '#' ) {
             return node.color
           }
-          d3.schemeCategory10[node.color]
+          return d3.schemeCategory10[node.color]
         }}
 
         linkWidth={link => link.width}
@@ -67,7 +67,7 @@ const ClassGraphViz = () => {
           if ( link.color[0] === "#" ) {
             return link.color
           }
-          d3.schemeAccent[link.color]
+          return d3.schemeAccent[link.color]
         }}
 
         nodeCanvasObject={(node, ctx, globalScale) => {
