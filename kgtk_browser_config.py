@@ -250,9 +250,9 @@ class KypherAPIObject(object):
             Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
             the specified language (using 'any' for 'LANG' retrieves all labels).
             Return distinct 'node1', 'node_label' pairs as the result
-        
+
             For proper performace, 'node2' in the label graph must be indexed:
-        
+
             CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
             ANALYZE "graph_2_node2_idx";
             """,
@@ -270,17 +270,17 @@ class KypherAPIObject(object):
             Given parameters 'LABEL' and 'LANG' retrieve nodes with labels matching 'LABEL' in
             the specified language (using 'any' for 'LANG' retrieves all labels).
             Return distinct 'node1', 'node_label' pairs as the result
-        
+
             This query implements a case-insensitive search by matching against the
             'node2;upper' column, which has the 'node2' column in the label graph
             ('graph_2') translated to upper case.  'node2;upper' may be created with
             `kgtk calc` or `kgtk query`, or with the following SQL:
-        
+
             alter table graph_2 add column "node2;upper" text;
             update graph_2 set "node2;upper" = upper(node2);
-        
+
             For proper performance, "node2;upper" must be indexed:
-        
+
             CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
             ANALYZE "graph_2_node2upper_idx";
             """,
@@ -335,12 +335,12 @@ class KypherAPIObject(object):
             the specified language (using 'any' for 'LANG' retrieves all labels).
             Return 'node1', 'node_label' pairs as the result.
             Limit the number of return pairs to LIMIT.
-        
+
             The output from this query is unordered, due to poor perfromance when
             there are a large number of matches.
-        
+
             For proper performace, the 'node2' column in the label graph must be indexed:
-        
+
             CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
             ANALYZE "graph_2_node2_idx";
             """,
@@ -361,20 +361,20 @@ class KypherAPIObject(object):
             the specified language (using 'any' for 'LANG' retrieves all labels).
             Return 'node1', 'node_label' pairs as the result.
             Limit the number of return pairs to LIMIT.
-        
+
             The output from this query is unordered, due to poor perfromance when
             there are a large number of matches.
-        
+
             This query implements a case-insensitive search by matching against the
             'node2;upper' column, which has the 'node' column in the label graph
             ('graph_2') translated to upper case.  'node2;upper' may be created with
             `kgtk calc` or `kgtk query`, or with the following SQL:
-        
+
             alter table graph_2 add column "node2;upper" text;
             update graph_2 set "node2;upper" = upper(node2);
-        
+
             For proper performance, the "node2;upper" column in the label graph must be indexed:
-        
+
             CREATE INDEX "graph_2_node2upper_idx" ON graph_2 ("node2;upper");
             ANALYZE "graph_2_node2upper_idx";
             """,
@@ -443,7 +443,7 @@ class KypherAPIObject(object):
             Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
             and label's 'label_label'.
             Limit the number of return edges to LIMIT.
-        
+
             """,
             name='rb_node_edges_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
@@ -702,7 +702,7 @@ class KypherAPIObject(object):
             and then all qualifier edges for all such base edges found.  For each
             qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
             for base edges.
-    
+
             Do not supply a name for these queries.
             """,
             inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
