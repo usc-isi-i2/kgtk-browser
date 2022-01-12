@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import ForceGraph2D from 'react-force-graph-2d'
+import * as d3 from 'd3'
 
 import useStyles from '../styles/data'
 import fetchClassGraphData from '../utils/fetchClassGraphData'
@@ -33,9 +34,25 @@ const ClassGraphViz = () => {
         nodeId={'id'}
         nodeLabel={'tooltip'}
         nodeVal={'size'}
+
+        nodeColor={node => {
+          if ( node.color[0] === '#' ) {
+            return node.color
+          }
+          d3.schemeCategory10[node.color]
+        }}
+
         linkWidth={link => link.width}
         linkDirectionalArrowLength={6}
         linkDirectionalArrowRelPos={1}
+
+        linkColor={link => {
+          if ( link.color[0] === "#" ) {
+            return link.color
+          }
+          d3.schemeAccent[link.color]
+        }}
+
         nodeCanvasObject={(node, ctx, globalScale) => {
           const label = node.label;
           const fontSize = 12/globalScale;
