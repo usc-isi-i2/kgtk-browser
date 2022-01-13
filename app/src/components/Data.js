@@ -543,7 +543,6 @@ const Data = () => {
         <Grid container spacing={1}>
           {renderDescription()}
           {renderProperties()}
-          {renderClassGraph()}
           {renderRelatedItems()}
         </Grid>
       </Grid>
@@ -551,6 +550,11 @@ const Data = () => {
         <Grid container spacing={1}>
           {renderGallery()}
           {renderIdentifiers()}
+        </Grid>
+      </Grid>
+      <Grid item xs={12} style={{ 'opacity': loading ? '0.25' : '1' }}>
+        <Grid container spacing={1}>
+          {renderClassGraph()}
         </Grid>
       </Grid>
     </Grid>
