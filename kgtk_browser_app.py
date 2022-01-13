@@ -231,17 +231,23 @@ def get_class_graph_data(node=None):
     node_file_name = f"{temp_dir}/{node}.node.tsv"
     html_file_name = f"{temp_dir}/{node}.html"
     output_file_name = f"{class_viz_dir}/{node}.graph.json"
+    empty_output_file_name = f"{class_viz_dir}/{node}.graph.empty.json"
 
     if Path(output_file_name).exists():
         return flask.jsonify(json.load(open(output_file_name)))
+
+    if Path(empty_output_file_name).exists():
+        return flask.jsonify(json.load(open(empty_output_file_name)))
 
     try:
         with get_backend() as backend:
             edge_results = backend.get_classviz_edge_results(node).to_records_dict()
             if len(edge_results) == 0:
+                open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
             node_results = backend.get_classviz_node_results(node).to_records_dict()
             if len(node_results) == 0:
+                open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
 
             edge_df = pd.DataFrame(edge_results)
@@ -2133,4 +2139,3 @@ def get_all_node_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
-    
