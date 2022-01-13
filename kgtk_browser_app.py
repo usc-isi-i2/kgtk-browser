@@ -1,6 +1,8 @@
 """
 Kypher backend support for the KGTK browser.
 """
+from pathlib import Path
+import shutil
 
 import datetime
 import hashlib
@@ -8,17 +10,21 @@ from http import HTTPStatus
 import math
 import os
 import os.path
+import json
+
+import pandas as pd
 import random
 import sys
 import traceback
 import typing
 
-import json
 import flask
 import browser.backend.kypher as kybe
+import tempfile
 
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
+from kgtk.visualize.visualize_api import KgtkVisualize
 
 from kgtk_browser_config import KypherAPIObject
 
@@ -209,8 +215,65 @@ def get_class_graph_data(node=None):
         }]
     }
     """
-    data = json.load(open('class_graph_data.json', 'r'))
-    return flask.jsonify(data), 200
+    # data = json.load(open('class_graph_data.json', 'r'))
+    # return flask.jsonify(data), 200
+    args = flask.request.args
+    refresh: bool = args.get("refresh", type=rb_is_true,
+                             default=False)
+
+    temp_dir = tempfile.mkdtemp()
+
+    class_viz_dir = "class_viz_files"
+    if not Path(class_viz_dir).exists():
+        Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
+
+    edge_file_name = f"{temp_dir}/{node}.edge.tsv"
+    node_file_name = f"{temp_dir}/{node}.node.tsv"
+    html_file_name = f"{temp_dir}/{node}.html"
+    output_file_name = f"{class_viz_dir}/{node}.graph.json"
+
+    if Path(output_file_name).exists():
+        return flask.jsonify(json.load(open(output_file_name)))
+
+    try:
+        with get_backend() as backend:
+            edge_results = backend.get_classviz_edge_results(node).to_records_dict()
+            if len(edge_results) == 0:
+                return flask.jsonify({}), 200
+            node_results = backend.get_classviz_node_results(node).to_records_dict()
+            if len(node_results) == 0:
+                return flask.jsonify({}), 200
+
+            edge_df = pd.DataFrame(edge_results)
+            node_df = pd.DataFrame(node_results)
+            edge_df.to_csv(edge_file_name, sep='\t', index=False)
+            node_df.to_csv(node_file_name, sep='\t', index=False)
+
+            kv = KgtkVisualize(input_file=edge_file_name,
+                               output_file=html_file_name,
+                               node_file=node_file_name,
+                               direction='arrow',
+                               edge_color_column='edge_type',
+                               edge_color_style='categorical',
+                               node_color_column='node_type',
+                               node_color_style='categorical',
+                               node_size_column='instance_count',
+                               node_size_default=5.0,
+                               node_size_minimum=2.0,
+                               node_size_maximum=8.0,
+                               node_size_scale='log',
+                               tooltip_column='tooltip',
+                               text_node='above',
+                               node_categorical_scale='d3.schemeCategory10',
+                               edge_categorical_scale='d3.schemeCategory10',
+                               node_file_id='node1')
+            visualization_graph, _ = kv.compute_visualization_graph()
+            open(output_file_name, 'w').write(json.dumps(visualization_graph))
+            shutil.rmtree(temp_dir)
+            return flask.jsonify(visualization_graph), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
 def rb_is_true(value: str) -> bool:
@@ -727,7 +790,8 @@ def rb_format_time(
 
 
 def rb_dd_to_dms(degs: float) -> typing.Tuple[bool, int, int, float]:
-    # Taken from: https://stackoverflow.com/questions/2579535/convert-dd-decimal-degrees-to-dms-degrees-minutes-seconds-in-python
+    # Taken from:
+    # https://stackoverflow.com/questions/2579535/convert-dd-decimal-degrees-to-dms-degrees-minutes-seconds-in-python
     neg: bool = degs < 0
     if neg:
         degs = - degs
@@ -1070,7 +1134,6 @@ def rb_build_property_priority_map(backend, verbose: bool = False):
     rel: typing.List[str]
     for rel in subproperty_relationships:
         node1, node2, label = rel
-        # print("%s (%s) is a subproperty of %s" % (repr(node1), repr(label), repr(node2)), file=sys.stderr, flush=True) # ***
         if node2 not in forest:
             forest[node2] = list()
         forest[node2].append(node1)
@@ -2070,3 +2133,4 @@ def get_all_node_data():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
+    
