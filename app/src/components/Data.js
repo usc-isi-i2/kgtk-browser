@@ -15,6 +15,7 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
+import fetchClassGraphData from '../utils/fetchClassGraphData'
 import classNames from '../utils/classNames'
 
 
@@ -27,11 +28,25 @@ const Data = () => {
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
 
+  const [classGraphData, setClassGraphData] = useState(null)
+  const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
+
   useEffect(() => {
+
+    // fetch item data
     setLoading(true)
     fetchData(id).then(data => {
       setLoading(false)
       setData(data)
+    })
+
+    // fetch class graph data
+    setLoadingClassGraphData(true)
+    fetchClassGraphData(id).then(data => {
+      setLoadingClassGraphData(false)
+      if ( !!Object.keys(data).length ) {
+        setClassGraphData(data)
+      }
     })
   }, [id])
 
@@ -311,7 +326,9 @@ const Data = () => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
-            <ClassGraphViz />
+            <ClassGraphViz
+              data={classGraphData}
+              loading={loadingClassGraphData} />
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>

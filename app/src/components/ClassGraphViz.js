@@ -1,24 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useRef, useState } from 'react'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
 
 import useStyles from '../styles/data'
-import fetchClassGraphData from '../utils/fetchClassGraphData'
 
 
-const ClassGraphViz = () => {
+const ClassGraphViz = ({ data, loading }) => {
 
   const fgRef = useRef()
 
-  const { id } = useParams()
-
   const classes = useStyles()
-
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState()
 
   const [graphWidth, setGraphWidth] = useState(window.innerWidth / 12 * 8)
   const [graphHeight, setGraphHeight] = useState(window.innerHeight / 12 * 8)
@@ -27,14 +20,6 @@ const ClassGraphViz = () => {
     setGraphWidth(window.innerWidth / 12 * 8)
     setGraphHeight(window.innerHeight / 12 * 8)
   })
-
-  useEffect(() => {
-    setLoading(true)
-    fetchClassGraphData(id).then(data => {
-      setLoading(false)
-      setData(data)
-    })
-  }, [])
 
   const renderGraph = () => {
     if ( !data ) { return }
