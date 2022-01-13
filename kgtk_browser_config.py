@@ -685,6 +685,30 @@ class KypherAPIObject(object):
             order='n1, n1label'
         )
 
+    def GET_CLASS_VIZ_EDGE_QUERY(self, node):
+        match_clause = f'(class)-[{{label: property, graph: "{node}", edge_type: edge_type}}]->(superclass)'
+        return self.kapi.get_query(
+            doc="""
+                        Query the 'classvizedge' table to fetch the edges for given Qnode
+                        """,
+            name='class_viz_edge_query',
+            inputs='classvizedge',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=match_clause
+        )
+
+    def GET_CLASS_VIZ_NODE_QUERY(self, node):
+        match_clause = f'(class)-[{{graph: "{node}", instance_count: instance_count, label: label}}]->()'
+        return self.kapi.get_query(
+            doc="""
+                             Query the 'classviznode' table to fetch the edges for given Qnode
+                        """,
+            name='class_viz_node_query',
+            inputs='classviznode',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=match_clause
+        )
+
     def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
         """This code generates a new name for each query, thus
         rendering the query cache ineffective and filled with junk.
