@@ -341,7 +341,7 @@ class BrowserBackend(object):
                 formatter = self.formatter
             return formatter.format_node_data(node_data)
 
-    ### Support for the revised browser:
+    # Support for the revised browser:
     def rb_get_node_labels(self, node, fmt=None):
         """Retrieve all labels for 'node'.
 
@@ -526,3 +526,17 @@ class BrowserBackend(object):
         """
         query = self.api.RB_LANGUAGE_LABELS_QUERY
         return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
+
+    def get_classviz_edge_results(self, node, fmt=FORMAT_FAST_DF):
+
+        node = node.upper()
+        query = self.api.GET_CLASS_VIZ_EDGE_QUERY(node)
+
+        return self.execute_query(query, fmt=fmt)
+
+    def get_classviz_node_results(self, node, fmt=FORMAT_FAST_DF):
+
+        node = node.upper()
+        query = self.api.GET_CLASS_VIZ_NODE_QUERY(node)
+
+        return self.execute_query(query, fmt=fmt)
