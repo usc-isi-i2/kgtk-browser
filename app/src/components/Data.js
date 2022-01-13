@@ -557,6 +557,7 @@ const Data = () => {
           {renderClassGraph()}
         </Grid>
       </Grid>
+      <div style={{ width: '100%', height: '150px' }} />
     </Grid>
   )
 }
