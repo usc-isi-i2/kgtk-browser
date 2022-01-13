@@ -14,12 +14,23 @@ const Header = ({ info }) => {
 
   const classes = useStyles()
 
+  const navigateHome = () => {
+    let url = '/'
+
+    // prefix the url with the location of where the app is hosted
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    }
+
+    window.location = url
+  }
+
   return (
     <div className={classes.grow}>
       <AppBar position="static" className={classes.appBar}>
         <Toolbar>
-          <div className={classes.logo}>
-            <Logo/>
+          <div className={classes.logo} onClick={() => navigateHome()}>
+            <Logo />
           </div>
           <Typography className={classes.title} variant="h6" noWrap>
             KGTK Browser{info ? `: ${info.graph_id}` : ''}

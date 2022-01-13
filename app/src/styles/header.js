@@ -12,6 +12,7 @@ const useStyles = makeStyles(theme => ({
     width: theme.spacing(8),
     height: theme.spacing(8),
     marginRight: theme.spacing(2),
+    cursor: 'pointer',
   },
   title: {
     display: 'none',
