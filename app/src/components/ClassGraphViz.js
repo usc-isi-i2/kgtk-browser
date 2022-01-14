@@ -13,12 +13,12 @@ const ClassGraphViz = ({ data, loading }) => {
 
   const classes = useStyles()
 
-  const [graphWidth, setGraphWidth] = useState(window.innerWidth / 12 * 8)
-  const [graphHeight, setGraphHeight] = useState(window.innerHeight / 12 * 8)
+  const [graphWidth, setGraphWidth] = useState(window.innerWidth)
+  const [graphHeight, setGraphHeight] = useState(window.innerHeight)
 
   window.addEventListener('resize', () => {
-    setGraphWidth(window.innerWidth / 12 * 8)
-    setGraphHeight(window.innerHeight / 12 * 8)
+    setGraphWidth(window.innerWidth)
+    setGraphHeight(window.innerHeight)
   })
 
   const renderGraph = () => {
