@@ -24,6 +24,14 @@ ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
 ARG REACT_APP_FRONTEND_URL=
 ENV REACT_APP_FRONTEND_URL=$REACT_APP_FRONTEND_URL
 
+# set the search endpoint url environment variable
+ARG REACT_APP_KGTK_SEARCH_ES_URL='https://kgtk.isi.edu'
+ENV REACT_APP_KGTK_SEARCH_ES_URL=$REACT_APP_KGTK_SEARCH_ES_URL
+
+# set the kgtk browser backend environment variable
+ARG REACT_APP_USE_KGTK_KYPHER_BACKEND='1'
+ENV REACT_APP_USE_KGTK_KYPHER_BACKEND=$REACT_APP_USE_KGTK_KYPHER_BACKEND
+
 # copy the source over
 ADD src /app/src
 ADD public /app/public
