@@ -687,11 +687,12 @@ class KypherAPIObject(object):
 
     def GET_CLASS_VIZ_EDGE_QUERY(self, node):
         match_clause = f'(class)-[{{label: property, graph: "{node}", edge_type: edge_type}}]->(superclass)'
+        query_name = f'{node}_class_viz_edge_query'
         return self.kapi.get_query(
             doc="""
                         Query the 'classvizedge' table to fetch the edges for given Qnode
                         """,
-            name='class_viz_edge_query',
+            name=query_name,
             inputs='classvizedge',
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause
@@ -699,11 +700,12 @@ class KypherAPIObject(object):
 
     def GET_CLASS_VIZ_NODE_QUERY(self, node):
         match_clause = f'(class)-[{{graph: "{node}", instance_count: instance_count, label: label}}]->()'
+        query_name = f'{node}_class_viz_node_query'
         return self.kapi.get_query(
             doc="""
                              Query the 'classviznode' table to fetch the edges for given Qnode
                         """,
-            name='class_viz_node_query',
+            name=query_name,
             inputs='classviznode',
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause
