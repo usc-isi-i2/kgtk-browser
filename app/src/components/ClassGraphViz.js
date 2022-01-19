@@ -103,14 +103,16 @@ const ClassGraphViz = ({ data, loading }) => {
 
   const renderToolbar = () => {
     return (
-      <Tooltip arrow title="Reset Graph">
-        <IconButton
-          color="inherit"
-          title="Reset Graph"
-          onClick={resetGraph}>
-          <AutorenewIcon fontSize="large" />
-        </IconButton>
-      </Tooltip>
+      <div className={classes.toolbar}>
+        <Tooltip arrow title="Reset Graph">
+          <IconButton
+            color="inherit"
+            title="Reset Graph"
+            onClick={resetGraph}>
+            <AutorenewIcon fontSize="large" />
+          </IconButton>
+        </Tooltip>
+      </div>
     )
   }
 
