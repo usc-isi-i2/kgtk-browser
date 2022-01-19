@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import ForceGraph2D from 'react-force-graph-2d'
@@ -8,6 +9,8 @@ import useStyles from '../styles/data'
 
 
 const ClassGraphViz = ({ data, loading }) => {
+
+  const { id } = useParams()
 
   const classes = useStyles()
 
@@ -62,6 +65,9 @@ const ClassGraphViz = ({ data, loading }) => {
           ctx.textBaseline = 'middle'
 
           ctx.fillStyle = d3.schemeCategory10[node.color]
+          if ( node.id === id ) {
+            ctx.fillStyle = 'limegreen'
+          }
 
           ctx.fillText(label, node.x, node.y - 10)
           ctx.beginPath()
