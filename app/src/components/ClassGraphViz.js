@@ -4,6 +4,7 @@ import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import AutorenewIcon from '@material-ui/icons/Autorenew'
 import IconButton from '@material-ui/core/IconButton'
+import Tooltip from '@material-ui/core/Tooltip'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
 
@@ -102,12 +103,14 @@ const ClassGraphViz = ({ data, loading }) => {
 
   const renderToolbar = () => {
     return (
-      <IconButton
-        color="inherit"
-        title="Reset Graph"
-        onClick={resetGraph}>
-        <AutorenewIcon fontSize="large" />
-      </IconButton>
+      <Tooltip arrow title="Reset Graph">
+        <IconButton
+          color="inherit"
+          title="Reset Graph"
+          onClick={resetGraph}>
+          <AutorenewIcon fontSize="large" />
+        </IconButton>
+      </Tooltip>
     )
   }
 
