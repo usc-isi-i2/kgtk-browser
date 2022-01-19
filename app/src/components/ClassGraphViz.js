@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import AutorenewIcon from '@material-ui/icons/Autorenew'
+import IconButton from '@material-ui/core/IconButton'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
 
@@ -23,6 +25,11 @@ const ClassGraphViz = ({ data, loading }) => {
     setGraphWidth(window.innerWidth)
     setGraphHeight(window.innerHeight)
   })
+
+  const resetGraph = () => {
+    fgRef.current.zoomToFit(500, 75)
+    fgRef.current.d3ReheatSimulation()
+  }
 
   const renderGraph = () => {
     if ( !data ) { return }
@@ -93,14 +100,20 @@ const ClassGraphViz = ({ data, loading }) => {
     )
   }
 
-  const resetGraph = () => {
-    fgRef.current.zoomToFit(500, 75)
-    fgRef.current.d3ReheatSimulation()
+  const renderToolbar = () => {
+    return (
+      <IconButton
+        color="inherit"
+        title="Reset Graph"
+        onClick={resetGraph}>
+        <AutorenewIcon fontSize="large" />
+      </IconButton>
+    )
   }
 
   return (
     <Grid container spacing={1} style={{'overflow': 'hidden'}}>
-      <button onClick={() => resetGraph()}>reset graph</button>
+      {renderToolbar()}
       {renderLoading()}
       {renderGraph()}
     </Grid>
