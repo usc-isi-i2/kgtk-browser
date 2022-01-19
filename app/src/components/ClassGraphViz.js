@@ -93,8 +93,14 @@ const ClassGraphViz = ({ data, loading }) => {
     )
   }
 
+  const resetGraph = () => {
+    fgRef.current.zoomToFit(500, 75)
+    fgRef.current.d3ReheatSimulation()
+  }
+
   return (
     <Grid container spacing={1} style={{'overflow': 'hidden'}}>
+      <button onClick={() => resetGraph()}>reset graph</button>
       {renderLoading()}
       {renderGraph()}
     </Grid>
