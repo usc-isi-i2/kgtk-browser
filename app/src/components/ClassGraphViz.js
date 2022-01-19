@@ -103,11 +103,11 @@ const ClassGraphViz = ({ data, loading }) => {
   }
 
   const renderToolbar = () => {
-    if ( !data ) { return }
+    if ( !data || !data.nodes ) { return }
     return (
       <Grid container spacing={1} className={classes.toolbar}>
         <Grid item xs={11}>
-          <GraphSearch options={data.nodes} />
+          <GraphSearch nodes={data.nodes} />
         </Grid>
         <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
