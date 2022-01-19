@@ -10,6 +10,8 @@ import useStyles from '../styles/data'
 
 const ClassGraphViz = ({ data, loading }) => {
 
+  const fgRef = useRef()
+
   const { id } = useParams()
 
   const classes = useStyles()
@@ -26,6 +28,7 @@ const ClassGraphViz = ({ data, loading }) => {
     if ( !data ) { return }
     return (
       <ForceGraph2D
+        ref={fgRef}
         graphData={data}
         nodeId={'id'}
         nodeLabel={'tooltip'}
