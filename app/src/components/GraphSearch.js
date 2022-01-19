@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const GraphSearch = ({ nodes }) => {
+const GraphSearch = ({ nodes, onSelect }) => {
 
   const classes = useStyles()
 
@@ -79,10 +79,6 @@ const GraphSearch = ({ nodes }) => {
     }, 500)
 
   }, [inputValue])
-
-  const onSelect = node => {
-    console.log(node)
-  }
 
   return (
     <Autocomplete

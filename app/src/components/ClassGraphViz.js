@@ -33,6 +33,10 @@ const ClassGraphViz = ({ data, loading }) => {
     fgRef.current.d3ReheatSimulation()
   }
 
+  const selectNode = node => {
+    console.log(node)
+  }
+
   const renderGraph = () => {
     if ( !data ) { return }
     return (
@@ -107,7 +111,9 @@ const ClassGraphViz = ({ data, loading }) => {
     return (
       <Grid container spacing={1} className={classes.toolbar}>
         <Grid item xs={11}>
-          <GraphSearch nodes={data.nodes} />
+          <GraphSearch
+            nodes={data.nodes}
+            onSelect={node => selectNode(node)} />
         </Grid>
         <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
