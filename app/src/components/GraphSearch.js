@@ -60,23 +60,17 @@ const GraphSearch = ({ nodes, onSelect }) => {
   useEffect(() => {
     if ( !inputValue || inputValue.length < 2 ) { return }
 
-    clearTimeout(timeoutID.current)
-    timeoutID.current = setTimeout(() => {
-      setLoading(true)
-      if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
-        fetchSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
-      } else {
-        fetchESSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
+    const filteredNodes = nodes.filter(node => {
+      if ( node.id.indexOf(inputValue) === 0 ) {
+        return true
       }
-    }, 500)
+      if ( node.label.indexOf(inputValue) >= 0 ) {
+        return true
+      }
+      return false
+    })
+
+    setOptions(filteredNodes)
 
   }, [inputValue])
 
@@ -88,6 +82,7 @@ const GraphSearch = ({ nodes, onSelect }) => {
         setOpen(!!options.length)
       }}
       onClose={() => {
+        setOptions(nodes)
         setOpen(false)
       }}
       onChange={(event, value) => onSelect(value)}
