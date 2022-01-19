@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
@@ -33,9 +33,11 @@ const ClassGraphViz = ({ data, loading }) => {
     fgRef.current.d3ReheatSimulation()
   }
 
-  const selectNode = node => {
-    console.log(node)
-  }
+  const selectNode = useCallback(node => {
+    fgRef.current.zoomToFit(500, 75)
+    fgRef.current.d3ReheatSimulation()
+    fgRef.current.centerAt(node.x, node.y, 1000)
+  }, [fgRef])
 
   const renderGraph = () => {
     if ( !data ) { return }
@@ -55,6 +57,8 @@ const ClassGraphViz = ({ data, loading }) => {
           }
           return d3.schemeCategory10[node.color]
         }}
+
+        onNodeClick={selectNode}
 
         linkWidth={link => link.width}
         linkDirectionalArrowLength={6}
