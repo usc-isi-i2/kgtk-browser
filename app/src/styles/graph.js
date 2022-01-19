@@ -2,6 +2,9 @@ import { makeStyles } from '@material-ui/core/styles'
 
 
 const useStyles = makeStyles(theme => ({
+  wrapper: {
+    overflow: 'hidden',
+  },
   loading: {
     position: 'absolute',
     top: 'calc(50% - 25px)',

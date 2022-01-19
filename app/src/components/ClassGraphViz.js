@@ -8,7 +8,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
 
-import useStyles from '../styles/data'
+import useStyles from '../styles/graph'
 
 
 const ClassGraphViz = ({ data, loading }) => {
@@ -115,10 +115,17 @@ const ClassGraphViz = ({ data, loading }) => {
   }
 
   return (
-    <Grid container spacing={1} style={{'overflow': 'hidden'}}>
-      {renderToolbar()}
-      {renderLoading()}
-      {renderGraph()}
+    <Grid container spacing={1} className={classes.wrapper}>
+      <Grid item xs={6}>
+        <h3>Legend</h3>
+      </Grid>
+      <Grid item xs={6}>
+        {renderToolbar()}
+      </Grid>
+      <Grid item xs={12}>
+        {renderLoading()}
+        {renderGraph()}
+      </Grid>
     </Grid>
   )
 }
