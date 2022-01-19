@@ -83,7 +83,7 @@ const ClassGraphViz = ({ data, loading }) => {
   }
 
   return (
-    <Grid container spacing={1}>
+    <Grid container spacing={1} style={{'overflow': 'hidden'}}>
       {renderLoading()}
       {renderGraph()}
     </Grid>
