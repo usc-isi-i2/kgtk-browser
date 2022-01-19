@@ -112,9 +112,6 @@ const GraphSearch = ({ nodes }) => {
           <Typography variant="body1">
             {option.label}
           </Typography>
-          <Typography variant="body1">
-            {option.tooltip}
-          </Typography>
         </ListItemText>
       )}
       options={options}
