@@ -9,8 +9,6 @@ import useStyles from '../styles/data'
 
 const ClassGraphViz = ({ data, loading }) => {
 
-  const fgRef = useRef()
-
   const classes = useStyles()
 
   const [graphWidth, setGraphWidth] = useState(window.innerWidth)
@@ -29,13 +27,8 @@ const ClassGraphViz = ({ data, loading }) => {
         nodeId={'id'}
         nodeLabel={'tooltip'}
         nodeVal={'size'}
-
         width={graphWidth}
         height={graphHeight}
-
-        ref={fgRef}
-        onEngineStop={() => fgRef.current.zoomToFit(2500, 75)}
-        cooldownTime={5000}
 
         nodeColor={node => {
           if ( node.color[0] === '#' ) {
