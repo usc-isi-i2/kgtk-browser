@@ -8,6 +8,7 @@ import Tooltip from '@material-ui/core/Tooltip'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
 
+import GraphSearch from './GraphSearch'
 import useStyles from '../styles/graph'
 
 
@@ -102,26 +103,32 @@ const ClassGraphViz = ({ data, loading }) => {
   }
 
   const renderToolbar = () => {
+    if ( !data ) { return }
     return (
-      <div className={classes.toolbar}>
-        <Tooltip arrow title="Reset Graph">
-          <IconButton
-            color="inherit"
-            title="Reset Graph"
-            onClick={resetGraph}>
-            <AutorenewIcon fontSize="large" />
-          </IconButton>
-        </Tooltip>
-      </div>
+      <Grid container spacing={1} className={classes.toolbar}>
+        <Grid item xs={11}>
+          <GraphSearch options={data.nodes} />
+        </Grid>
+        <Grid item xs={1}>
+          <Tooltip arrow title="Reset Graph">
+            <IconButton
+              color="inherit"
+              title="Reset Graph"
+              onClick={resetGraph}>
+              <AutorenewIcon fontSize="large" />
+            </IconButton>
+          </Tooltip>
+        </Grid>
+      </Grid>
     )
   }
 
   return (
     <Grid container spacing={1} className={classes.wrapper}>
-      <Grid item xs={6}>
+      <Grid item xs={8}>
         <h3>Legend</h3>
       </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={4}>
         {renderToolbar()}
       </Grid>
       <Grid item xs={12}>
