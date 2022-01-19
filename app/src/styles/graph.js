@@ -6,7 +6,7 @@ const useStyles = makeStyles(theme => ({
     overflow: 'hidden',
   },
   toolbar: {
-    textAlign: 'right',
+    textAlign: 'center',
     fontSize: '1em',
   },
   loading: {

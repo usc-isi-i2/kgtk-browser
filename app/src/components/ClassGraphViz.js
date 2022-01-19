@@ -110,12 +110,12 @@ const ClassGraphViz = ({ data, loading }) => {
     if ( !data || !data.nodes ) { return }
     return (
       <Grid container spacing={1} className={classes.toolbar}>
-        <Grid item xs={11}>
+        <Grid item xs={10}>
           <GraphSearch
             nodes={data.nodes}
             onSelect={node => selectNode(node)} />
         </Grid>
-        <Grid item xs={1}>
+        <Grid item xs={2}>
           <Tooltip arrow title="Reset Graph">
             <IconButton
               color="inherit"
