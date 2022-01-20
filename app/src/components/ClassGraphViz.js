@@ -111,6 +111,19 @@ const ClassGraphViz = ({ data, loading }) => {
     )
   }
 
+  const renderLegend = () => {
+    return (
+      <div className={classes.legend}>
+        <h3>Legend</h3>
+        <p>Root node: <div className={classes.rootNode} /></p>
+        <p>Orange node: <div className={classes.orangeNode} /></p>
+        <p>Blue node: <div className={classes.blueNode} /></p>
+        <p>Superclass: <b>A <ArrowRightAltIcon className={classes.superclass} /> B</b></p>
+        <p>Subclass: <b>A <ArrowRightAltIcon className={classes.subclass} /> B</b></p>
+      </div>
+    )
+  }
+
   const renderToolbar = () => {
     if ( !data || !data.nodes ) { return }
     return (
@@ -136,13 +149,8 @@ const ClassGraphViz = ({ data, loading }) => {
 
   return (
     <Grid container spacing={1} className={classes.wrapper}>
-      <Grid item xs={8} className={classes.legend}>
-        <h3>Legend</h3>
-        <p>Root node: <div className={classes.rootNode} /></p>
-        <p>Orange node: <div className={classes.orangeNode} /></p>
-        <p>Blue node: <div className={classes.blueNode} /></p>
-        <p>Superclass: <b>A <ArrowRightAltIcon className={classes.superclass} /> B</b></p>
-        <p>Subclass: <b>A <ArrowRightAltIcon className={classes.subclass} /> B</b></p>
+      {renderLegend()}
+      <Grid item xs={8}>
       </Grid>
       <Grid item xs={4}>
         {renderToolbar()}

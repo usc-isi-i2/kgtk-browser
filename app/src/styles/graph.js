@@ -11,6 +11,10 @@ const useStyles = makeStyles(theme => ({
   },
   legend: {
     zIndex: 99999,
+    padding: '1em 2em',
+    background: 'white',
+    border: '1px dashed #ccc',
+    position: 'absolute',
     pointerEvents: 'none',
     '& b, div': {
       marginLeft: '5px',
