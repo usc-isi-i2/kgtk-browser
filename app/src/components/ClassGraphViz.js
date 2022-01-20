@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import AutorenewIcon from '@material-ui/icons/Autorenew'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
@@ -137,6 +138,11 @@ const ClassGraphViz = ({ data, loading }) => {
     <Grid container spacing={1} className={classes.wrapper}>
       <Grid item xs={8}>
         <h3>Legend</h3>
+        <p>Root node <div className={classes.rootNode} /></p>
+        <p>Orange node <div className={classes.orangeNode} /></p>
+        <p>Blue node <div className={classes.blueNode} /></p>
+        <p>Superclass <ArrowRightAltIcon className={classes.superclass} /></p>
+        <p>Subclass <ArrowRightAltIcon className={classes.subclass} /></p>
       </Grid>
       <Grid item xs={4}>
         {renderToolbar()}
