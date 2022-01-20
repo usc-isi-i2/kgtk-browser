@@ -1,13 +1,9 @@
-import React, { useEffect, useRef, useState }from 'react'
+import React, { useEffect, useState } from 'react'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import ListItemText from '@material-ui/core/ListItemText'
-import CircularProgress from '@material-ui/core/CircularProgress'
 import { makeStyles } from '@material-ui/core/styles'
-
-import fetchSearchResults from '../utils/fetchSearchResults'
-import fetchESSearchResults from '../utils/fetchESSearchResults'
 
 
 const useStyles = makeStyles(theme => ({
@@ -50,11 +46,8 @@ const GraphSearch = ({ nodes, onSelect }) => {
 
   const classes = useStyles()
 
-  const timeoutID = useRef(null)
-
   const [open, setOpen] = useState(false)
   const [options, setOptions] = useState(nodes)
-  const [loading, setLoading] = useState(false)
   const [inputValue, setInputValue] = useState('')
 
   useEffect(() => {
@@ -106,7 +99,6 @@ const GraphSearch = ({ nodes, onSelect }) => {
         </ListItemText>
       )}
       options={options}
-      loading={loading}
       renderInput={(params) => (
         <TextField
           fullWidth
@@ -122,7 +114,6 @@ const GraphSearch = ({ nodes, onSelect }) => {
             ...params.InputProps,
             endAdornment: (
               <React.Fragment>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
                 {params.InputProps.endAdornment}
               </React.Fragment>
             ),
