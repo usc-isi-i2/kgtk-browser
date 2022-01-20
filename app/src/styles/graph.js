@@ -6,8 +6,12 @@ const useStyles = makeStyles(theme => ({
     overflow: 'hidden',
   },
   toolbar: {
-    textAlign: 'center',
     fontSize: '1em',
+    textAlign: 'center',
+  },
+  legend: {
+    zIndex: 99999,
+    pointerEvents: 'none',
   },
   rootNode: {
     width: '15px',

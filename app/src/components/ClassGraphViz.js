@@ -136,7 +136,7 @@ const ClassGraphViz = ({ data, loading }) => {
 
   return (
     <Grid container spacing={1} className={classes.wrapper}>
-      <Grid item xs={8}>
+      <Grid item xs={8} className={classes.legend}>
         <h3>Legend</h3>
         <p>Root node <div className={classes.rootNode} /></p>
         <p>Orange node <div className={classes.orangeNode} /></p>
