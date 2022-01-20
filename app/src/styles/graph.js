@@ -12,6 +12,9 @@ const useStyles = makeStyles(theme => ({
   legend: {
     zIndex: 99999,
     pointerEvents: 'none',
+    '& b, div': {
+      marginLeft: '5px',
+    },
   },
   rootNode: {
     width: '15px',
@@ -20,7 +23,6 @@ const useStyles = makeStyles(theme => ({
     background: 'limegreen',
     display: 'inline-block',
     verticalAlign: 'middle',
-    marginLeft: '5px',
   },
   orangeNode: {
     width: '15px',
@@ -29,7 +31,6 @@ const useStyles = makeStyles(theme => ({
     background: '#FF7F14',
     display: 'inline-block',
     verticalAlign: 'middle',
-    marginLeft: '5px',
   },
   blueNode: {
     width: '15px',
@@ -38,18 +39,15 @@ const useStyles = makeStyles(theme => ({
     background: '#1477B4',
     display: 'inline-block',
     verticalAlign: 'middle',
-    marginLeft: '5px',
   },
   superclass: {
     color: '#BEAED4',
     fontSize: '2em',
-    marginLeft: '5px',
     verticalAlign: 'middle',
   },
   subclass: {
     color: '#7DC980',
     fontSize: '2em',
-    marginLeft: '5px',
     verticalAlign: 'middle',
   },
   loading: {
