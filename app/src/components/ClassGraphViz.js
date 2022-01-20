@@ -116,10 +116,10 @@ const ClassGraphViz = ({ data, loading }) => {
       <div className={classes.legend}>
         <h3>Legend</h3>
         <p>Root node: <div className={classes.rootNode} /></p>
-        <p>Orange node: <div className={classes.orangeNode} /></p>
-        <p>Blue node: <div className={classes.blueNode} /></p>
-        <p>Superclass: <b>A <ArrowRightAltIcon className={classes.superclass} /> B</b></p>
-        <p>Subclass: <b>A <ArrowRightAltIcon className={classes.subclass} /> B</b></p>
+        <p>Many Subclasses: <div className={classes.orangeNode} /></p>
+        <p>Few Subclasses: <div className={classes.blueNode} /></p>
+        <p><b>A <ArrowRightAltIcon className={classes.superclass} /> B</b>: B is a superclass of A</p>
+        <p><b>A <ArrowRightAltIcon className={classes.subclass} /> B</b>: A is a subclass of B</p>
       </div>
     )
   }
