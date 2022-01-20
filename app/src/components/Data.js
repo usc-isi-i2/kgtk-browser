@@ -31,7 +31,12 @@ const Data = () => {
   const [classGraphData, setClassGraphData] = useState(null)
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
 
+  const [showGraph, setShowGraph] = useState(false)
+
   useEffect(() => {
+
+    // hide the graph when switching between different items/nodes
+    setShowGraph(false)
 
     // fetch item data
     setLoading(true)
@@ -313,14 +318,20 @@ const Data = () => {
     )
   }
 
+  const toggleGraph = () => {
+    setShowGraph(!showGraph)
+  }
+
   const renderClassGraph = () => {
     return (
       <Grid item xs={12}>
         <ExpansionPanel
           square={true}
+          expanded={showGraph}
           defaultExpanded={false}
           TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}
+            onClick={toggleGraph}>
             <Typography variant="h6" className={classes.heading}>
               Class Graph Visualization
             </Typography>
