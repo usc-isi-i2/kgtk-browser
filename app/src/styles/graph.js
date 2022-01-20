@@ -16,8 +16,13 @@ const useStyles = makeStyles(theme => ({
     border: '1px dashed #ccc',
     position: 'absolute',
     pointerEvents: 'none',
-    '& b, div': {
-      marginLeft: '5px',
+    '& b': {
+      marginLeft: '3px',
+    },
+    '& div': {
+      marginTop: '2px',
+      marginRight: '5px',
+      verticalAlign: 'top',
     },
   },
   rootNode: {
