@@ -39,6 +39,7 @@ const Data = () => {
   useEffect(() => {
 
     // hide the graph when switching between different items/nodes
+    setClassGraphData(null)
     setClassGraphViz(false)
 
     // fetch item data
