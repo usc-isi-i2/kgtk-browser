@@ -11,7 +11,7 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
-import BubbleChartIcon from '@material-ui/icons/BubbleChart'
+import ShareIcon from '@material-ui/icons/Share'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 
@@ -100,15 +100,16 @@ const Data = () => {
         <Paper className={classes.paper}>
           <Typography variant="h4" className={classes.title}>
             {data.text}
+            <Tooltip arrow title="View Class Graph Visualization">
+              <IconButton
+                color="inherit"
+                title="View Class Graph Visualization"
+                className={classes.graphIcon}
+                onClick={showClassGraphViz}>
+                <ShareIcon fontSize="medium" />
+              </IconButton>
+            </Tooltip>
           </Typography>
-          <Tooltip arrow title="View Class Graph Visualization">
-            <IconButton
-              color="inherit"
-              title="View Class Graph Visualization"
-              onClick={showClassGraphViz}>
-              <BubbleChartIcon fontSize="large" />
-            </IconButton>
-          </Tooltip>
           <Typography variant="subtitle1" className={classes.nodeId}>
             ({data.ref})
           </Typography>
