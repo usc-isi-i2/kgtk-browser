@@ -9,6 +9,7 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import AutorenewIcon from '@material-ui/icons/Autorenew'
 import IconButton from '@material-ui/core/IconButton'
+import CloseIcon from '@material-ui/icons/Close'
 import Tooltip from '@material-ui/core/Tooltip'
 import ForceGraph2D from 'react-force-graph-2d'
 import * as d3 from 'd3'
@@ -136,12 +137,10 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
     if ( !data || !data.nodes ) { return }
     return (
       <Grid container spacing={1} className={classes.toolbar}>
-        <Grid item xs={8}>
+        <Grid item xs={9}>
           <GraphSearch
             nodes={data.nodes}
             onSelect={node => selectNode(node)} />
-        </Grid>
-        <Grid item xs={1}>
         </Grid>
         <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
@@ -156,6 +155,14 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
         <Grid item xs={1}>
         </Grid>
         <Grid item xs={1}>
+          <Tooltip arrow title="Close Graph">
+            <IconButton
+              color="inherit"
+              title="Close Graph"
+              onClick={hideClassGraphViz}>
+              <CloseIcon fontSize="large" />
+            </IconButton>
+          </Tooltip>
         </Grid>
       </Grid>
     )
