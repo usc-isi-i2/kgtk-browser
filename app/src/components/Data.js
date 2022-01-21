@@ -115,7 +115,7 @@ const Data = () => {
             )}
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
-            ({data.ref})
+            { !!data.ref ? `(${data.ref})` : '' }
           </Typography>
           {data.aliases && (
             <Typography variant="subtitle2" className={classes.aliases}>
