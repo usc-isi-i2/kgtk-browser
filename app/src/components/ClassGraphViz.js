@@ -85,8 +85,8 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
 
           // only show node labels when there are less than K nodes (100)
           if ( data.nodes.length <= 100 ) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y- 10- bckgDimensions[1] / 2, ...bckgDimensions)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
 
             ctx.textAlign = 'center'
             ctx.textBaseline = 'middle'
