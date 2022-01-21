@@ -21,6 +21,8 @@ const useStyles = makeStyles(theme => ({
     position: 'absolute',
     top: '1em',
     left: '1em',
+    zIndex: 99999,
+    background: 'white',
   },
   toolbar: {
     fontSize: '1em',
@@ -30,6 +32,9 @@ const useStyles = makeStyles(theme => ({
     top: '2vh',
     width: '35vw',
     zIndex: 99999,
+    '& .MuiIconButton-root': {
+      background: 'white',
+    },
   },
   legend: {
     zIndex: 99999,
