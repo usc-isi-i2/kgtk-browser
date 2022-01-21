@@ -183,6 +183,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
   return (
     <Dialog
       open={true}
+      maxWidth={'xl'}
       onClose={hideClassGraphViz}
       classes={{paper: classes.dialog}}>
       <DialogTitle>

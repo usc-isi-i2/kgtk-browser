@@ -2,6 +2,13 @@ import { makeStyles } from '@material-ui/core/styles'
 
 
 const useStyles = makeStyles(theme => ({
+  dialog: {
+    position: 'absolute',
+    top: '5vh',
+    left: '1.5vw',
+    right: '1.5vw',
+    bottom: '3vh',
+  },
   wrapper: {
     overflow: 'hidden',
   },
