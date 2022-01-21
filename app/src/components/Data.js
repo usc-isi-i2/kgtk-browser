@@ -100,17 +100,19 @@ const Data = () => {
         <Paper className={classes.paper}>
           <Typography variant="h4" className={classes.title}>
             {data.text}
-            <Tooltip arrow placement="right"
-              title="View Class Graph Visualization">
-              <IconButton
-                color="inherit"
-                title="View Class Graph Visualization"
-                onClick={showClassGraphViz}>
-                <div className={classes.graphIcon}>
-                  <GraphIcon />
-                </div>
-              </IconButton>
-            </Tooltip>
+            { !!classGraphData && (
+              <Tooltip arrow placement="right"
+                title="View Class Graph Visualization">
+                <IconButton
+                  color="inherit"
+                  title="View Class Graph Visualization"
+                  onClick={showClassGraphViz}>
+                  <div className={classes.graphIcon}>
+                    <GraphIcon />
+                  </div>
+                </IconButton>
+              </Tooltip>
+            )}
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
             ({data.ref})
