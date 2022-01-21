@@ -215,8 +215,6 @@ def get_class_graph_data(node=None):
         }]
     }
     """
-    # data = json.load(open('class_graph_data.json', 'r'))
-    # return flask.jsonify(data), 200
     args = flask.request.args
     refresh: bool = args.get("refresh", type=rb_is_true,
                              default=False)
