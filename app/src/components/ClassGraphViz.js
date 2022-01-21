@@ -25,12 +25,12 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
 
   const classes = useStyles()
 
-  const [graphWidth, setGraphWidth] = useState(window.innerWidth)
-  const [graphHeight, setGraphHeight] = useState(window.innerHeight)
+  const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.94)
+  const [graphHeight, setGraphHeight] = useState(window.innerHeight * 0.85)
 
   window.addEventListener('resize', () => {
-    setGraphWidth(window.innerWidth)
-    setGraphHeight(window.innerHeight)
+    setGraphWidth(window.innerWidth * 0.94)
+    setGraphHeight(window.innerHeight * 0.85)
   })
 
   const resetGraph = () => {
@@ -136,12 +136,14 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
     if ( !data || !data.nodes ) { return }
     return (
       <Grid container spacing={1} className={classes.toolbar}>
-        <Grid item xs={10}>
+        <Grid item xs={8}>
           <GraphSearch
             nodes={data.nodes}
             onSelect={node => selectNode(node)} />
         </Grid>
-        <Grid item xs={2}>
+        <Grid item xs={1}>
+        </Grid>
+        <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
             <IconButton
               color="inherit"
@@ -151,13 +153,17 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
             </IconButton>
           </Tooltip>
         </Grid>
+        <Grid item xs={1}>
+        </Grid>
+        <Grid item xs={1}>
+        </Grid>
       </Grid>
     )
   }
 
   const renderTitle = () => {
     return (
-      <Typography variant="h6" className={classes.heading}>
+      <Typography variant="h6" className={classes.title}>
         Class Graph Visualization
       </Typography>
     )
@@ -166,12 +172,9 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
   const renderContent = () => {
     return (
       <Grid container spacing={1} className={classes.wrapper}>
+        {renderTitle()}
         {renderLegend()}
-        <Grid item xs={8}>
-        </Grid>
-        <Grid item xs={4}>
-          {renderToolbar()}
-        </Grid>
+        {renderToolbar()}
         <Grid item xs={12}>
           {renderLoading()}
           {renderGraph()}
@@ -186,9 +189,6 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
       maxWidth={'xl'}
       onClose={hideClassGraphViz}
       classes={{paper: classes.dialog}}>
-      <DialogTitle>
-        {renderTitle()}
-      </DialogTitle>
       <DialogContent>
         {renderContent()}
       </DialogContent>

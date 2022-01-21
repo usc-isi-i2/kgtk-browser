@@ -8,21 +8,41 @@ const useStyles = makeStyles(theme => ({
     left: '1.5vw',
     right: '1.5vw',
     bottom: '3vh',
+    '& .MuiDialogContent-root': {
+      padding: 0,
+    },
   },
   wrapper: {
     overflow: 'hidden',
   },
+  title: {
+    color: '#333',
+    fontWeight: 'bold',
+    position: 'absolute',
+    top: '1em',
+    left: '1em',
+  },
   toolbar: {
     fontSize: '1em',
     textAlign: 'center',
+    position: 'absolute',
+    right: '2vw',
+    top: '2vh',
+    width: '35vw',
+    zIndex: 99999,
   },
   legend: {
     zIndex: 99999,
-    padding: '1em 2em',
+    padding: '1em',
     background: 'white',
     border: '1px dashed #ccc',
     position: 'absolute',
+    top: '5em',
+    left: '1.5em',
     pointerEvents: 'none',
+    '& h3': {
+      marginTop: 0,
+    },
     '& b': {
       marginLeft: '3px',
     },

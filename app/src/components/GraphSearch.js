@@ -13,9 +13,10 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     maxHeight: '100%',
     padding: theme.spacing(1),
+    background: 'white',
     [theme.breakpoints.up('sm')]: {
       marginLeft: theme.spacing(3),
-      minWidth: '350px',
+      minWidth: '250px',
       width: 'auto',
     },
   },
