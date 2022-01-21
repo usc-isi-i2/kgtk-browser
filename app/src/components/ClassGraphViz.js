@@ -90,7 +90,11 @@ const ClassGraphViz = ({ data, loading }) => {
             ctx.fillStyle = 'limegreen'
           }
 
-          ctx.fillText(label, node.x, node.y - (node.size + 5))
+          // do not show node labels when more than K nodes in the graph (100)
+          if ( data.nodes.length <= 100 ) {
+            ctx.fillText(label, node.x, node.y - (node.size + 5))
+          }
+
           ctx.beginPath()
           ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
           ctx.fill()
