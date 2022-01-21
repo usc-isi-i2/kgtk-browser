@@ -83,8 +83,8 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
           const textWidth = ctx.measureText(label).width
           const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
 
-          // only show node labels when there are less than K nodes (100)
-          if ( data.nodes.length <= 100 ) {
+          // only show node labels when there are less than K nodes
+          if ( data.nodes.length <= 150 ) {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
             ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
 
