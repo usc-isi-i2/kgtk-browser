@@ -83,20 +83,20 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
           const textWidth = ctx.measureText(label).width
           const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
 
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
-          ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y- 10- bckgDimensions[1] / 2, ...bckgDimensions)
+          // do not show node labels when more than K nodes in the graph (100)
+          if ( data.nodes.length <= 100 ) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
+            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y- 10- bckgDimensions[1] / 2, ...bckgDimensions)
 
-          ctx.textAlign = 'center'
-          ctx.textBaseline = 'middle'
+            ctx.textAlign = 'center'
+            ctx.textBaseline = 'middle'
+
+            ctx.fillText(label, node.x, node.y - (node.size + 5))
+          }
 
           ctx.fillStyle = d3.schemeCategory10[node.color]
           if ( node.id === id ) {
             ctx.fillStyle = 'limegreen'
-          }
-
-          // do not show node labels when more than K nodes in the graph (100)
-          if ( data.nodes.length <= 100 ) {
-            ctx.fillText(label, node.x, node.y - (node.size + 5))
           }
 
           ctx.beginPath()
