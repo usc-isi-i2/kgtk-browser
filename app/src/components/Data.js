@@ -318,34 +318,6 @@ const Data = () => {
     )
   }
 
-  const toggleGraph = () => {
-    setShowGraph(!showGraph)
-  }
-
-  const renderClassGraph = () => {
-    return (
-      <Grid item xs={12}>
-        <ExpansionPanel
-          square={true}
-          expanded={showGraph}
-          defaultExpanded={false}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}
-            onClick={toggleGraph}>
-            <Typography variant="h6" className={classes.heading}>
-              Class Graph Visualization
-            </Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            <ClassGraphViz
-              data={classGraphData}
-              loading={loadingClassGraphData} />
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-      </Grid>
-    )
-  }
-
   const renderRelatedItems = () => {
     return (
       <Grid item xs={12}>
@@ -558,6 +530,34 @@ const Data = () => {
                 </Grid>
               </Grid>
             ))}
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+      </Grid>
+    )
+  }
+
+  const toggleGraph = () => {
+    setShowGraph(!showGraph)
+  }
+
+  const renderClassGraph = () => {
+    return (
+      <Grid item xs={12}>
+        <ExpansionPanel
+          square={true}
+          expanded={showGraph}
+          defaultExpanded={false}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}
+            onClick={toggleGraph}>
+            <Typography variant="h6" className={classes.heading}>
+              Class Graph Visualization
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+            <ClassGraphViz
+              data={classGraphData}
+              loading={loadingClassGraphData} />
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
