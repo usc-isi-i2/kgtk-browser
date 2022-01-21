@@ -1,6 +1,10 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
+import Dialog from '@material-ui/core/Dialog'
+import DialogTitle from '@material-ui/core/DialogTitle'
+import DialogContent from '@material-ui/core/DialogContent'
+import Typography from '@material-ui/core/Typography'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import AutorenewIcon from '@material-ui/icons/Autorenew'
@@ -13,7 +17,7 @@ import GraphSearch from './GraphSearch'
 import useStyles from '../styles/graph'
 
 
-const ClassGraphViz = ({ data, loading }) => {
+const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
 
   const fgRef = useRef()
 
@@ -151,19 +155,43 @@ const ClassGraphViz = ({ data, loading }) => {
     )
   }
 
+  const renderTitle = () => {
+    return (
+      <Typography variant="h6" className={classes.heading}>
+        Class Graph Visualization
+      </Typography>
+    )
+  }
+
+  const renderContent = () => {
+    return (
+      <Grid container spacing={1} className={classes.wrapper}>
+        {renderLegend()}
+        <Grid item xs={8}>
+        </Grid>
+        <Grid item xs={4}>
+          {renderToolbar()}
+        </Grid>
+        <Grid item xs={12}>
+          {renderLoading()}
+          {renderGraph()}
+        </Grid>
+      </Grid>
+    )
+  }
+
   return (
-    <Grid container spacing={1} className={classes.wrapper}>
-      {renderLegend()}
-      <Grid item xs={8}>
-      </Grid>
-      <Grid item xs={4}>
-        {renderToolbar()}
-      </Grid>
-      <Grid item xs={12}>
-        {renderLoading()}
-        {renderGraph()}
-      </Grid>
-    </Grid>
+    <Dialog
+      open={true}
+      onClose={hideClassGraphViz}
+      classes={{paper: classes.dialog}}>
+      <DialogTitle>
+        {renderTitle()}
+      </DialogTitle>
+      <DialogContent>
+        {renderContent()}
+      </DialogContent>
+    </Dialog>
   )
 }
 
