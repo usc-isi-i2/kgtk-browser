@@ -90,7 +90,7 @@ const ClassGraphViz = ({ data, loading }) => {
             ctx.fillStyle = 'limegreen'
           }
 
-          ctx.fillText(label, node.x, node.y - 10)
+          ctx.fillText(label, node.x, node.y - (node.size + 5))
           ctx.beginPath()
           ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
           ctx.fill()
