@@ -11,10 +11,10 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
-import ShareIcon from '@material-ui/icons/Share'
 import IconButton from '@material-ui/core/IconButton'
 import Tooltip from '@material-ui/core/Tooltip'
 
+import GraphIcon from './GraphIcon'
 import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
@@ -105,9 +105,10 @@ const Data = () => {
               <IconButton
                 color="inherit"
                 title="View Class Graph Visualization"
-                className={classes.graphIcon}
                 onClick={showClassGraphViz}>
-                <ShareIcon fontSize="medium" />
+                <div className={classes.graphIcon}>
+                  <GraphIcon />
+                </div>
               </IconButton>
             </Tooltip>
           </Typography>
