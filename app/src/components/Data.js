@@ -11,6 +11,9 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import BubbleChartIcon from '@material-ui/icons/BubbleChart'
+import IconButton from '@material-ui/core/IconButton'
+import Tooltip from '@material-ui/core/Tooltip'
 
 import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
@@ -98,6 +101,14 @@ const Data = () => {
           <Typography variant="h4" className={classes.title}>
             {data.text}
           </Typography>
+          <Tooltip arrow title="View Class Graph Visualization">
+            <IconButton
+              color="inherit"
+              title="View Class Graph Visualization"
+              onClick={showClassGraphViz}>
+              <BubbleChartIcon fontSize="large" />
+            </IconButton>
+          </Tooltip>
           <Typography variant="subtitle1" className={classes.nodeId}>
             ({data.ref})
           </Typography>
@@ -544,37 +555,20 @@ const Data = () => {
     )
   }
 
-  const toggleGraph = () => {
-    setShowGraph(!showGraph)
-  }
-
   const renderClassGraph = () => {
+    if ( !classGraphViz ) { return }
     return (
-      <Grid item xs={12}>
-        <ExpansionPanel
-          square={true}
-          expanded={showGraph}
-          defaultExpanded={false}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}
-            onClick={toggleGraph}>
-            <Typography variant="h6" className={classes.heading}>
-              Class Graph Visualization
-            </Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            <ClassGraphViz
-              data={classGraphData}
-              loading={loadingClassGraphData} />
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
-      </Grid>
+      <ClassGraphViz
+        data={classGraphData}
+        loading={loadingClassGraphData}
+        hideClassGraphViz={hideClassGraphViz} />
     )
   }
 
   return (
     <Grid container spacing={1}>
       {renderLoading()}
+      {renderClassGraph()}
       <Grid item xs={8} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderDescription()}
@@ -588,12 +582,6 @@ const Data = () => {
           {renderIdentifiers()}
         </Grid>
       </Grid>
-      <Grid item xs={12} style={{ 'opacity': loading ? '0.25' : '1' }}>
-        <Grid container spacing={1}>
-          {renderClassGraph()}
-        </Grid>
-      </Grid>
-      <div style={{ width: '100%', height: '150px' }} />
     </Grid>
   )
 }
