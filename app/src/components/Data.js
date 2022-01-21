@@ -100,7 +100,8 @@ const Data = () => {
         <Paper className={classes.paper}>
           <Typography variant="h4" className={classes.title}>
             {data.text}
-            <Tooltip arrow title="View Class Graph Visualization">
+            <Tooltip arrow placement="right"
+              title="View Class Graph Visualization">
               <IconButton
                 color="inherit"
                 title="View Class Graph Visualization"
