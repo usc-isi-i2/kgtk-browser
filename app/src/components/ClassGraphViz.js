@@ -10,28 +10,22 @@ import AutorenewIcon from '@material-ui/icons/Autorenew'
 import IconButton from '@material-ui/core/IconButton'
 import CloseIcon from '@material-ui/icons/Close'
 import Tooltip from '@material-ui/core/Tooltip'
+
 import ForceGraph2D from 'react-force-graph-2d'
+import { SizeMe } from 'react-sizeme'
 import * as d3 from 'd3'
 
 import GraphSearch from './GraphSearch'
 import useStyles from '../styles/graph'
 
 
-const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
+const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
 
   const fgRef = useRef()
 
   const { id } = useParams()
 
   const classes = useStyles()
-
-  const [graphWidth, setGraphWidth] = useState(window.innerWidth * 0.94)
-  const [graphHeight, setGraphHeight] = useState(window.innerHeight * 0.85)
-
-  window.addEventListener('resize', () => {
-    setGraphWidth(window.innerWidth * 0.94)
-    setGraphHeight(window.innerHeight * 0.85)
-  })
 
   const resetGraph = () => {
     fgRef.current.zoomToFit(500, 75)
@@ -47,70 +41,79 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz }) => {
   const renderGraph = () => {
     if ( !data ) { return }
     return (
-      <ForceGraph2D
-        ref={fgRef}
-        graphData={data}
-        nodeId={'id'}
-        nodeLabel={'tooltip'}
-        nodeVal={'size'}
-        width={graphWidth}
-        height={graphHeight}
+      <SizeMe
+        refreshRate={32}
+        monitorWidth={true}
+        monitorHeight={true}
+        noPlaceholder={true}
+        render={({ size }) => (
+          <ForceGraph2D
+            ref={fgRef}
+            graphData={data}
+            nodeId={'id'}
+            nodeLabel={'tooltip'}
+            nodeVal={'size'}
 
-        nodeColor={node => {
-          if ( node.color[0] === '#' ) {
-            return node.color
-          }
-          return d3.schemeCategory10[node.color]
-        }}
+            width={size.width}
+            height={size.height}
 
-        onNodeClick={selectNode}
+            nodeColor={node => {
+              if ( node.color[0] === '#' ) {
+                return node.color
+              }
+              return d3.schemeCategory10[node.color]
+            }}
 
-        linkWidth={link => link.width}
-        linkDirectionalArrowLength={6}
-        linkDirectionalArrowRelPos={1}
+            onNodeClick={selectNode}
 
-        linkColor={link => {
-          if ( link.color[0] === "#" ) {
-            return link.color
-          }
-          return d3.schemeAccent[link.color]
-        }}
+            linkWidth={link => link.width}
+            linkDirectionalArrowLength={6}
+            linkDirectionalArrowRelPos={1}
 
-        nodeCanvasObject={(node, ctx, globalScale) => {
-          const label = node.label
-          const fontSize = 12 / globalScale
-          ctx.font = `${fontSize}px Sans-Serif`
-          const textWidth = ctx.measureText(label).width
-          const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+            linkColor={link => {
+              if ( link.color[0] === "#" ) {
+                return link.color
+              }
+              return d3.schemeAccent[link.color]
+            }}
 
-          // only show node labels when there are less than K nodes
-          if ( data.nodes.length <= 150 ) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
+            nodeCanvasObject={(node, ctx, globalScale) => {
+              const label = node.label
+              const fontSize = 12 / globalScale
+              ctx.font = `${fontSize}px Sans-Serif`
+              const textWidth = ctx.measureText(label).width
+              const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
 
-            ctx.textAlign = 'center'
-            ctx.textBaseline = 'middle'
+              // only show node labels when there are less than K nodes
+              if ( data.nodes.length <= 150 ) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
 
-            ctx.fillStyle = d3.schemeCategory10[node.color]
-            if ( node.id === id ) {
-              ctx.fillStyle = 'limegreen'
-            }
+                ctx.textAlign = 'center'
+                ctx.textBaseline = 'middle'
 
-            ctx.fillText(label, node.x, node.y - (node.size + 5))
+                ctx.fillStyle = d3.schemeCategory10[node.color]
+                if ( node.id === id ) {
+                  ctx.fillStyle = 'limegreen'
+                }
 
-          } else {
-            ctx.fillStyle = d3.schemeCategory10[node.color]
-            if ( node.id === id ) {
-              ctx.fillStyle = 'limegreen'
-            }
-          }
+                ctx.fillText(label, node.x, node.y - (node.size + 5))
 
-          ctx.beginPath()
-          ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
-          ctx.fill()
+              } else {
+                ctx.fillStyle = d3.schemeCategory10[node.color]
+                if ( node.id === id ) {
+                  ctx.fillStyle = 'limegreen'
+                }
+              }
 
-          node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
-        }}
+              ctx.beginPath()
+              ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
+              ctx.fill()
+
+              node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
+            }}
+          />
+        )}
       />
     )
   }
