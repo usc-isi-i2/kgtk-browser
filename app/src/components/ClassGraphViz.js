@@ -28,12 +28,12 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
   const classes = useStyles()
 
   const resetGraph = () => {
-    fgRef.current.zoomToFit(500, 75)
+    fgRef.current.zoomToFit(500, 250)
     fgRef.current.d3ReheatSimulation()
   }
 
   const selectNode = useCallback(node => {
-    fgRef.current.zoomToFit(500, 75)
+    fgRef.current.zoomToFit(500, 250)
     fgRef.current.d3ReheatSimulation()
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
