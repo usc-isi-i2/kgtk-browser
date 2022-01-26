@@ -74,7 +74,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
               if ( link.color[0] === "#" ) {
                 return link.color
               }
-              return d3.schemeAccent[link.color]
+              return d3.schemeSet1[link.color]
             }}
 
             nodeCanvasObject={(node, ctx, globalScale) => {
