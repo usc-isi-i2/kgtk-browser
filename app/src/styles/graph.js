@@ -82,12 +82,12 @@ const useStyles = makeStyles(theme => ({
     verticalAlign: 'middle',
   },
   superclass: {
-    color: '#BEAED4',
+    color: '#327EB8',
     fontSize: '2em',
     verticalAlign: 'middle',
   },
   subclass: {
-    color: '#7DC980',
+    color: '#E7251E',
     fontSize: '2em',
     verticalAlign: 'middle',
   },
