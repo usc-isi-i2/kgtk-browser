@@ -56,6 +56,22 @@ let theme = createTheme({
         },
       },
     },
+    MuiTooltip: {
+      tooltip: {
+        fontSize: '16px',
+        color: '#fefefe',
+        backgroundColor: '#4d4d4d',
+        borderColor: '#fefefe',
+        borderStyle: 'solid',
+        borderWidth: '1px',
+        borderRadius: 0,
+      },
+      arrow: {
+        '&::before': {
+          backgroundColor: '#4d4d4d',
+        },
+      },
+    },
   },
 })
 theme = responsiveFontSizes(theme)

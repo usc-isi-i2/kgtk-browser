@@ -11,9 +11,14 @@ import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import IconButton from '@material-ui/core/IconButton'
+import Tooltip from '@material-ui/core/Tooltip'
 
+import GraphIcon from './GraphIcon'
+import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
+import fetchClassGraphData from '../utils/fetchClassGraphData'
 import classNames from '../utils/classNames'
 
 
@@ -26,11 +31,31 @@ const Data = () => {
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
 
+  const [classGraphData, setClassGraphData] = useState(null)
+  const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
+
+  const [classGraphViz, setClassGraphViz] = useState(false)
+
   useEffect(() => {
+
+    // hide the graph when switching between different items/nodes
+    setClassGraphData(null)
+    setClassGraphViz(false)
+
+    // fetch item data
     setLoading(true)
     fetchData(id).then(data => {
       setLoading(false)
       setData(data)
+    })
+
+    // fetch class graph data
+    setLoadingClassGraphData(true)
+    fetchClassGraphData(id).then(data => {
+      setLoadingClassGraphData(false)
+      if ( !!Object.keys(data).length ) {
+        setClassGraphData(data)
+      }
     })
   }, [id])
 
@@ -52,6 +77,14 @@ const Data = () => {
     return url
   }
 
+  const showClassGraphViz = () => {
+    setClassGraphViz(true)
+  }
+
+  const hideClassGraphViz = () => {
+    setClassGraphViz(false)
+  }
+
   const renderLoading = () => {
     if ( !loading ) { return }
     return (
@@ -68,9 +101,22 @@ const Data = () => {
         <Paper className={classes.paper}>
           <Typography variant="h4" className={classes.title}>
             {data.text}
+            { !!classGraphData && (
+              <Tooltip arrow placement="right"
+                title="View Class Graph Visualization">
+                <IconButton
+                  color="inherit"
+                  title="View Class Graph Visualization"
+                  onClick={showClassGraphViz}>
+                  <div className={classes.graphIcon}>
+                    <GraphIcon />
+                  </div>
+                </IconButton>
+              </Tooltip>
+            )}
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
-            ({data.ref})
+            { !!data.ref ? `(${data.ref})` : '' }
           </Typography>
           {data.aliases && (
             <Typography variant="subtitle2" className={classes.aliases}>
@@ -515,9 +561,20 @@ const Data = () => {
     )
   }
 
+  const renderClassGraph = () => {
+    if ( !classGraphViz ) { return }
+    return (
+      <ClassGraphViz
+        data={classGraphData}
+        loading={loadingClassGraphData}
+        hideClassGraphViz={hideClassGraphViz} />
+    )
+  }
+
   return (
     <Grid container spacing={1}>
       {renderLoading()}
+      {renderClassGraph()}
       <Grid item xs={8} style={{ 'opacity': loading ? '0.25' : '1' }}>
         <Grid container spacing={1}>
           {renderDescription()}

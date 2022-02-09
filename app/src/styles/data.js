@@ -28,6 +28,11 @@ const useStyles = makeStyles(theme => ({
     color: '#333',
     fontWeight: 'bold',
   },
+  graphIcon: {
+    width: theme.spacing(3),
+    height: theme.spacing(3),
+    cursor: 'pointer',
+  },
   description: {},
   breadcrumbArrow: {
     color: '#333',

@@ -1,13 +1,9 @@
-import React, { useEffect, useRef, useState }from 'react'
+import React, { useEffect, useState } from 'react'
 import TextField from '@material-ui/core/TextField'
 import Typography from '@material-ui/core/Typography'
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import ListItemText from '@material-ui/core/ListItemText'
-import CircularProgress from '@material-ui/core/CircularProgress'
 import { makeStyles } from '@material-ui/core/styles'
-
-import fetchSearchResults from '../utils/fetchSearchResults'
-import fetchESSearchResults from '../utils/fetchESSearchResults'
 
 
 const useStyles = makeStyles(theme => ({
@@ -17,9 +13,10 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
     maxHeight: '100%',
     padding: theme.spacing(1),
+    background: 'white',
     [theme.breakpoints.up('sm')]: {
       marginLeft: theme.spacing(3),
-      minWidth: '350px',
+      minWidth: '250px',
       width: 'auto',
     },
   },
@@ -46,50 +43,30 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const Search = () => {
+const GraphSearch = ({ nodes, onSelect }) => {
 
   const classes = useStyles()
 
-  const timeoutID = useRef(null)
-
   const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [options, setOptions] = useState(nodes)
   const [inputValue, setInputValue] = useState('')
 
   useEffect(() => {
     if ( !inputValue || inputValue.length < 2 ) { return }
 
-    clearTimeout(timeoutID.current)
-    timeoutID.current = setTimeout(() => {
-      setLoading(true)
-      if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
-        fetchSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
-      } else {
-        fetchESSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
+    const filteredNodes = nodes.filter(node => {
+      if ( node.id.indexOf(inputValue) === 0 ) {
+        return true
       }
-    }, 500)
+      if ( node.label.indexOf(inputValue) >= 0 ) {
+        return true
+      }
+      return false
+    })
+
+    setOptions(filteredNodes)
 
   }, [inputValue])
-
-  const onSelect = node => {
-    let url = `/${node.ref}`
-
-    // prefix the url with the location of where the app is hosted
-    if ( process.env.REACT_APP_FRONTEND_URL ) {
-      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
-    }
-
-    window.location = url
-  }
 
   return (
     <Autocomplete
@@ -99,11 +76,11 @@ const Search = () => {
         setOpen(!!options.length)
       }}
       onClose={() => {
-        setOptions([])
+        setOptions(nodes)
         setOpen(false)
       }}
       onChange={(event, value) => onSelect(value)}
-      getOptionLabel={option => option.description + ' ' + option.ref}
+      getOptionLabel={option => option.label + ' ' + option.id}
       filterOptions={options => options}
       onInputChange={(event, newInputValue) => {
         setInputValue(newInputValue)
@@ -115,18 +92,14 @@ const Search = () => {
       renderOption={(option, { selected }) => (
         <ListItemText className={classes.listItem}>
           <Typography variant="body1">
-            <b>{option.ref}</b>
+            <b>{option.id}</b>
           </Typography>
           <Typography variant="body1">
-            {option.description}
-          </Typography>
-          <Typography variant="body1">
-            {option.ref_description}
+            {option.label}
           </Typography>
         </ListItemText>
       )}
       options={options}
-      loading={loading}
       renderInput={(params) => (
         <TextField
           fullWidth
@@ -142,7 +115,6 @@ const Search = () => {
             ...params.InputProps,
             endAdornment: (
               <React.Fragment>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
                 {params.InputProps.endAdornment}
               </React.Fragment>
             ),
@@ -153,4 +125,4 @@ const Search = () => {
   )
 }
 
-export default Search
+export default GraphSearch

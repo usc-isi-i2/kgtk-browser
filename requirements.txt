@@ -1,2 +1,3 @@
 Flask==2.0.1
-kgtk==1.0.1
+pandas==1.3.0
+kgtk==1.1.0

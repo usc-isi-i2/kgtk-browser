@@ -1,6 +1,8 @@
 """
 Kypher backend support for the KGTK browser.
 """
+from pathlib import Path
+import shutil
 
 import datetime
 import hashlib
@@ -8,6 +10,9 @@ from http import HTTPStatus
 import math
 import os
 import os.path
+import json
+
+import pandas as pd
 import random
 import sys
 import traceback
@@ -15,11 +20,16 @@ import typing
 
 import flask
 import browser.backend.kypher as kybe
+import tempfile
 
 from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
+from kgtk.visualize.visualize_api import KgtkVisualize
+
+from kgtk_browser_config import KypherAPIObject
 
 import re
+import time
 
 # How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
@@ -52,7 +62,8 @@ app = flask.Flask(__name__,
                   static_folder='app/build',
                   template_folder='web/templates')
 
-# os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
+if 'KGTK_BROWSER_CONFIG' not in os.environ:
+    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 # Allow urls with trailing slashes
@@ -72,7 +83,7 @@ DEFAULT_MATCH_LABEL_EXACTLY: bool = True
 DEFAULT_MATCH_LABEL_PREFIXES: bool = True
 DEFAULT_MATCH_LABEL_PREFIXES_LIMIT: int = 20
 DEFAULT_MATCH_LABEL_IGNORE_CASE: bool = True
-DEFAULT_MATCH_LABEL_TEXT_LIKE: bool = True
+DEFAULT_MATCH_LABEL_TEXT_LIKE: bool = False
 
 DEFAULT_PROPLIST_MAX_LEN: int = 2000
 DEFAULT_VALUELIST_MAX_LEN: int = 20
@@ -81,6 +92,7 @@ DEFAULT_QUAL_VALUELIST_MAX_LEN: int = 20
 DEFAULT_QUERY_LIMIT: int = 300000
 DEFAULT_QUAL_QUERY_LIMIT: int = 300000
 DEFAULT_VERBOSE: bool = False
+DEFAULT_KYPHER_OBJECTS_NUM: int = 5
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -127,14 +139,22 @@ app.config['QUAL_VALUELIST_MAX_LEN'] = app.config.get('QUAL_VALUELIST_MAX_LEN', 
 app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
 app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
 app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
+app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
 
-app.kgtk_backend = kybe.BrowserBackend(app)
+kgtk_backends = {}
+for i in range(app.config['KYPHER_OBJECTS_NUM']):
+    k_api = KypherAPIObject()
+    _api = kybe.BrowserBackend(api=k_api)
+    _api.set_app_config(app)
+    kgtk_backends[i] = _api
 
 item_regex = re.compile(f"^[q|Q|p|P]\d+$")
 
 
-def get_backend(app):
-    return app.kgtk_backend
+def get_backend():
+    epoch = int(time.time())
+    key = epoch % 5
+    return kgtk_backends[key]
 
 
 # Multi-threading
@@ -166,6 +186,98 @@ def rb_get_kb(node=None):
        It sends the initial HTML file, "kb.html".
     """
     return flask.send_from_directory('app/build', 'index.html')
+
+
+@app.route('/kb/get_class_graph_data/<string:node>', methods=['GET'])
+def get_class_graph_data(node=None):
+    """
+    Get the data for your class graph visualization here!
+    This endpoint takes in a node id to look up the class
+    And returns a json object representing a graph, like so:
+    {
+        "nodes": [{
+            "id":      <str: qnode>,
+            "label":   <str: label>,
+            "tooltip": <str: description>,
+            "color":   <int: color>,
+            "size":    <float: value>
+        }, {
+            ...
+        }],
+        "links": [{
+            "source":     <str: source qnode>,
+            "target":     <str: target qnode>,
+            "label":      <str: edge label>,
+            "color":      <int: color>,
+            "width_orig": <int: width>
+        }, {
+            ...
+        }]
+    }
+    """
+    args = flask.request.args
+    refresh: bool = args.get("refresh", type=rb_is_true,
+                             default=False)
+
+    temp_dir = tempfile.mkdtemp()
+
+    class_viz_dir = "class_viz_files"
+    if not Path(class_viz_dir).exists():
+        Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
+
+    edge_file_name = f"{temp_dir}/{node}.edge.tsv"
+    node_file_name = f"{temp_dir}/{node}.node.tsv"
+    html_file_name = f"{temp_dir}/{node}.html"
+    output_file_name = f"{class_viz_dir}/{node}.graph.json"
+    empty_output_file_name = f"{class_viz_dir}/{node}.graph.empty.json"
+
+    if Path(output_file_name).exists():
+        return flask.jsonify(json.load(open(output_file_name)))
+
+    if Path(empty_output_file_name).exists():
+        return flask.jsonify(json.load(open(empty_output_file_name)))
+
+    try:
+        with get_backend() as backend:
+            edge_results = backend.get_classviz_edge_results(node).to_records_dict()
+            if len(edge_results) == 0:
+                open(empty_output_file_name, 'w').write(json.dumps({}))
+                return flask.jsonify({}), 200
+            node_results = backend.get_classviz_node_results(node).to_records_dict()
+            if len(node_results) == 0:
+                open(empty_output_file_name, 'w').write(json.dumps({}))
+                return flask.jsonify({}), 200
+
+            edge_df = pd.DataFrame(edge_results)
+            node_df = pd.DataFrame(node_results)
+            edge_df.to_csv(edge_file_name, sep='\t', index=False)
+            node_df.to_csv(node_file_name, sep='\t', index=False)
+
+            kv = KgtkVisualize(input_file=edge_file_name,
+                               output_file=html_file_name,
+                               node_file=node_file_name,
+                               direction='arrow',
+                               edge_color_column='edge_type',
+                               edge_color_style='categorical',
+                               node_color_column='node_type',
+                               node_color_style='categorical',
+                               node_size_column='instance_count',
+                               node_size_default=5.0,
+                               node_size_minimum=2.0,
+                               node_size_maximum=8.0,
+                               node_size_scale='log',
+                               tooltip_column='tooltip',
+                               text_node='above',
+                               node_categorical_scale='d3.schemeCategory10',
+                               edge_categorical_scale='d3.schemeCategory10',
+                               node_file_id='node1')
+            visualization_graph, _ = kv.compute_visualization_graph()
+            open(output_file_name, 'w').write(json.dumps(visualization_graph))
+            shutil.rmtree(temp_dir)
+            return flask.jsonify(visualization_graph), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
 def rb_is_true(value: str) -> bool:
@@ -331,7 +443,7 @@ def rb_get_kb_query():
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
     try:
-        with get_backend(app) as backend:
+        with get_backend() as backend:
             matches = []
 
             # We keep track of the matches we've seen and produce only one match per node.
@@ -358,20 +470,90 @@ def rb_get_kb_query():
                 # query.  Should we?  The underlying code imposes a default
                 # limit, currently 1000.
                 if verbose:
-                    print("Searching for node %s" % repr(q), file=sys.stderr, flush=True)
+                    print("Searching for item %s" % repr(q), file=sys.stderr, flush=True)
                 # Look for an exact match for the node name:
 
                 results = backend.rb_get_node_labels(q)
 
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
+                for result in results:
                     item = result[0]
                     if item in items_seen:
                         continue
                     items_seen.add(item)
                     label = KgtkFormat.unstringify(result[1])
                     description = KgtkFormat.unstringify(result[2]) if result[2].strip() != "" else ""
+                    matches.append(
+                        {
+                            "ref": item,
+                            "text": item,
+                            "description": label,
+                            "ref_description": description
+                        }
+                    )
+
+            query_text_like = True
+            if match_label_prefixes and len(q) >= 3:
+                # Query the labels, looking for a prefix match. The search may
+                # be case-sensitive or case-insensitive, according to
+                # "match_label_ignore_case".
+                #
+                # Labels are assumed to be encoded as language-qualified
+                # strings in the database.  We want to do a prefix match, so
+                # we stringify to a plain string, replace the leading '"' with
+                # "'", and remove the trailing '"'
+                #
+
+                if verbose:
+                    print("Searching for label prefix, textmatch %s (ignore_case=%s)" % (
+                        repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+
+                results = backend.search_labels(q,
+                                                lang=lang,
+                                                limit=match_label_prefixes_limit)
+
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                if len(results) > 0:
+
+                    query_text_like = False
+                    for result in results:
+                        item = result[0]
+                        if item in items_seen:
+                            continue
+                        items_seen.add(item)
+                        label = KgtkFormat.unstringify(result[1])
+                        description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
+                        matches.append(
+                            {
+                                "ref": item,
+                                "text": item,
+                                "description": label,
+                                "ref_description": description
+                            }
+                        )
+
+            if match_label_text_like and query_text_like and len(q) >= 3:
+                # Query the labels, using the %like% match in sqlite FTS5.
+                # split the input string at space and insert % between every token
+
+                search_label = f"%{'%'.join(q.split(' '))}%"
+                if verbose:
+                    print("Searching for label, textlike %s " % (repr(q)), file=sys.stderr, flush=True)
+
+                results = backend.search_labels_textlike(search_label,
+                                                         lang=lang,
+                                                         limit=match_label_prefixes_limit)
+                if verbose:
+                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+                for result in results:
+                    item = result[0]
+                    if item in items_seen:
+                        continue
+                    items_seen.add(item)
+                    label = KgtkFormat.unstringify(result[1])
+                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
                     matches.append(
                         {
                             "ref": item,
@@ -398,7 +580,8 @@ def rb_get_kb_query():
                 # We will use kgtk_lqstring_text() function to get the text part of the language qualified string,
                 # and kgtk_lqstring_lang() to get the language.
                 if verbose:
-                    print("Searching for label %s (ignore_case=%s)" % (repr(q), repr(match_label_ignore_case)),
+                    print("Searching for label, exact match %s (ignore_case=%s)" %
+                          (repr(q), repr(match_label_ignore_case)),
                           file=sys.stderr, flush=True)
 
                 results = backend.search_labels_exactly(q,
@@ -408,7 +591,7 @@ def rb_get_kb_query():
                 if verbose:
                     print("Got %d matches" % len(results), file=sys.stderr, flush=True)
 
-                for result in rb_sort_query_results(results):
+                for result in results:
                     item = result[0]
                     if item in items_seen:
                         continue
@@ -423,73 +606,6 @@ def rb_get_kb_query():
                             "ref_description": description
                         }
                     )
-
-            if match_label_text_like:
-                # Query the labels, using the %like% match in sqlite FTS5.
-                # split the input string at space and insert % between every token
-
-                search_label = f"%{'%'.join(q.split(' '))}%"
-                if verbose:
-                    print("Searching for label like %s " % (repr(q)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels_textlike(search_label,
-                                                         lang=lang,
-                                                         limit=match_label_prefixes_limit)
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
-            if match_label_prefixes:
-                # Query the labels, looking for a prefix match. The search may
-                # be case-sensitive or case-insensitive, according to
-                # "match_label_ignore_case".
-                #
-                # Labels are assumed to be encoded as language-qualified
-                # strings in the database.  We want to do a prefix match, so
-                # we stringify to a plain string, replace the leading '"' with
-                # "'", and remove the trailing '"'
-                #
-
-                if verbose:
-                    print("Searching for label prefix %s (ignore_case=%s)" % (
-                        repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels(q,
-                                                lang=lang,
-                                                limit=match_label_prefixes_limit)
-
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in rb_sort_query_results(results):
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
             if verbose:
                 print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
 
@@ -678,7 +794,8 @@ def rb_format_time(
 
 
 def rb_dd_to_dms(degs: float) -> typing.Tuple[bool, int, int, float]:
-    # Taken from: https://stackoverflow.com/questions/2579535/convert-dd-decimal-degrees-to-dms-degrees-minutes-seconds-in-python
+    # Taken from:
+    # https://stackoverflow.com/questions/2579535/convert-dd-decimal-degrees-to-dms-degrees-minutes-seconds-in-python
     neg: bool = degs < 0
     if neg:
         degs = - degs
@@ -1021,7 +1138,6 @@ def rb_build_property_priority_map(backend, verbose: bool = False):
     rel: typing.List[str]
     for rel in subproperty_relationships:
         node1, node2, label = rel
-        # print("%s (%s) is a subproperty of %s" % (repr(node1), repr(label), repr(node2)), file=sys.stderr, flush=True) # ***
         if node2 not in forest:
             forest[node2] = list()
         forest[node2].append(node1)
@@ -1621,7 +1737,7 @@ def rb_send_kb_item(item: str,
                     qual_query_limit: int = 10000,
                     verbose: bool = False):
     try:
-        with get_backend(app) as backend:
+        with get_backend() as backend:
             rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
 
             verbose2: bool = verbose  # ***
@@ -1636,7 +1752,8 @@ def rb_send_kb_item(item: str,
                 print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True)  # ***
 
             # item_inverse_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
-            # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_qualifiers(item, lang=lang)
+            # item_inverse_qualifier_edges: typing.List[typing.List[str]] = backend.rb_get_node_inverse_edge_
+            # qualifiers(item, lang=lang)
             # if verbose:
             #     print("Fetching category edges", file=sys.stderr, flush=True) # ***
             # item_category_edges: typing.List[typing.List[str]] = backend.rb_get_node_categories(item, lang=lang)
@@ -1841,36 +1958,6 @@ def rb_get_kb_named_item(item):
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-@app.route('/kb/<string:item>', methods=['GET'])
-def rb_get_kb_named_item2(item):
-    args = flask.request.args
-    verbose: bool = args.get("verbose", default=False, type=rb_is_true)
-
-    if verbose:
-        print("get_kb_named_item2: " + item)
-
-    if item is None or len(item) == 0:
-        try:
-            return flask.send_from_directory('web/static', "kb.html")
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-    elif item in ["kb.js", "kb.html"]:
-        try:
-            return flask.send_from_directory('web/static', item)
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-    else:
-        try:
-            return flask.render_template("kb.html", ITEMID=item, SCRIPT="/kb/kb.js")
-        except Exception as e:
-            print('ERROR: ' + str(e))
-            flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
 ### Test URL handlers:
 
 # These all call the corresponding backend query method with the same name.
@@ -2049,5 +2136,4 @@ def get_all_node_data():
 
 
 if __name__ == '__main__':
-    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
-    app.run(host='0.0.0.0', port=3233)
+    app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
