@@ -84,27 +84,18 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
               const textWidth = ctx.measureText(label).width
               const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
 
-              // only show node labels when there are less than K nodes
-              if ( data.nodes.length <= 150 ) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+              ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
 
-                ctx.textAlign = 'center'
-                ctx.textBaseline = 'middle'
+              ctx.textAlign = 'center'
+              ctx.textBaseline = 'middle'
 
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
-
-                ctx.fillText(label, node.x, node.y - (node.size + 5))
-
-              } else {
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
+              ctx.fillStyle = d3.schemeCategory10[node.color]
+              if ( node.id === id ) {
+                ctx.fillStyle = 'limegreen'
               }
+
+              ctx.fillText(label, node.x, node.y - (node.size + 5))
 
               ctx.beginPath()
               ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
