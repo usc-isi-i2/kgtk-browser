@@ -275,6 +275,20 @@ def get_class_graph_data(node=None):
             visualization_graph, _ = kv.compute_visualization_graph()
             open(output_file_name, 'w').write(json.dumps(visualization_graph))
             shutil.rmtree(temp_dir)
+
+            # check nodes for incoming edges and set showLabel prop
+            for node in data['nodes']:
+                incoming_edges = [
+                    link
+                    for link
+                    in data['links']
+                    if link['target'] == node['id']
+                ]
+                if incoming_edges:
+                    node['showLabel'] = True
+                else:
+                    node['showLabel'] = False
+
             return flask.jsonify(visualization_graph), 200
     except Exception as e:
         print('ERROR: ' + str(e))
