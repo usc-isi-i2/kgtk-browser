@@ -277,24 +277,17 @@ def get_class_graph_data(node=None):
             shutil.rmtree(temp_dir)
 
             # check nodes for incoming edges and set showLabel prop
-            for other_node in visualization_graph['nodes']:
-
-                # show the label either way
-                # if the node is the originally requested node
-                if other_node == node:
-                    node['showLabel'] = True
-                    continue
-
+            for node in visualization_graph['nodes']:
                 incoming_edges = [
                     link
                     for link
                     in visualization_graph['links']
-                    if link['target'] == other_node['id']
+                    if link['target'] == node['id']
                 ]
                 if incoming_edges:
-                    other_node['showLabel'] = True
+                    node['showLabel'] = True
                 else:
-                    other_node['showLabel'] = False
+                    node['showLabel'] = False
 
             return flask.jsonify(visualization_graph), 200
     except Exception as e:
