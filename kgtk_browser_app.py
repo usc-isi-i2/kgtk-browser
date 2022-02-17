@@ -196,11 +196,12 @@ def get_class_graph_data(node=None):
     And returns a json object representing a graph, like so:
     {
         "nodes": [{
-            "id":      <str: qnode>,
-            "label":   <str: label>,
-            "tooltip": <str: description>,
-            "color":   <int: color>,
-            "size":    <float: value>
+            "id":        <str: qnode>,
+            "label":     <str: label>,
+            "showLabel": <bool: show label?>,
+            "tooltip":   <str: description>,
+            "color":     <int: color>,
+            "size":      <float: value>
         }, {
             ...
         }],
