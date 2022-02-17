@@ -85,8 +85,8 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
               const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
 
               // render node labels only for nodes with incoming edges
-              const incoming = data['links'].filter(link => link.target === node.id)
-              if ( !!incoming.length ) {
+              // in which case showLabel = true
+              if ( node.showLabel ) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
                 ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
 
@@ -112,6 +112,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
 
               node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
             }}
+
           />
         )}
       />
