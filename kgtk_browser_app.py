@@ -277,11 +277,11 @@ def get_class_graph_data(node=None):
             shutil.rmtree(temp_dir)
 
             # check nodes for incoming edges and set showLabel prop
-            for node in data['nodes']:
+            for node in visualization_graph['nodes']:
                 incoming_edges = [
                     link
                     for link
-                    in data['links']
+                    in visualization_graph['links']
                     if link['target'] == node['id']
                 ]
                 if incoming_edges:
