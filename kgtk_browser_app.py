@@ -273,8 +273,6 @@ def get_class_graph_data(node=None):
                                edge_categorical_scale='d3.schemeCategory10',
                                node_file_id='node1')
             visualization_graph, _ = kv.compute_visualization_graph()
-            open(output_file_name, 'w').write(json.dumps(visualization_graph))
-            shutil.rmtree(temp_dir)
 
             # check nodes for incoming edges and set showLabel prop
             original_node = node
@@ -295,6 +293,10 @@ def get_class_graph_data(node=None):
                     node['showLabel'] = True
                 else:
                     node['showLabel'] = False
+
+            # write visualization graph to the output file
+            open(output_file_name, 'w').write(json.dumps(visualization_graph))
+            shutil.rmtree(temp_dir)
 
             return flask.jsonify(visualization_graph), 200
     except Exception as e:
