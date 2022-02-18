@@ -232,11 +232,11 @@ def get_class_graph_data(node=None):
     output_file_name = f"{class_viz_dir}/{node}.graph.json"
     empty_output_file_name = f"{class_viz_dir}/{node}.graph.empty.json"
 
-    if Path(output_file_name).exists():
-        return flask.jsonify(json.load(open(output_file_name)))
+    #if Path(output_file_name).exists():
+    #    return flask.jsonify(json.load(open(output_file_name)))
 
-    if Path(empty_output_file_name).exists():
-        return flask.jsonify(json.load(open(empty_output_file_name)))
+    #if Path(empty_output_file_name).exists():
+    #    return flask.jsonify(json.load(open(empty_output_file_name)))
 
     try:
         with get_backend() as backend:
