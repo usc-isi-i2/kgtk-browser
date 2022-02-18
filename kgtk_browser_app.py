@@ -277,7 +277,14 @@ def get_class_graph_data(node=None):
             shutil.rmtree(temp_dir)
 
             # check nodes for incoming edges and set showLabel prop
+            original_node = node
             for node in visualization_graph['nodes']:
+
+                # always show the label for the original node
+                if node['id'] == original_node:
+                    node['showLabel'] = True
+                    continue
+
                 incoming_edges = [
                     link
                     for link
