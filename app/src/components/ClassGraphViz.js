@@ -33,9 +33,14 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
   }
 
   const selectNode = useCallback(node => {
-    fgRef.current.zoomToFit(500, 50)
-    fgRef.current.d3ReheatSimulation()
-    fgRef.current.centerAt(node.x, node.y, 1000)
+    let url = `/${node.id}`
+
+    // prefix the url with the location of where the app is hosted
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    }
+
+    window.location = url
   }, [fgRef])
 
   const renderGraph = () => {
