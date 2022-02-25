@@ -50,6 +50,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
           <ForceGraph2D
             ref={fgRef}
             graphData={data}
+            cooldownTime={25000}
             nodeId={'id'}
             nodeLabel={'tooltip'}
             nodeVal={'size'}
