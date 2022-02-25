@@ -54,13 +54,20 @@ const GraphSearch = ({ nodes, onSelect }) => {
   useEffect(() => {
     if ( !inputValue || inputValue.length < 2 ) { return }
 
+    // make sure the input value is in lower case
+    const inputValueLowerCase = inputValue.toLowerCase()
+
     const filteredNodes = nodes.filter(node => {
-      if ( node.id.indexOf(inputValue) === 0 ) {
+      const nodeId = node.id.toLowerCase()
+      if ( nodeId.indexOf(inputValueLowerCase) === 0 ) {
         return true
       }
-      if ( node.label.indexOf(inputValue) >= 0 ) {
+
+      const nodeLabel = node.label.toLowerCase()
+      if ( nodeLabel.indexOf(inputValueLowerCase) >= 0 ) {
         return true
       }
+
       return false
     })
 
