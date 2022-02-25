@@ -275,24 +275,50 @@ def get_class_graph_data(qnode=None):
             visualization_graph, _ = kv.compute_visualization_graph()
 
             # check nodes for incoming edges and set showLabel prop
-            original_node = node
+            # count all incoming edges and save that number as a node property
             for node in visualization_graph['nodes']:
-
-                # always show the label for the original node
-                if node['id'] == original_node:
-                    node['showLabel'] = True
-                    continue
-
                 incoming_edges = [
                     link
                     for link
                     in visualization_graph['links']
                     if link['target'] == node['id']
                 ]
-                if incoming_edges:
+                node['incoming_edges'] = len(incoming_edges)
+
+            # check nodes for incoming edges and set showLabel prop
+            for node in visualization_graph['nodes']:
+
+                # always show the label for the original node
+                if node['id'] == qnode:
                     node['showLabel'] = True
-                else:
-                    node['showLabel'] = False
+                    continue
+
+                # show the label if the node has any incoming edges
+                if node['incoming_edges']:
+                    node['showLabel'] = True
+                    continue
+
+                # show the label if the node has no incoming edges
+                if not node['incoming_edges']:
+                    node['showLabel'] = True
+
+                    # gather all neighboring nodes
+                    neighboring_nodes = []
+                    for link in visualization_graph['links']:
+                        if link['source'] == node['id']:
+                            for other_node in visualization_graph['nodes']:
+                                if other_node['id'] == link['target']:
+                                    neighboring_nodes.append(other_node)
+
+                    # show the label if there are more than 1 neighbors
+                    if len(neighboring_nodes) > 1:
+                        node['showLabel'] = True
+                    else:
+                        # don't show the label when there's only one neighbor and
+                        # that neighbor has a cluster with more than 5 incoming edges
+                        for neighbor_node in neighboring_nodes:
+                            if neighbor_node['incoming_edges'] >= 5:
+                                node['showLabel'] = False
 
             # write visualization graph to the output file
             open(output_file_name, 'w').write(json.dumps(visualization_graph))
