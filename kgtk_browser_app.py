@@ -188,11 +188,11 @@ def rb_get_kb(node=None):
     return flask.send_from_directory('app/build', 'index.html')
 
 
-@app.route('/kb/get_class_graph_data/<string:node>', methods=['GET'])
-def get_class_graph_data(node=None):
+@app.route('/kb/get_class_graph_data/<string:qnode>', methods=['GET'])
+def get_class_graph_data(qnode=None):
     """
     Get the data for your class graph visualization here!
-    This endpoint takes in a node id to look up the class
+    This endpoint takes in a qnode id to look up the class
     And returns a json object representing a graph, like so:
     {
         "nodes": [{
@@ -226,11 +226,11 @@ def get_class_graph_data(node=None):
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
-    edge_file_name = f"{temp_dir}/{node}.edge.tsv"
-    node_file_name = f"{temp_dir}/{node}.node.tsv"
-    html_file_name = f"{temp_dir}/{node}.html"
-    output_file_name = f"{class_viz_dir}/{node}.graph.json"
-    empty_output_file_name = f"{class_viz_dir}/{node}.graph.empty.json"
+    edge_file_name = f"{temp_dir}/{qnode}.edge.tsv"
+    node_file_name = f"{temp_dir}/{qnode}.node.tsv"
+    html_file_name = f"{temp_dir}/{qnode}.html"
+    output_file_name = f"{class_viz_dir}/{qnode}.graph.json"
+    empty_output_file_name = f"{class_viz_dir}/{qnode}.graph.empty.json"
 
     if Path(output_file_name).exists():
         return flask.jsonify(json.load(open(output_file_name)))
@@ -240,11 +240,11 @@ def get_class_graph_data(node=None):
 
     try:
         with get_backend() as backend:
-            edge_results = backend.get_classviz_edge_results(node).to_records_dict()
+            edge_results = backend.get_classviz_edge_results(qnode).to_records_dict()
             if len(edge_results) == 0:
                 open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
-            node_results = backend.get_classviz_node_results(node).to_records_dict()
+            node_results = backend.get_classviz_node_results(qnode).to_records_dict()
             if len(node_results) == 0:
                 open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
