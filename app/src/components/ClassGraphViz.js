@@ -43,6 +43,13 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     window.location = url
   }, [fgRef])
 
+  const centerOnNode = useCallback(node => {
+    if ( !node ) { return }
+    fgRef.current.zoomToFit(500, 50)
+    fgRef.current.d3ReheatSimulation()
+    fgRef.current.centerAt(node.x, node.y, 1000)
+  }, [fgRef])
+
   const renderGraph = () => {
     if ( !data ) { return }
     return (
@@ -155,7 +162,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
         <Grid item xs={9}>
           <GraphSearch
             nodes={data.nodes}
-            onSelect={node => selectNode(node)} />
+            onSelect={node => centerOnNode(node)} />
         </Grid>
         <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
