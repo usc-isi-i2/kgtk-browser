@@ -54,6 +54,23 @@ const Data = () => {
     fetchClassGraphData(id).then(data => {
       setLoadingClassGraphData(false)
       if ( !!Object.keys(data).length ) {
+
+        // add links and neighbors to the node data
+        data.links.forEach(link => {
+          const a = data.nodes.find(node => node.id === link.source)
+          const b = data.nodes.find(node => node.id === link.target)
+
+          !a.neighbors && (a.neighbors = [])
+          !b.neighbors && (b.neighbors = [])
+          a.neighbors.push(b)
+          b.neighbors.push(a)
+
+          !a.links && (a.links = [])
+          !b.links && (b.links = [])
+          a.links.push(link)
+          b.links.push(link)
+        })
+
         setClassGraphData(data)
       }
     })
