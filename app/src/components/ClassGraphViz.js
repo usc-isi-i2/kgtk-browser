@@ -89,12 +89,18 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
 
-  const renderNodeCanvasObject = (node, ctx, globalScale) => {
+  const renderNodeCanvasObject = useCallback((node, ctx, globalScale) => {
     const label = node.label
     const fontSize = 12 / globalScale
     ctx.font = `${fontSize}px Sans-Serif`
     const textWidth = ctx.measureText(label).width
     const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+
+    // add outline for the highlighted node
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, node.size * 1.4, 0, 2 * Math.PI, false)
+    ctx.fillStyle = node === hoverNode ? '#d62728' : d3.schemeCategory10[node.color]
+    ctx.fill()
 
     // render node labels only for nodes with incoming edges
     // in which case showLabel = true
@@ -123,7 +129,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     ctx.fill()
 
     node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
-  }
+  }, [hoverNode])
 
   const renderGraph = () => {
     if ( !data ) { return }
