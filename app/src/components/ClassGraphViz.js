@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import Dialog from '@material-ui/core/Dialog'
@@ -27,6 +27,45 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
 
   const classes = useStyles()
 
+  const [hoverNode, setHoverNode] = useState(null)
+  const [highlightNodes, setHighlightNodes] = useState(new Set())
+  const [highlightLinks, setHighlightLinks] = useState(new Set())
+
+  const updateHighlight = () => {
+    setHighlightNodes(highlightNodes)
+    setHighlightLinks(highlightLinks)
+  }
+
+  const handleNodeHover = node => {
+    highlightNodes.clear()
+    highlightLinks.clear()
+    if (node) {
+      highlightNodes.add(node)
+
+      data.links.forEach(link => {
+      })
+
+      node.neighbors.forEach(neighbor => highlightNodes.add(neighbor))
+      node.links.forEach(link => highlightLinks.add(link))
+    }
+
+    setHoverNode(node || null)
+    updateHighlight()
+  }
+
+  const handleLinkHover = link => {
+    highlightNodes.clear()
+    highlightLinks.clear()
+
+    if (link) {
+      highlightLinks.add(link)
+      highlightNodes.add(link.source)
+      highlightNodes.add(link.target)
+    }
+
+    updateHighlight()
+  }
+
   const resetGraph = () => {
     fgRef.current.zoomToFit(500, 50)
     fgRef.current.d3ReheatSimulation()
@@ -50,12 +89,18 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
 
-  const renderNodeCanvasObject = (node, ctx, globalScale) => {
+  const renderNodeCanvasObject = useCallback((node, ctx, globalScale) => {
     const label = node.label
     const fontSize = 12 / globalScale
     ctx.font = `${fontSize}px Sans-Serif`
     const textWidth = ctx.measureText(label).width
     const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+
+    // add outline for the highlighted node
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, node.size * 1.4, 0, 2 * Math.PI, false)
+    ctx.fillStyle = node === hoverNode ? '#d62728' : d3.schemeCategory10[node.color]
+    ctx.fill()
 
     // render node labels only for nodes with incoming edges
     // in which case showLabel = true
@@ -84,7 +129,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     ctx.fill()
 
     node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
-  }
+  }, [hoverNode])
 
   const renderGraph = () => {
     if ( !data ) { return }
@@ -114,8 +159,11 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
             }}
 
             onNodeClick={selectNode}
+            onNodeHover={handleNodeHover}
+            onLinkHover={handleLinkHover}
 
-            linkWidth={link => link.width}
+            linkWidth={link => highlightLinks.has(link) ? 3 : 1}
+
             linkDirectionalArrowLength={6}
             linkDirectionalArrowRelPos={1}
 
