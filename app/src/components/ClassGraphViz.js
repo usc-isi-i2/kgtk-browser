@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import Dialog from '@material-ui/core/Dialog'
@@ -26,6 +26,45 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
   const { id } = useParams()
 
   const classes = useStyles()
+
+  const [hoverNode, setHoverNode] = useState(null)
+  const [highlightNodes, setHighlightNodes] = useState(new Set())
+  const [highlightLinks, setHighlightLinks] = useState(new Set())
+
+  const updateHighlight = () => {
+    setHighlightNodes(highlightNodes)
+    setHighlightLinks(highlightLinks)
+  }
+
+  const handleNodeHover = node => {
+    highlightNodes.clear()
+    highlightLinks.clear()
+    if (node) {
+      highlightNodes.add(node)
+
+      data.links.forEach(link => {
+      })
+
+      node.neighbors.forEach(neighbor => highlightNodes.add(neighbor))
+      node.links.forEach(link => highlightLinks.add(link))
+    }
+
+    setHoverNode(node || null)
+    updateHighlight()
+  }
+
+  const handleLinkHover = link => {
+    highlightNodes.clear()
+    highlightLinks.clear()
+
+    if (link) {
+      highlightLinks.add(link)
+      highlightNodes.add(link.source)
+      highlightNodes.add(link.target)
+    }
+
+    updateHighlight()
+  }
 
   const resetGraph = () => {
     fgRef.current.zoomToFit(500, 50)
@@ -114,8 +153,11 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
             }}
 
             onNodeClick={selectNode}
+            onNodeHover={handleNodeHover}
+            onLinkHover={handleLinkHover}
 
-            linkWidth={link => link.width}
+            linkWidth={link => highlightLinks.has(link) ? 3 : 1}
+
             linkDirectionalArrowLength={6}
             linkDirectionalArrowRelPos={1}
 
