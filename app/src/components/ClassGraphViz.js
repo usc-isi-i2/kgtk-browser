@@ -50,6 +50,42 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
 
+  const renderNodeCanvasObject = (node, ctx, globalScale) => {
+    const label = node.label
+    const fontSize = 12 / globalScale
+    ctx.font = `${fontSize}px Sans-Serif`
+    const textWidth = ctx.measureText(label).width
+    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+
+    // render node labels only for nodes with incoming edges
+    // in which case showLabel = true
+    if ( node.showLabel ) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+      ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
+
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+
+      ctx.fillStyle = d3.schemeCategory10[node.color]
+      if ( node.id === id ) {
+        ctx.fillStyle = 'limegreen'
+      }
+
+      ctx.fillText(label, node.x, node.y - (node.size + 5))
+    } else {
+      ctx.fillStyle = d3.schemeCategory10[node.color]
+      if ( node.id === id ) {
+        ctx.fillStyle = 'limegreen'
+      }
+    }
+
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
+    ctx.fill()
+
+    node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
+  }
+
   const renderGraph = () => {
     if ( !data ) { return }
     return (
@@ -90,41 +126,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
               return d3.schemeSet1[link.color]
             }}
 
-            nodeCanvasObject={(node, ctx, globalScale) => {
-              const label = node.label
-              const fontSize = 12 / globalScale
-              ctx.font = `${fontSize}px Sans-Serif`
-              const textWidth = ctx.measureText(label).width
-              const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
-
-              // render node labels only for nodes with incoming edges
-              // in which case showLabel = true
-              if ( node.showLabel ) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
-
-                ctx.textAlign = 'center'
-                ctx.textBaseline = 'middle'
-
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
-
-                ctx.fillText(label, node.x, node.y - (node.size + 5))
-              } else {
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
-              }
-
-              ctx.beginPath()
-              ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
-              ctx.fill()
-
-              node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
-            }}
+            nodeCanvasObject={renderNodeCanvasObject}
 
           />
         )}
