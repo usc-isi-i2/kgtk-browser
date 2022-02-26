@@ -188,19 +188,20 @@ def rb_get_kb(node=None):
     return flask.send_from_directory('app/build', 'index.html')
 
 
-@app.route('/kb/get_class_graph_data/<string:node>', methods=['GET'])
-def get_class_graph_data(node=None):
+@app.route('/kb/get_class_graph_data/<string:qnode>', methods=['GET'])
+def get_class_graph_data(qnode=None):
     """
     Get the data for your class graph visualization here!
-    This endpoint takes in a node id to look up the class
+    This endpoint takes in a qnode id to look up the class
     And returns a json object representing a graph, like so:
     {
         "nodes": [{
-            "id":      <str: qnode>,
-            "label":   <str: label>,
-            "tooltip": <str: description>,
-            "color":   <int: color>,
-            "size":    <float: value>
+            "id":        <str: qnode>,
+            "label":     <str: label>,
+            "showLabel": <bool: show label?>,
+            "tooltip":   <str: description>,
+            "color":     <int: color>,
+            "size":      <float: value>
         }, {
             ...
         }],
@@ -225,11 +226,11 @@ def get_class_graph_data(node=None):
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
-    edge_file_name = f"{temp_dir}/{node}.edge.tsv"
-    node_file_name = f"{temp_dir}/{node}.node.tsv"
-    html_file_name = f"{temp_dir}/{node}.html"
-    output_file_name = f"{class_viz_dir}/{node}.graph.json"
-    empty_output_file_name = f"{class_viz_dir}/{node}.graph.empty.json"
+    edge_file_name = f"{temp_dir}/{qnode}.edge.tsv"
+    node_file_name = f"{temp_dir}/{qnode}.node.tsv"
+    html_file_name = f"{temp_dir}/{qnode}.html"
+    output_file_name = f"{class_viz_dir}/{qnode}.graph.json"
+    empty_output_file_name = f"{class_viz_dir}/{qnode}.graph.empty.json"
 
     if Path(output_file_name).exists():
         return flask.jsonify(json.load(open(output_file_name)))
@@ -239,11 +240,11 @@ def get_class_graph_data(node=None):
 
     try:
         with get_backend() as backend:
-            edge_results = backend.get_classviz_edge_results(node).to_records_dict()
+            edge_results = backend.get_classviz_edge_results(qnode).to_records_dict()
             if len(edge_results) == 0:
                 open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
-            node_results = backend.get_classviz_node_results(node).to_records_dict()
+            node_results = backend.get_classviz_node_results(qnode).to_records_dict()
             if len(node_results) == 0:
                 open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
@@ -272,8 +273,57 @@ def get_class_graph_data(node=None):
                                edge_categorical_scale='d3.schemeCategory10',
                                node_file_id='node1')
             visualization_graph, _ = kv.compute_visualization_graph()
+
+            # check nodes for incoming edges and set showLabel prop
+            # count all incoming edges and save that number as a node property
+            for node in visualization_graph['nodes']:
+                incoming_edges = [
+                    link
+                    for link
+                    in visualization_graph['links']
+                    if link['target'] == node['id']
+                ]
+                node['incoming_edges'] = len(incoming_edges)
+
+            # check nodes for incoming edges and set showLabel prop
+            for node in visualization_graph['nodes']:
+
+                # always show the label for the original node
+                if node['id'] == qnode:
+                    node['showLabel'] = True
+                    continue
+
+                # show the label if the node has any incoming edges
+                if node['incoming_edges']:
+                    node['showLabel'] = True
+                    continue
+
+                # show the label if the node has no incoming edges
+                if not node['incoming_edges']:
+                    node['showLabel'] = True
+
+                    # gather all neighboring nodes
+                    neighboring_nodes = []
+                    for link in visualization_graph['links']:
+                        if link['source'] == node['id']:
+                            for other_node in visualization_graph['nodes']:
+                                if other_node['id'] == link['target']:
+                                    neighboring_nodes.append(other_node)
+
+                    # show the label if there are more than 1 neighbors
+                    if len(neighboring_nodes) > 1:
+                        node['showLabel'] = True
+                    else:
+                        # don't show the label when there's only one neighbor and
+                        # that neighbor has a cluster with more than 5 incoming edges
+                        for neighbor_node in neighboring_nodes:
+                            if neighbor_node['incoming_edges'] >= 5:
+                                node['showLabel'] = False
+
+            # write visualization graph to the output file
             open(output_file_name, 'w').write(json.dumps(visualization_graph))
             shutil.rmtree(temp_dir)
+
             return flask.jsonify(visualization_graph), 200
     except Exception as e:
         print('ERROR: ' + str(e))

@@ -28,15 +28,63 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
   const classes = useStyles()
 
   const resetGraph = () => {
-    fgRef.current.zoomToFit(500, 250)
+    fgRef.current.zoomToFit(500, 50)
     fgRef.current.d3ReheatSimulation()
   }
 
   const selectNode = useCallback(node => {
-    fgRef.current.zoomToFit(500, 250)
+    let url = `/${node.id}`
+
+    // prefix the url with the location of where the app is hosted
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    }
+
+    window.location = url
+  }, [fgRef])
+
+  const centerOnNode = useCallback(node => {
+    if ( !node ) { return }
+    fgRef.current.zoomToFit(500, 50)
     fgRef.current.d3ReheatSimulation()
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
+
+  const renderNodeCanvasObject = (node, ctx, globalScale) => {
+    const label = node.label
+    const fontSize = 12 / globalScale
+    ctx.font = `${fontSize}px Sans-Serif`
+    const textWidth = ctx.measureText(label).width
+    const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+
+    // render node labels only for nodes with incoming edges
+    // in which case showLabel = true
+    if ( node.showLabel ) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
+      ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
+
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+
+      ctx.fillStyle = d3.schemeCategory10[node.color]
+      if ( node.id === id ) {
+        ctx.fillStyle = 'limegreen'
+      }
+
+      ctx.fillText(label, node.x, node.y - (node.size + 5))
+    } else {
+      ctx.fillStyle = d3.schemeCategory10[node.color]
+      if ( node.id === id ) {
+        ctx.fillStyle = 'limegreen'
+      }
+    }
+
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
+    ctx.fill()
+
+    node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
+  }
 
   const renderGraph = () => {
     if ( !data ) { return }
@@ -50,6 +98,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
           <ForceGraph2D
             ref={fgRef}
             graphData={data}
+            cooldownTime={25000}
             nodeId={'id'}
             nodeLabel={'tooltip'}
             nodeVal={'size'}
@@ -77,41 +126,8 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
               return d3.schemeSet1[link.color]
             }}
 
-            nodeCanvasObject={(node, ctx, globalScale) => {
-              const label = node.label
-              const fontSize = 12 / globalScale
-              ctx.font = `${fontSize}px Sans-Serif`
-              const textWidth = ctx.measureText(label).width
-              const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2) // some padding
+            nodeCanvasObject={renderNodeCanvasObject}
 
-              // only show node labels when there are less than K nodes
-              if ( data.nodes.length <= 150 ) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'
-                ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - (node.size + 5) - bckgDimensions[1] / 2, ...bckgDimensions)
-
-                ctx.textAlign = 'center'
-                ctx.textBaseline = 'middle'
-
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
-
-                ctx.fillText(label, node.x, node.y - (node.size + 5))
-
-              } else {
-                ctx.fillStyle = d3.schemeCategory10[node.color]
-                if ( node.id === id ) {
-                  ctx.fillStyle = 'limegreen'
-                }
-              }
-
-              ctx.beginPath()
-              ctx.arc(node.x, node.y, node.size, 0, 2 * Math.PI, false)
-              ctx.fill()
-
-              node.__bckgDimensions = bckgDimensions // to re-use in nodePointerAreaPaint
-            }}
           />
         )}
       />
@@ -148,7 +164,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
         <Grid item xs={9}>
           <GraphSearch
             nodes={data.nodes}
-            onSelect={node => selectNode(node)} />
+            onSelect={node => centerOnNode(node)} />
         </Grid>
         <Grid item xs={1}>
           <Tooltip arrow title="Reset Graph">
