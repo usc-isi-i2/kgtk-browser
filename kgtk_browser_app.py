@@ -17,6 +17,7 @@ import random
 import sys
 import traceback
 import typing
+from typing import Tuple
 
 import flask
 import browser.backend.kypher as kybe
@@ -93,6 +94,7 @@ DEFAULT_QUERY_LIMIT: int = 300000
 DEFAULT_QUAL_QUERY_LIMIT: int = 300000
 DEFAULT_VERBOSE: bool = False
 DEFAULT_KYPHER_OBJECTS_NUM: int = 5
+DEFAULT_PROPERTY_VALUES_COUNT_LIMIT: int = 25
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -140,6 +142,8 @@ app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
 app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
 app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
 app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
+app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUNT_LIMIT',
+                                                           DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -1848,6 +1852,140 @@ def rb_send_kb_item(item: str,
 
             # The data source would also, presumably, be responsible for providing images.
             # response["gallery"] = [ ] # This is required by kb.js as a minimum element.
+            response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
+
+            return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int) -> (
+        Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
+    high_cardinality_properties = list()
+    normal_properties = list()
+    for prop_edge in property_value_counts:
+        high_cardinality_properties.append(prop_edge) \
+            if prop_edge[1] >= prop_values_limit \
+            else normal_properties.append(prop_edge)
+    return high_cardinality_properties, normal_properties
+
+
+def create_intial_hc_properties_response(high_cardinality_properties: typing.List[Tuple]) -> typing.List[typing.Dict]:
+    response = list()
+    for high_cardinality_property_edge in high_cardinality_properties:
+        property, count, wikidatatype, label = high_cardinality_property_edge
+        value: KgtkValue = KgtkValue(wikidatatype)
+        datatype = rb_find_type(property, value)
+        label_ = rb_unstringify(label, property)
+        response.append(
+            {
+                'property': label_,
+                'ref': property,
+                'type': datatype,
+                'count': count,
+                'values': [],
+                'mode': 'ajax'
+            }
+
+        )
+    return response
+
+
+@app.route('/kb/xitem', methods=['GET'])
+def rb_get_kb_xitem():
+    args = flask.request.args
+    item: str = args.get('id')
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    properties_values_limit = args.get('prop_val_limit', type=int,
+                                       default=app.config['PROPERTY_VALUES_COUNT_LIMIT'])
+    verbose: bool = args.get("verbose", type=rb_is_true,
+                             default=app.config['VERBOSE'])
+
+    if verbose:
+        print("rb_get_kb_item: %s" % repr(item))
+        print("lang: %s" % repr(lang))
+        print("proplist_max_len: %s" % repr(proplist_max_len))
+        print("valuelist_max_len: %s" % repr(valuelist_max_len))
+        print("qual_proplist_max_len: %s" % repr(qual_proplist_max_len))
+        print("qual_valuelist_max_len: %s" % repr(qual_valuelist_max_len))
+        print("query_limit: %s" % repr(query_limit))
+        print("qual_query_limit: %s" % repr(qual_query_limit))
+    try:
+        with get_backend() as backend:
+            property_values_count: typing.List[typing.List[str]] = backend.get_property_values_count_results(item, lang)
+            high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
+                                                                                                  properties_values_limit)
+
+            low_cardinality_properties_list_str = ", ".join(
+                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+
+            rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
+
+            verbose2: bool = verbose  # ***
+
+            if verbose2:
+                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
+                      file=sys.stderr, flush=True)  # ***
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=query_limit,
+                                                                                  lc_properties=low_cardinality_properties_list_str)
+
+            p = set()
+            for i in item_edges:
+                p.add(i[2])
+
+            for hcp in high_cardinality_properties:
+                assert hcp[0] not in p
+
+            if verbose2:
+                print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True)  # ***
+
+            if verbose2:
+                print("Done fetching edges", file=sys.stderr, flush=True)  # ***
+
+            response: typing.MutableMapping[str, any] = dict()
+            response["ref"] = item
+
+            item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item, lang=lang)
+            response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+
+            item_aliases: typing.List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
+            response["aliases"] = [rb_unstringify(x) for x in item_aliases]
+
+            item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
+            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
+
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            response_xrefs: typing.List[typing.MutableMapping[str, any]]
+            response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
+                                                                                  item,
+                                                                                  item_edges,
+                                                                                  proplist_max_len=proplist_max_len,
+                                                                                  valuelist_max_len=valuelist_max_len,
+                                                                                  qual_proplist_max_len=qual_proplist_max_len,
+                                                                                  qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                                  qual_query_limit=qual_query_limit,
+                                                                                  lang=lang,
+                                                                                  verbose=verbose)
+
+            hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
+            response_properties.extend(hcp_response)
+            response["properties"] = response_properties
+            response["xrefs"] = response_xrefs
+
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
 
             return flask.jsonify(response), 200
