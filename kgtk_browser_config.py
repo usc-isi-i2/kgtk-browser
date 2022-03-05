@@ -6,8 +6,8 @@ import kgtk.kypher.api as kapi
 
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
-GRAPH_CACHE = './wikidata.sqlite3.db'
-# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
+# GRAPH_CACHE = './wikidata.sqlite3.db'
+GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -37,6 +37,7 @@ KYPHER_OBJECTS_NUM = 5
 
 # Data server limits
 VALUELIST_MAX_LEN: int = 100
+PROPERTY_VALUES_COUNT_LIMIT: int = 25
 
 
 # Query configuration section:
@@ -709,6 +710,67 @@ class KypherAPIObject(object):
             inputs='classviznode',
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause
+        )
+
+    def GET_PROPERTY_VALUES_COUNT_QUERY(self, node: str, lang) -> kapi.KypherQuery:
+        """
+        This function returns all the properties and their value counts for a Qnode. Helper function
+        to identify high cardinatlity properties.
+        :param node:
+        :return: KypherQuery object
+        """
+        query_name = f'{node}_property_values_count_query'
+        match_clause = f'claims: (:{node})-[eid {{label: property}}]->(), ' \
+                       f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
+        return self.kapi.get_query(
+            doc="""
+                    Find property value counts for a Qnode  
+                 """,
+            name=query_name,
+            inputs=('claims', 'labels', 'datatypes'),
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=match_clause,
+            opt='$labels: (property)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            ret='distinct property as node1, count(eid) as node2, rlwdt as wikidatatype, llabel as property_label'
+        )
+
+    def RB_NODE_EDGES_CONDITIONAL_QUERY(self, node, lc_properties, lang, limit):
+        where_clause = f'n1="{node}" AND rl IN [{lc_properties}]'
+        return self.kapi.get_query(
+            doc="""
+                    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of properties only.
+                    Additionally retrieve descriptive information for all relationship labels.
+                    Additionally retrieve the node2 descriptions.
+                    Parameter 'LANG' controls the language for retrieved labels.
+                    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
+                    and label's 'label_label'.
+                    Limit the number of return edges to LIMIT.
+
+                    """,
+            name=f'rb_{node}_edges_conditional_query',
+            inputs=('edges', 'labels', 'descriptions', 'datatypes'),
+            match='$edges: (n1)-[r {label: rl}]->(n2)',
+            where=where_clause,
+            opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
+            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
+            opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
+            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
+            opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
+            ret='r as id, ' +
+                'n1 as node1, ' +
+                'r.label as relationship, ' +
+                'n2 as node2, ' +
+                'llabel as relationship_label, ' +
+                'n2 as target_node, ' +
+                'n2label as target_label, ' +
+                'n2desc as target_description, ' +
+                'rlwdt as wikidatatype',
+            order='r.label, n2, r, llabel, n2label, n2desc',  # For better performance with LIMIT, sort in caller.
+            limit=f"{limit}"
         )
 
     def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
