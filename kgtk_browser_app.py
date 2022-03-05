@@ -1930,6 +1930,10 @@ def rb_get_kb_xitem():
             high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
                                                                                                   properties_values_limit)
 
+            normal_property_dict = {}
+            for normal_property_edge in normal_properties:
+                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+
             low_cardinality_properties_list_str = ", ".join(
                 list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
 
@@ -1980,6 +1984,9 @@ def rb_get_kb_xitem():
                                                                                   qual_query_limit=qual_query_limit,
                                                                                   lang=lang,
                                                                                   verbose=verbose)
+            for response_property in response_properties:
+                response_property['count'] = normal_property_dict[response_property['ref']]
+                response_property['mode'] = 'sync'
 
             hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
             response_properties.extend(hcp_response)
