@@ -787,7 +787,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_edges_conditional_query',
+            name=f'rb_{node}_{property}_edges_one_property_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
