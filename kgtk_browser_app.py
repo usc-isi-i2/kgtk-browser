@@ -1419,13 +1419,6 @@ def rb_render_kb_items(backend,
         wikidatatype: typing.Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
 
-        # if current_edge_id is not None and current_edge_id == edge_id:
-        #     if verbose:
-        #         print("*** skipping duplicate %s" % repr(current_edge_id), file=sys.stderr, flush=True)
-        #     # Skip duplicates (say, multiple labels or descriptions).
-        #     continue
-        # current_edge_id = edge_id
-
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
 
