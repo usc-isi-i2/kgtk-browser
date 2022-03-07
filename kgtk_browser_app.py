@@ -18,6 +18,7 @@ import sys
 import traceback
 import typing
 from typing import Tuple
+from typing import List
 
 import flask
 import browser.backend.kypher as kybe
@@ -95,6 +96,8 @@ DEFAULT_QUAL_QUERY_LIMIT: int = 300000
 DEFAULT_VERBOSE: bool = False
 DEFAULT_KYPHER_OBJECTS_NUM: int = 5
 DEFAULT_PROPERTY_VALUES_COUNT_LIMIT: int = 25
+DEFAULT_PROPERTY_SKIP_NUM: int = 0
+DEFAULT_PROPERTY_LIMIT_NUM: int = 50
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -144,6 +147,8 @@ app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
 app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
 app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUNT_LIMIT',
                                                            DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
+app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
+app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -1872,7 +1877,7 @@ def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str,
     return high_cardinality_properties, normal_properties
 
 
-def create_intial_hc_properties_response(high_cardinality_properties: typing.List[Tuple]) -> typing.List[typing.Dict]:
+def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple]) -> List[typing.Dict]:
     response = list()
     for high_cardinality_property_edge in high_cardinality_properties:
         property, count, wikidatatype, label = high_cardinality_property_edge
@@ -1891,6 +1896,60 @@ def create_intial_hc_properties_response(high_cardinality_properties: typing.Lis
 
         )
     return response
+
+
+@app.route('/kb/property', methods=['GET'])
+def rb_get_kb_property():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    property: str = args.get('property', None)
+    skip: int = args.get('skip', type=int, default=app.config.get('PROPERTY_SKIP_NUM'))
+    limit: int = args.get('limit', type=int, default=app.config.get('PROPERTY_LIMIT_NUM'))
+
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+
+    if id is None or property is None:
+        return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
+
+    try:
+        with get_backend() as backend:
+            item_p_edges = backend.rb_get_node_one_property_edges(item, property, limit, skip, lang=lang)
+            response: typing.MutableMapping[str, any] = dict()
+
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+
+            response_properties, _ = rb_send_kb_items_and_qualifiers(backend,
+                                                                     item,
+                                                                     item_p_edges,
+                                                                     proplist_max_len=proplist_max_len,
+                                                                     valuelist_max_len=valuelist_max_len,
+                                                                     qual_proplist_max_len=qual_proplist_max_len,
+                                                                     qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                     qual_query_limit=qual_query_limit,
+                                                                     lang=lang)
+
+            for response_property in response_properties:
+                response_property['limit'] = limit
+                response_property['skip'] = skip
+
+            response["properties"] = response_properties
+
+            return flask.jsonify(response), 200
+
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
 @app.route('/kb/xitem', methods=['GET'])
