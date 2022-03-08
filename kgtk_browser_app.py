@@ -222,7 +222,7 @@ def get_class_graph_data(qnode=None):
 
     temp_dir = tempfile.mkdtemp()
 
-    class_viz_dir = "class_viz_files"
+    class_viz_dir = "/data/class_viz_files"
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
