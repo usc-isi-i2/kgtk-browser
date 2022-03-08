@@ -87,7 +87,7 @@ def add_arguments_extended(parser: KGTKArgumentParser, parsed_shared_args: Names
 
 
 def run(
-        kgtk_browser_host: str = 'localhost',
+        kgtk_browser_host: str = '0.0.0.0',
         kgtk_browser_port: str = '5000',
         kgtk_browser_config: str = 'kgtk_browser_config.py',
         kgtk_browser_app: str = 'kgtk_browser_app.py',
