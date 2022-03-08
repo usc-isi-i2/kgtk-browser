@@ -199,8 +199,8 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
         <p><div className={classes.rootNode} /> Root Node</p>
         <p><div className={classes.orangeNode} /> Many Subclasses</p>
         <p><div className={classes.blueNode} /> Few Subclasses</p>
-        <p><ArrowRightAltIcon className={classes.superclass} /> Superclass Of</p>
-        <p><ArrowRightAltIcon className={classes.subclass} /> Subclass Of</p>
+        <p><ArrowRightAltIcon className={classes.superclass} /> Superclass</p>
+        <p><ArrowRightAltIcon className={classes.subclass} /> Subclass</p>
       </div>
     )
   }
