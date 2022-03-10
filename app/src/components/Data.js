@@ -52,34 +52,24 @@ const Data = () => {
       setLoading(false)
       setData(data)
 
+      // fetch all high cardinality properties
       if ( !!data.properties.length ) {
-
-        // keep track of the fetch promises
-        const propertyPromises = []
-
-        // fetch all high cardinality properties
         data.properties
           .filter(property => property.mode === 'ajax')
-          .forEach(property => {
+          .map(property => {
             const numPages = Math.round(property.count / 10)
-            propertyPromises.push(
-              fetchProperty(id, property.ref).then(data => ({
-                ...data,
-                page: 0,
-                numPages,
-              }))
-            )
+            fetchProperty(id, property.ref).then(data => {
+              setPropertyData(prevData => {
+                const propertyData = {...prevData}
+                propertyData[property.ref] = {
+                  ...data,
+                  page: 0,
+                  numPages,
+                }
+                return propertyData
+              })
+            })
           })
-
-        // wait for all requests to return and update property data
-        Promise.all(propertyPromises).then(properties => {
-          setPropertyData(
-            properties.reduce((prev, property) => {
-              prev[property.ref] = {...property}
-              return prev
-            }, {})
-          )
-        })
       }
     })
 
