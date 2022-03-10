@@ -61,7 +61,7 @@ let theme = createTheme({
         marginTop: '0.5em',
         '& .MuiPagination-ul': {
           '& .MuiPaginationItem-page': {
-            color: '#111',
+            color: '#333',
             '&:hover': {
               backgroundColor: 'rgba(222, 103, 32, 0.25)',
             },
