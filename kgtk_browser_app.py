@@ -2027,11 +2027,11 @@ def rb_get_related_items_property():
                                            lang=lang,
                                            is_related_item=True)
 
-            for response_property in response_properties:
-                response_property['limit'] = limit
-                response_property['skip'] = skip
-
-            response["properties"] = response_properties
+            assert len(response_properties) == 1
+            response = response_properties[0]
+            response['limit'] = limit
+            response['skip'] = skip
+            response['mode'] = 'ajax'
 
             return flask.jsonify(response), 200
     except Exception as e:
