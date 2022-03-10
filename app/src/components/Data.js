@@ -117,6 +117,7 @@ const Data = () => {
       setPropertyData(prevData => {
         const propertyData = {...prevData}
         propertyData[property.ref] = {
+          ...propertyData[property.ref],
           ...data,
         }
         return propertyData
