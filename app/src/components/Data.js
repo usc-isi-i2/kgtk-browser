@@ -63,7 +63,6 @@ const Data = () => {
                 const propertyData = {...prevData}
                 propertyData[property.ref] = {
                   ...data,
-                  page: 1,
                   numPages,
                 }
                 return propertyData
@@ -119,7 +118,6 @@ const Data = () => {
         const propertyData = {...prevData}
         propertyData[property.ref] = {
           ...data,
-          page,
         }
         return propertyData
       })
