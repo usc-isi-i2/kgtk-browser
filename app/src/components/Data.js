@@ -63,7 +63,6 @@ const Data = () => {
                 const propertyData = {...prevData}
                 propertyData[property.ref] = {
                   ...data,
-                  page: 1,
                   numPages,
                 }
                 return propertyData
@@ -118,8 +117,8 @@ const Data = () => {
       setPropertyData(prevData => {
         const propertyData = {...prevData}
         propertyData[property.ref] = {
+          ...propertyData[property.ref],
           ...data,
-          page,
         }
         return propertyData
       })
@@ -416,7 +415,7 @@ const Data = () => {
           </Grid>
         ))}
         {property.mode === 'ajax' && (
-          <Pagination count={10} size="small"
+          <Pagination count={property.numPages} size="small"
             onChange={(event, page) => handleOnPageChange(property, page)} />
         )}
       </Grid>
