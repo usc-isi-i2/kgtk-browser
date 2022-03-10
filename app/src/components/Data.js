@@ -112,6 +112,20 @@ const Data = () => {
     })
   }, [id])
 
+  const handleOnPageChange = (property, page) => {
+    const skip = (page - 1) * 10
+    fetchProperty(id, property.ref, skip).then(data => {
+      setPropertyData(prevData => {
+        const propertyData = {...prevData}
+        propertyData[property.ref] = {
+          ...data,
+          page,
+        }
+        return propertyData
+      })
+    })
+  }
+
   const getURL = item => {
 
     // if there is an external url, return url that right away
@@ -402,7 +416,8 @@ const Data = () => {
           </Grid>
         ))}
         {property.mode === 'ajax' && (
-          <Pagination count={10} size="small" />
+          <Pagination count={10} size="small"
+            onChange={(event, page) => handleOnPageChange(property, page)} />
         )}
       </Grid>
     )
