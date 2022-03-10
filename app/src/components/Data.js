@@ -56,7 +56,7 @@ const Data = () => {
       if ( !!data.properties.length ) {
         data.properties
           .filter(property => property.mode === 'ajax')
-          .map(property => {
+          .forEach(property => {
             const numPages = Math.round(property.count / 10)
             fetchProperty(id, property.ref).then(data => {
               setPropertyData(prevData => {
