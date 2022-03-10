@@ -723,7 +723,7 @@ class KypherAPIObject(object):
                        f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
         return self.kapi.get_query(
             doc="""
-                    Find property value counts for a Qnode  
+                    Find property value counts for a Qnode
                  """,
             name=query_name,
             inputs=('claims', 'labels', 'datatypes'),
@@ -739,7 +739,7 @@ class KypherAPIObject(object):
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
-                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of 
+                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of
                     properties only.
                     Additionally retrieve descriptive information for all relationship labels.
                     Additionally retrieve the node2 descriptions.
@@ -862,7 +862,7 @@ class KypherAPIObject(object):
         match_clause = f'claims: ()-[eid {{label: property}}]->(:{node})'
         return self.kapi.get_query(
             doc="""
-                    Find incoming properties for the qnode and their counts  
+                    Find incoming properties for the qnode and their counts
                  """,
             name=query_name,
             inputs=('claims', 'labels'),
