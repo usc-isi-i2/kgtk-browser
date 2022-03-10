@@ -186,6 +186,8 @@ def get_info():
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
         'version': app.config.get('VERSION'),
+        'hasIdentifiers': True,
+        'hasGallery': True,
     }
     return flask.jsonify(info), 200
 
