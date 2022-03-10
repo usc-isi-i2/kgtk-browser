@@ -1934,6 +1934,7 @@ def rb_get_kb_property():
             # return the first property in the response object
             if response_properties:
                 response = response_properties[0]
+                response['mode'] = 'ajax'
                 response['limit'] = limit
                 response['skip'] = skip
 
