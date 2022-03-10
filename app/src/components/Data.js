@@ -18,6 +18,7 @@ import GraphIcon from './GraphIcon'
 import ClassGraphViz from './ClassGraphViz'
 import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
+import fetchProperty from '../utils/fetchProperty'
 import fetchClassGraphData from '../utils/fetchClassGraphData'
 import classNames from '../utils/classNames'
 
@@ -47,6 +48,13 @@ const Data = () => {
     fetchData(id).then(data => {
       setLoading(false)
       setData(data)
+
+      // fetch all high cardinality properties
+      if ( !!data.properties.length ) {
+        data.properties
+          .filter(property => property.mode === 'ajax')
+          .map(property => fetchProperty(id, property.ref))
+      }
     })
 
     // fetch class graph data
