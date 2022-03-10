@@ -6,8 +6,8 @@ import kgtk.kypher.api as kapi
 
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
-GRAPH_CACHE = './wikidata.sqlite3.db'
-# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
+# GRAPH_CACHE = './wikidata.sqlite3.db'
+GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -750,7 +750,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_edges_conditional_query',
+            name=f'rb_{node}_{lc_properties}edges_conditional_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
@@ -788,7 +788,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_edges_one_property_query',
+            name=f'rb_{node}_{property}_{skip}_{limit}_edges_one_property_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
@@ -887,7 +887,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_related_edges_one_property_query',
+            name=f'rb_{node}_{property}_{skip}_{limit}_related_edges_one_property_query',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
