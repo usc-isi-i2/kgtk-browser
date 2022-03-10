@@ -231,6 +231,9 @@ const Data = () => {
   }
 
   const renderPropertyValues = property => {
+    if ( property.mode === 'ajax' && property.ref in propertyData ) {
+      property = propertyData[property.ref]
+    }
     return (
       <Grid item xs={9}>
         {!!property.values && property.values.map((value, index) => (
