@@ -12,6 +12,7 @@ import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import IconButton from '@material-ui/core/IconButton'
+import Pagination from '@material-ui/lab/Pagination'
 import Tooltip from '@material-ui/core/Tooltip'
 
 import GraphIcon from './GraphIcon'
@@ -410,6 +411,9 @@ const Data = () => {
             </Grid>
           </Grid>
         ))}
+        {property.mode === 'ajax' && (
+          <Pagination count={10} size="small" />
+        )}
       </Grid>
     )
   }
