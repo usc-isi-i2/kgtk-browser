@@ -32,6 +32,8 @@ const Data = () => {
   const [data, setData] = useState({})
   const [loading, setLoading] = useState()
 
+  const [propertyData, setPropertyData] = useState({})
+
   const [classGraphData, setClassGraphData] = useState(null)
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
 
@@ -53,7 +55,20 @@ const Data = () => {
       if ( !!data.properties.length ) {
         data.properties
           .filter(property => property.mode === 'ajax')
-          .map(property => fetchProperty(id, property.ref))
+          .map(property => {
+            const numPages = Math.round(property.count / 10)
+            fetchProperty(id, property.ref).then(data => {
+              setPropertyData(prevData => {
+                const propertyData = {...prevData}
+                propertyData[property.ref] = {
+                  ...data,
+                  page: 0,
+                  numPages,
+                }
+                return propertyData
+              })
+            })
+          })
       }
     })
 
