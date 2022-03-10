@@ -1931,11 +1931,11 @@ def rb_get_kb_property():
                                                                      qual_query_limit=qual_query_limit,
                                                                      lang=lang)
 
-            for response_property in response_properties:
-                response_property['limit'] = limit
-                response_property['skip'] = skip
-
-            response["properties"] = response_properties
+            # return the first property in the response object
+            if response_properties:
+                response = response_properties[0]
+                response['limit'] = limit
+                response['skip'] = skip
 
             return flask.jsonify(response), 200
 
