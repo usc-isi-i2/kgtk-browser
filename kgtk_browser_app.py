@@ -19,6 +19,8 @@ import traceback
 import typing
 from typing import Tuple
 from typing import List
+from typing import MutableMapping
+from typing import Optional
 
 import flask
 import browser.backend.kypher as kybe
@@ -1240,13 +1242,12 @@ def rb_get_property_priority(relationship: str) -> str:
     return str(priority).zfill(rb_property_priority_width)
 
 
-def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]]) -> typing.MutableMapping[
-    str, typing.List[str]]:
+def rb_build_keyed_item_edges(item_edges: List[List[str]]) -> typing.MutableMapping[str, List[str]]:
     # Sort the item edges
     keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
 
     idx: int
-    item_edge: typing.List[str]
+    item_edge: List[str]
     for idx, item_edge in enumerate(item_edges):
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if relationship_label is None:
@@ -1254,13 +1255,29 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]]) -> typi
         if target_label is None:
             target_label = target_node
         priority: str = rb_get_property_priority(relationship)
-        item_edge_key: str = (
-                priority + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        item_edge_key: str = f'{priority}|{relationship_label}|{target_label}|{str(idx + 1000000)}'.lower()
         keyed_item_edges[item_edge_key] = item_edge
     return keyed_item_edges
 
 
-def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]]) -> typing.List[typing.List[str]]:
+def rb_build_keyed_related_item_edges(item_edges: List[List[str]]) -> typing.MutableMapping[str, List[str]]:
+    # Sort the item edges
+    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
+
+    idx: int
+    item_edge: List[str]
+    for idx, item_edge in enumerate(item_edges):
+        edge_id, node1, relationship, relationship_label, node1_label = item_edge
+        if relationship_label is None:
+            relationship_label = relationship
+
+        priority: str = rb_get_property_priority(relationship)
+        item_edge_key: str = f'{priority}|{relationship_label}|{node1_label}|{str(idx + 1000000)}'.lower()
+        keyed_item_edges[item_edge_key] = item_edge
+    return keyed_item_edges
+
+
+def rb_build_sorted_item_edges(item_edges: List[List[str]], is_related_items=False) -> List[List[str]]:
     # Sort the item edges:
     sorted_item_edges: typing.List[typing.List[str]] = list()
 
@@ -1384,6 +1401,51 @@ def rb_render_item_qualifiers(backend,
                           repr(item) + " edge " + repr(edge_id), verbose)
 
     return current_qualifiers
+
+
+def rb_render_related_kb_items(item_edges: List[List[str]],
+                               verbose: bool = False) -> List[MutableMapping[str, any]]:
+    response_properties: List[MutableMapping[str, any]] = list()
+
+    current_relationship: Optional[str] = None
+    current_values: List[MutableMapping[str, any]] = list()
+
+    item_edge: typing.List[str]
+    for item_edge in item_edges:
+        if verbose:
+            print(repr(item_edge), file=sys.stderr, flush=True)
+
+        edge_id: str
+        node1: str
+        relationship: str
+        relationship_label: Optional[str]
+        node1_label: str
+        edge_id, node1, relationship, relationship_label, node1_label = item_edge
+
+        value: KgtkValue = KgtkValue(node1)
+
+        # If a relationship has multiple values, they must be next to each
+        # other in the sorted list of item_edges.
+        if current_relationship is None or relationship != current_relationship:
+            # We are starting a new relationship.
+            current_relationship = relationship
+            current_values = list()
+            relationship_label: str = rb_unstringify(relationship_label, default=relationship)
+            current_property_map: MutableMapping[str, any] = {
+                "ref": relationship,
+                "property": relationship_label,
+                "values": current_values,
+            }
+
+            response_properties.append(current_property_map)
+
+        current_value: MutableMapping[str, any] = {}
+        current_value["ref"] = node1
+        current_value["text"] = rb_unstringify(node1_label, default=node1)
+        current_value["edge_id"] = edge_id  # temporarily save the current edge ID.
+        current_values.append(current_value)
+
+    return response_properties
 
 
 def rb_render_kb_items(backend,
@@ -1533,11 +1595,12 @@ def rb_fetch_qualifiers(backend,
                         edge_id_tuple,
                         qual_query_limit: int = 0,
                         lang: str = 'en',
-                        verbose: bool = False) -> typing.List[typing.List[str]]:
+                        verbose: bool = False,
+                        is_related_item: bool = False) -> typing.List[typing.List[str]]:
     verbose2: bool = verbose
 
     item_qualifier_edges: typing.List[typing.List[str]]
-    if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
+    if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
             item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
                                                                      qual_query_limit=qual_query_limit, lang=lang,
@@ -1566,7 +1629,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                    qual_valuelist_max_len: int = 0,
                                    qual_query_limit: int = 0,
                                    lang: str = 'en',
-                                   verbose: bool = False):
+                                   verbose: bool = False,
+                                   is_related_item: bool = False):
     scanned_property_map: typing.MutableMapping[str, any]
     scanned_value: typing.MutableMapping[str, any]
     scanned_edge_id: str
@@ -1577,7 +1641,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                                                               edge_id_tuple,
                                                                               qual_query_limit=qual_query_limit,
                                                                               lang=lang,
-                                                                              verbose=verbose)
+                                                                              verbose=verbose,
+                                                                              is_related_item=is_related_item)
 
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
@@ -1714,7 +1779,8 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     qual_valuelist_max_len: int = 0,
                                     qual_query_limit: int = 0,
                                     lang: str = 'en',
-                                    verbose: bool = False) -> typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                    verbose: bool = False,
+                                    is_related_item=False) -> typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                            typing.List[
                                                                                typing.MutableMapping[str, any]]]:
     # Sort the item edges:
@@ -1889,6 +1955,89 @@ def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple
 
         )
     return response
+
+
+def create_initial_response_related_items(related_items_count_edges: List[Tuple]) -> List[dict]:
+    response_properties = list()
+    for related_item_count in related_items_count_edges:
+        property, count, label = related_item_count
+        response_properties.append({'mode': 'ajax', 'property': rb_unstringify(label), 'ref': property, 'count': count})
+    return response_properties
+
+
+@app.route('/kb/ritem', methods=['GET'])
+def rb_get_related_items():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+
+    if id is None:
+        return flask.make_response({'error': 'parameter `id` required.'}, 400)
+    try:
+        with get_backend() as backend:
+            incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang)
+            return flask.jsonify(create_initial_response_related_items(incoming_edge_counts))
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route('/kb/rproperty', methods=['GET'])
+def rb_get_related_items_property():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    property: str = args.get('property', None)
+    skip: int = args.get('skip', type=int, default=app.config.get('PROPERTY_SKIP_NUM'))
+    limit: int = args.get('limit', type=int, default=app.config.get('PROPERTY_LIMIT_NUM'))
+
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+
+    if id is None or property is None:
+        return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
+
+    try:
+        with get_backend() as backend:
+            item_rp_edges = backend.rb_get_node_one_property_related_edges(item, property, limit, skip, lang=lang)
+
+            response: typing.MutableMapping[str, any] = dict()
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            sorted_item_edges: typing.List[typing.List[str]] = list()
+
+            keyed_item_edges: typing.MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_rp_edges)
+
+            item_edge_key: str
+            for item_edge_key in sorted(keyed_item_edges.keys()):
+                sorted_item_edges.append(keyed_item_edges[item_edge_key])
+
+            response_properties = rb_render_related_kb_items(sorted_item_edges)
+
+            rb_fetch_and_render_qualifiers(backend,
+                                           item,
+                                           response_properties,
+                                           qual_proplist_max_len=qual_proplist_max_len,
+                                           qual_valuelist_max_len=qual_valuelist_max_len,
+                                           qual_query_limit=qual_query_limit,
+                                           lang=lang,
+                                           is_related_item=True)
+
+            assert len(response_properties) == 1
+            response = response_properties[0]
+            response['limit'] = limit
+            response['skip'] = skip
+            response['mode'] = 'ajax'
+
+            return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
 @app.route('/kb/property', methods=['GET'])
