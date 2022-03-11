@@ -24,7 +24,7 @@ import fetchClassGraphData from '../utils/fetchClassGraphData'
 import classNames from '../utils/classNames'
 
 
-const Data = info => {
+const Data = ({ info }) => {
 
   const { id } = useParams()
 
@@ -442,6 +442,7 @@ const Data = info => {
   }
 
   const renderGallery = () => {
+    if ( !!info && !info.hasGallery ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
@@ -478,6 +479,7 @@ const Data = info => {
   }
 
   const renderIdentifiers = () => {
+    if ( !!info && !info.hasIdentifiers ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
