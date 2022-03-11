@@ -21,6 +21,7 @@ import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
 import fetchProperty from '../utils/fetchProperty'
 import fetchClassGraphData from '../utils/fetchClassGraphData'
+import fetchRelatedData from '../utils/fetchRelatedData'
 import classNames from '../utils/classNames'
 
 
@@ -34,6 +35,7 @@ const Data = ({ info }) => {
   const [loading, setLoading] = useState()
 
   const [propertyData, setPropertyData] = useState({})
+  const [relatedData, setRelatedData] = useState({})
 
   const [classGraphData, setClassGraphData] = useState(null)
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
@@ -109,6 +111,15 @@ const Data = ({ info }) => {
         setClassGraphData(data)
       }
     })
+  }, [id])
+
+  useEffect(() => {
+
+    // fetch `from related items` data
+    fetchRelatedData(id).then(data => {
+      setRelatedData(data)
+    })
+
   }, [id])
 
   const handleOnPageChange = (property, page) => {
