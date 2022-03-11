@@ -24,7 +24,7 @@ import fetchClassGraphData from '../utils/fetchClassGraphData'
 import classNames from '../utils/classNames'
 
 
-const Data = () => {
+const Data = info => {
 
   const { id } = useParams()
 
