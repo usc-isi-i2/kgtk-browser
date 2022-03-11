@@ -434,7 +434,7 @@ const Data = ({ info }) => {
   }
 
   const renderRelatedItems = () => {
-    if ( !Object.keys(relatedData).length ) { return }
+    if ( !relatedData.length ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
@@ -447,6 +447,33 @@ const Data = ({ info }) => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
+            {relatedData && relatedData.map((property, index) => (
+              <Grid container key={index} className={classes.row} spacing={0}>
+                <Grid item xs={3}>
+                  {property.url || property.ref ? (
+                    <Link
+                      className={
+                        classNames(classes.link, {
+                          property: true,
+                          externalLink: !!property.url,
+                        })
+                      }
+                      to={{ pathname: getURL(property) }}
+                      target={!!property.url ? '_blank' : ''}
+                      title={property.url ? property.url : property.property}>
+                      {property.property}
+                    </Link>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      title={property.property}
+                      className={classes.text}>
+                      {property.property}
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
+            ))}
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
