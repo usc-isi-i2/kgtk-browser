@@ -133,6 +133,9 @@ const useStyles = makeStyles(theme => ({
     color: '#de6720',
     zIndex: 99999,
   },
+  arrow: {
+    transform: 'scaleX(-1)',
+  },
 }))
 
 

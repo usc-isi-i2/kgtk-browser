@@ -474,7 +474,7 @@ const Data = ({ info }) => {
                   )}
                 </Grid>
                 <Grid item xs={2}>
-                  <ArrowRightAltIcon />
+                  <ArrowRightAltIcon className={classes.arrow} />
                 </Grid>
               </Grid>
             ))}
