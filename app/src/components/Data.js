@@ -10,6 +10,7 @@ import ExpansionPanel from '@material-ui/core/ExpansionPanel'
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary'
 import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails'
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore'
+import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import IconButton from '@material-ui/core/IconButton'
 import Pagination from '@material-ui/lab/Pagination'
@@ -471,6 +472,9 @@ const Data = ({ info }) => {
                       {property.property}
                     </Typography>
                   )}
+                </Grid>
+                <Grid item xs={2}>
+                  <ArrowRightAltIcon />
                 </Grid>
               </Grid>
             ))}
