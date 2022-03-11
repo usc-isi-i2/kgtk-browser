@@ -434,6 +434,7 @@ const Data = ({ info }) => {
   }
 
   const renderRelatedItems = () => {
+    if ( !Object.keys(relatedData).length ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
