@@ -1,4 +1,4 @@
-const fetchReverseProperty = (id, property, skip=0, limit=10) => {
+const fetchRelatedProperties = (id, property, skip=0, limit=10) => {
 
   let url =
     `/kb/rproperty?id=${id}&property=${property}&skip=${skip}&limit=${limit}`
@@ -14,4 +14,4 @@ const fetchReverseProperty = (id, property, skip=0, limit=10) => {
   })
 }
 
-export default fetchReverseProperty
+export default fetchRelatedProperties

@@ -1,4 +1,4 @@
-const fetchReverseData = id => {
+const fetchRelatedData = id => {
 
   let url = `/kb/ritem?id=${id}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
@@ -13,4 +13,4 @@ const fetchReverseData = id => {
   })
 }
 
-export default fetchReverseData
+export default fetchRelatedData
