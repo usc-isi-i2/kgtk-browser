@@ -146,7 +146,6 @@ const Data = ({ info }) => {
 
   const handleLoadRelatedValues = property => {
     fetchRelatedValues(id, property.ref).then(data => {
-      const numPages = Math.round(property.count / 10)
       setRelatedPropertyValues(prevPropertyValues => {
         const propertyValues = {...prevPropertyValues}
         propertyValues[property.ref] = {
