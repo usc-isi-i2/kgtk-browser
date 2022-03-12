@@ -1,6 +1,6 @@
-const fetchData = id => {
+const fetchRelatedProperties = id => {
 
-  let url = `/kb/xitem?id=${id}`
+  let url = `/kb/ritem?id=${id}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
     url = `${process.env.REACT_APP_BACKEND_URL}${url}`
   }
@@ -13,4 +13,4 @@ const fetchData = id => {
   })
 }
 
-export default fetchData
+export default fetchRelatedProperties

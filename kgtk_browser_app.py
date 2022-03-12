@@ -23,6 +23,7 @@ from typing import MutableMapping
 from typing import Optional
 
 import flask
+from operator import itemgetter
 import browser.backend.kypher as kybe
 import tempfile
 
@@ -186,6 +187,8 @@ def get_info():
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
         'version': app.config.get('VERSION'),
+        'hasIdentifiers': True,
+        'hasGallery': True,
     }
     return flask.jsonify(info), 200
 
@@ -233,7 +236,7 @@ def get_class_graph_data(qnode=None):
 
     temp_dir = tempfile.mkdtemp()
 
-    class_viz_dir = "class_viz_files"
+    class_viz_dir = "/data/class_viz_files"
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
@@ -1961,8 +1964,20 @@ def create_initial_response_related_items(related_items_count_edges: List[Tuple]
     response_properties = list()
     for related_item_count in related_items_count_edges:
         property, count, label = related_item_count
-        response_properties.append({'mode': 'ajax', 'property': rb_unstringify(label), 'ref': property, 'count': count})
-    return response_properties
+        unstringified_label = rb_unstringify(label)
+        _ = {'mode': 'ajax', 'property': unstringified_label, 'ref': property, 'count': count}
+        if property == 'P31':
+            _['priority'] = '1'
+        elif property == 'P279':
+            _['priority'] = '2'
+        else:
+            _['priority'] = unstringified_label.lower()
+
+        response_properties.append(_)
+    sorted_properties = sorted(response_properties, key=itemgetter('priority'))
+    for sp in sorted_properties:
+        del sp['priority']
+    return sorted_properties
 
 
 @app.route('/kb/ritem', methods=['GET'])
@@ -2080,11 +2095,12 @@ def rb_get_kb_property():
                                                                      qual_query_limit=qual_query_limit,
                                                                      lang=lang)
 
-            for response_property in response_properties:
-                response_property['limit'] = limit
-                response_property['skip'] = skip
-
-            response["properties"] = response_properties
+            # return the first property in the response object
+            if response_properties:
+                response = response_properties[0]
+                response['mode'] = 'ajax'
+                response['limit'] = limit
+                response['skip'] = skip
 
             return flask.jsonify(response), 200
 

@@ -7,7 +7,6 @@ import kgtk.kypher.api as kapi
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
 GRAPH_CACHE = './wikidata.sqlite3.db'
-# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -724,7 +723,7 @@ class KypherAPIObject(object):
                        f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
         return self.kapi.get_query(
             doc="""
-                    Find property value counts for a Qnode  
+                    Find property value counts for a Qnode
                  """,
             name=query_name,
             inputs=('claims', 'labels', 'datatypes'),
@@ -740,7 +739,7 @@ class KypherAPIObject(object):
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
-                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of 
+                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of
                     properties only.
                     Additionally retrieve descriptive information for all relationship labels.
                     Additionally retrieve the node2 descriptions.
@@ -750,7 +749,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_edges_conditional_query',
+            name=f'rb_{node}_{lc_properties}edges_conditional_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
@@ -788,7 +787,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_edges_one_property_query',
+            name=f'rb_{node}_{property}_{skip}_{limit}_edges_one_property_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
@@ -863,7 +862,7 @@ class KypherAPIObject(object):
         match_clause = f'claims: ()-[eid {{label: property}}]->(:{node})'
         return self.kapi.get_query(
             doc="""
-                    Find incoming properties for the qnode and their counts  
+                    Find incoming properties for the qnode and their counts
                  """,
             name=query_name,
             inputs=('claims', 'labels'),
@@ -887,7 +886,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_related_edges_one_property_query',
+            name=f'rb_{node}_{property}_{skip}_{limit}_related_edges_one_property_query',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
