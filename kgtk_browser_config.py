@@ -7,6 +7,7 @@ import kgtk.kypher.api as kapi
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
 GRAPH_CACHE = './wikidata.sqlite3.db'
+# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -901,4 +902,33 @@ class KypherAPIObject(object):
                 'n1label as node1_label',
             limit=f"{limit}",
             skip=skip
+        )
+
+    def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self, node: str, lc_properties: str, lang: str, limit: int):
+        where_clause = f'n2="{node}" AND rl IN [{lc_properties}]'
+        return self.kapi.get_query(
+            doc="""
+                    Create the Kypher query used by 'BrowserBackend.rb_get_node_one_property_related_edges()'.
+                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node2 for low cardinality
+                    properies. Additionally retrieve descriptive information for all relationship labels.
+                    Parameter 'LANG' controls the language for retrieved labels.
+                    Return edge 'id', 'label', 'node1', as well as node1's 'node1_label'
+                    and label's 'label_label'.
+                    Limit the number of return edges to LIMIT.
+
+                    """,
+            name=f'rb_{node}_{lc_properties}_{limit}_related_edges_multiple_properties_query',
+            inputs=('edges', 'labels'),
+            match='$edges: (n1)-[r {label: rl}]->(n2)',
+            where=where_clause,
+            opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
+            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            opt2='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
+            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n1label)="{lang}"',
+            ret='r as id, ' +
+                'n1 as node1, ' +
+                'r.label as relationship, ' +
+                'llabel as relationship_label, ' +
+                'n1label as node1_label',
+            limit=f"{limit}"
         )

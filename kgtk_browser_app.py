@@ -1928,13 +1928,13 @@ def rb_send_kb_item(item: str,
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int) -> (
-        Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
+def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int,
+                                         count_index: int = 1) -> (Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
     high_cardinality_properties = list()
     normal_properties = list()
     for prop_edge in property_value_counts:
         high_cardinality_properties.append(prop_edge) \
-            if prop_edge[1] >= prop_values_limit \
+            if prop_edge[count_index] >= prop_values_limit \
             else normal_properties.append(prop_edge)
     return high_cardinality_properties, normal_properties
 
@@ -1985,13 +1985,68 @@ def rb_get_related_items():
     args = flask.request.args
     item: str = args.get('id', None)
     lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+    properties_values_limit = args.get('prop_val_limit', type=int,
+                                       default=app.config['PROPERTY_VALUES_COUNT_LIMIT'])
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
 
     if id is None:
         return flask.make_response({'error': 'parameter `id` required.'}, 400)
     try:
         with get_backend() as backend:
             incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang)
-            return flask.jsonify(create_initial_response_related_items(incoming_edge_counts))
+            hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
+                                                                                    properties_values_limit)
+            normal_property_dict = {}
+            for normal_property_edge in normal_properties:
+                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+
+            low_cardinality_properties_list_str = ", ".join(
+                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
+                                                                                                              lc_properties=low_cardinality_properties_list_str,
+                                                                                                              limit=query_limit,
+                                                                                                              lang=lang
+                                                                                                              )
+
+            response: typing.MutableMapping[str, any] = dict()
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            sorted_item_edges: typing.List[typing.List[str]] = list()
+
+            keyed_item_edges: typing.MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_edges)
+
+            item_edge_key: str
+            for item_edge_key in sorted(keyed_item_edges.keys()):
+                sorted_item_edges.append(keyed_item_edges[item_edge_key])
+
+            response_properties = rb_render_related_kb_items(sorted_item_edges)
+
+            rb_fetch_and_render_qualifiers(backend,
+                                           item,
+                                           response_properties,
+                                           qual_proplist_max_len=qual_proplist_max_len,
+                                           qual_valuelist_max_len=qual_valuelist_max_len,
+                                           qual_query_limit=qual_query_limit,
+                                           lang=lang,
+                                           is_related_item=True)
+
+            for response_property in response_properties:
+                response_property['count'] = normal_property_dict[response_property['ref']]
+                response_property['mode'] = 'sync'
+
+            hcp_response = create_initial_response_related_items(hc_properties)
+            response_properties.extend(hcp_response)
+            response["properties"] = response_properties
+
+            return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         traceback.print_exc()
