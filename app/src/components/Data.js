@@ -543,7 +543,7 @@ const Data = ({ info }) => {
                         </Grid>
                       </Grid>
                     ))}
-                    {property.count > 10 && (
+                    {property.numPages > 1 && (
                       <Pagination count={property.numPages} size="small"
                         onChange={(event, page) =>
                           handleOnPageChangeRelatedValues(property, page)} />
