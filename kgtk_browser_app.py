@@ -1960,20 +1960,24 @@ def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple
     return response
 
 
-def create_initial_response_related_items(related_items_count_edges: List[Tuple]) -> List[dict]:
+def create_initial_response_high_cardinality_related_items(related_items_count_edges: List[Tuple]) -> List[dict]:
     response_properties = list()
     for related_item_count in related_items_count_edges:
         property, count, label = related_item_count
-        unstringified_label = rb_unstringify(label)
-        _ = {'mode': 'ajax', 'property': unstringified_label, 'ref': property, 'count': count}
-        if property == 'P31':
-            _['priority'] = '1'
-        elif property == 'P279':
-            _['priority'] = '2'
-        else:
-            _['priority'] = unstringified_label.lower()
+        response_properties.append({'mode': 'ajax', 'property': rb_unstringify(label), 'ref': property, 'count': count})
 
-        response_properties.append(_)
+    return response_properties
+
+
+def sort_related_item_properties(response_properties: List[dict]) -> List[dict]:
+    for rp in response_properties:
+        if rp['ref'] == 'P31':
+            rp['priority'] = '1'
+        elif rp['ref'] == 'P279':
+            rp['priority'] = '2'
+        else:
+            rp['priority'] = rp['property'].lower()
+
     sorted_properties = sorted(response_properties, key=itemgetter('priority'))
     for sp in sorted_properties:
         del sp['priority']
@@ -2042,9 +2046,10 @@ def rb_get_related_items():
                 response_property['count'] = normal_property_dict[response_property['ref']]
                 response_property['mode'] = 'sync'
 
-            hcp_response = create_initial_response_related_items(hc_properties)
+            hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
             response_properties.extend(hcp_response)
-            response["properties"] = response_properties
+            sorted_properties = sort_related_item_properties(response_properties)
+            response["properties"] = sorted_properties
 
             return flask.jsonify(response), 200
     except Exception as e:
