@@ -163,19 +163,6 @@ const Data = ({ info }) => {
     })
   }
 
-  const handleLoadRelatedValues = property => {
-    fetchRelatedValues(id, property.ref).then(data => {
-      setRelatedPropertyValues(prevPropertyValues => {
-        const propertyValues = {...prevPropertyValues}
-        propertyValues[property.ref] = {
-          ...propertyValues[property.ref],
-          ...data,
-        }
-        return propertyValues
-      })
-    })
-  }
-
   const handleOnPageChangeRelatedValues = (property, page) => {
     const skip = (page - 1) * 10
     fetchRelatedValues(id, property.ref, skip).then(data => {
