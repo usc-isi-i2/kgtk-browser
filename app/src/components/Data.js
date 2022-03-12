@@ -136,18 +136,20 @@ const Data = ({ info }) => {
   const handleOnRelatedItemsExpand = useCallback(expanded => {
     if ( !expanded || !relatedProperties.length ) { return }
 
-    // fetch the first page for each related property
+    // fetch the first page for all related property that have 'ajax' mode
     relatedProperties.forEach(property => {
-      fetchRelatedValues(id, property.ref).then(data => {
-        setRelatedPropertyValues(prevPropertyValues => {
-          const propertyValues = {...prevPropertyValues}
-          propertyValues[property.ref] = {
-            ...propertyValues[property.ref],
-            ...data,
-          }
-          return propertyValues
+      if ( property.mode === 'ajax' ) {
+        fetchRelatedValues(id, property.ref).then(data => {
+          setRelatedPropertyValues(prevPropertyValues => {
+            const propertyValues = {...prevPropertyValues}
+            propertyValues[property.ref] = {
+              ...propertyValues[property.ref],
+              ...data,
+            }
+            return propertyValues
+          })
         })
-      })
+      }
     })
 
   }, [id, relatedProperties])
