@@ -37,7 +37,7 @@ KYPHER_OBJECTS_NUM = 5
 
 # Data server limits
 VALUELIST_MAX_LEN: int = 100
-PROPERTY_VALUES_COUNT_LIMIT: int = 25
+PROPERTY_VALUES_COUNT_LIMIT: int = 10
 
 
 # Query configuration section:
