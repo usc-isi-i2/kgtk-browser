@@ -2022,7 +2022,7 @@ def rb_get_related_items():
                                                                                                               lang=lang
                                                                                                               )
 
-            response: typing.MutableMapping[str, any] = dict()
+            response: typing.MutableMapping[dict, any] = list()
             response_properties: typing.List[typing.MutableMapping[str, any]]
             sorted_item_edges: typing.List[typing.List[str]] = list()
 
@@ -2049,8 +2049,7 @@ def rb_get_related_items():
 
             hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
             response_properties.extend(hcp_response)
-            sorted_properties = sort_related_item_properties(response_properties)
-            response["properties"] = sorted_properties
+            response = sort_related_item_properties(response_properties)
 
             return flask.jsonify(response), 200
     except Exception as e:
