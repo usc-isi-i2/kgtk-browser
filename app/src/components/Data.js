@@ -23,6 +23,7 @@ import fetchData from '../utils/fetchData'
 import fetchProperty from '../utils/fetchProperty'
 import fetchClassGraphData from '../utils/fetchClassGraphData'
 import fetchRelatedProperties from '../utils/fetchRelatedProperties'
+import fetchRelatedValues from '../utils/fetchRelatedValues'
 import classNames from '../utils/classNames'
 
 
@@ -37,6 +38,7 @@ const Data = ({ info }) => {
 
   const [propertyData, setPropertyData] = useState({})
   const [relatedProperties, setRelatedProperties] = useState({})
+  const [relatedPropertyValues, setRelatedPropertyValues] = useState({})
 
   const [classGraphData, setClassGraphData] = useState(null)
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
@@ -133,6 +135,20 @@ const Data = ({ info }) => {
           ...data,
         }
         return propertyData
+      })
+    })
+  }
+
+  const handleLoadRelatedValues = property => {
+    fetchRelatedValues(id, property.ref).then(data => {
+      const numPages = Math.round(property.count / 10)
+      setRelatedPropertyValues(prevPropertyValues => {
+        const propertyValues = {...prevPropertyValues}
+        propertyValues[property.ref] = {
+          ...propertyValues[property.ref],
+          ...data,
+        }
+        return propertyValues
       })
     })
   }
@@ -478,6 +494,7 @@ const Data = ({ info }) => {
                 </Grid>
                 <Grid item xs={8}>
                   <Link className={classNames(classes.link, {item: true})}
+                    onClick={() => handleLoadRelatedValues(property)}
                     title={`show ${property.count} values`}>
                     show {property.count} values
                   </Link>
