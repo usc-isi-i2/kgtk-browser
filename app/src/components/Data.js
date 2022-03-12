@@ -469,7 +469,7 @@ const Data = ({ info }) => {
             </Grid>
           </Grid>
         ))}
-        {property.mode === 'ajax' && (
+        {property.mode === 'ajax' && property.numPages > 1 && (
           <Pagination count={property.numPages} size="small"
             onChange={(event, page) => handleOnPageChange(property, page)} />
         )}
