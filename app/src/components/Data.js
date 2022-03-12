@@ -78,7 +78,9 @@ const Data = ({ info }) => {
           })
       }
     })
+  }, [id])
 
+  useEffect(() => {
     // fetch class graph data
     // (but only if the API supports that)
     if ( !!info && info.hasClassGraphVisualization ) {
