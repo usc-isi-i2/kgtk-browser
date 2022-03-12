@@ -37,7 +37,7 @@ const Data = ({ info }) => {
   const [loading, setLoading] = useState()
 
   const [propertyData, setPropertyData] = useState({})
-  const [relatedProperties, setRelatedProperties] = useState({})
+  const [relatedProperties, setRelatedProperties] = useState([])
   const [relatedPropertyValues, setRelatedPropertyValues] = useState({})
 
   const [classGraphData, setClassGraphData] = useState(null)
