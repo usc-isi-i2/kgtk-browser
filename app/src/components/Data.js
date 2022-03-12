@@ -78,43 +78,46 @@ const Data = ({ info }) => {
     })
 
     // fetch class graph data
-    setLoadingClassGraphData(true)
-    fetchClassGraphData(id).then(data => {
-      setLoadingClassGraphData(false)
-      if ( !!Object.keys(data).length ) {
+    // (but only if the API supports that)
+    if ( !!info && info.hasClassGraphVisualization ) {
+      setLoadingClassGraphData(true)
+      fetchClassGraphData(id).then(data => {
+        setLoadingClassGraphData(false)
+        if ( !!Object.keys(data).length ) {
 
-        // add links and neighbors to the node data
-        data.links.forEach(link => {
-          const a = data.nodes.find(node => node.id === link.source)
-          const b = data.nodes.find(node => node.id === link.target)
+          // add links and neighbors to the node data
+          data.links.forEach(link => {
+            const a = data.nodes.find(node => node.id === link.source)
+            const b = data.nodes.find(node => node.id === link.target)
 
-          if ( !a.neighbors ) {
-            a.neighbors = []
-          }
+            if ( !a.neighbors ) {
+              a.neighbors = []
+            }
 
-          if ( !b.neighbors ) {
-            b.neighbors = []
-          }
+            if ( !b.neighbors ) {
+              b.neighbors = []
+            }
 
-          a.neighbors.push(b)
-          b.neighbors.push(a)
+            a.neighbors.push(b)
+            b.neighbors.push(a)
 
-          if ( !a.links ) {
-            a.links = []
-          }
+            if ( !a.links ) {
+              a.links = []
+            }
 
-          if ( !b.links ) {
-            b.links = []
-          }
+            if ( !b.links ) {
+              b.links = []
+            }
 
-          a.links.push(link)
-          b.links.push(link)
-        })
+            a.links.push(link)
+            b.links.push(link)
+          })
 
-        setClassGraphData(data)
-      }
-    })
-  }, [id])
+          setClassGraphData(data)
+        }
+      })
+    }
+  }, [id, info])
 
   useEffect(() => {
 
