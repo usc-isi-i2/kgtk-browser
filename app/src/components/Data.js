@@ -500,7 +500,30 @@ const Data = ({ info }) => {
                       show {property.count} values
                     </Link>
                   ) : (
-                    null
+                    <Grid item xs={12}>
+                      {relatedPropertyValues[property.ref].values.map((value, index) => (
+                        <Grid container key={index} spacing={0}>
+                          <Grid item xs={12}>
+                            <Link
+                              className={
+                                classNames(classes.link, {
+                                  indent: false,
+                                  property: !!value.ref && value.ref[0] === 'P',
+                                  item: !!value.ref && value.ref[0] === 'Q',
+                                  externalLink: !!value.url,
+                                })
+                              }
+                              to={{ pathname: getURL(value) }}
+                              target={!!value.url ? '_blank' : ''}
+                              title={value.url ? value.url : value.text}>
+                              {value.text}
+                            </Link>
+                          </Grid>
+                        </Grid>
+                      ))}
+                      <Pagination count={property.numPages} size="small"
+                        onChange={(event, page) => handleOnPageChange(property, page)} />
+                    </Grid>
                   )}
                 </Grid>
               </Grid>
