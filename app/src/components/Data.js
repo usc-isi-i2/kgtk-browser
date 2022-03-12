@@ -473,8 +473,14 @@ const Data = ({ info }) => {
                     </Typography>
                   )}
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={1}>
                   <ArrowRightAltIcon className={classes.arrow} />
+                </Grid>
+                <Grid item xs={8}>
+                  <Link className={classNames(classes.link, {item: true})}
+                    title={`show ${property.count} values`}>
+                    show {property.count} values
+                  </Link>
                 </Grid>
               </Grid>
             ))}
