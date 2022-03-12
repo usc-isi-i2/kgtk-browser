@@ -513,41 +513,33 @@ const Data = ({ info }) => {
                   </Tooltip>
                 </Grid>
                 <Grid item xs={8}>
-                  { !relatedPropertyValues[property.ref] ? (
-                    <Link className={classNames(classes.link, {item: true})}
-                      onClick={() => handleLoadRelatedValues(property)}
-                      title={`show ${property.count} values`}>
-                      show {property.count} values
-                    </Link>
-                  ) : (
-                    <Grid item xs={12}>
-                      {relatedPropertyValues[property.ref].values.map((value, index) => (
-                        <Grid container key={index} spacing={0}>
-                          <Grid item xs={12}>
-                            <Link
-                              className={
-                                classNames(classes.link, {
-                                  indent: false,
-                                  property: !!value.ref && value.ref[0] === 'P',
-                                  item: !!value.ref && value.ref[0] === 'Q',
-                                  externalLink: !!value.url,
-                                })
-                              }
-                              to={{ pathname: getURL(value) }}
-                              target={!!value.url ? '_blank' : ''}
-                              title={value.url ? value.url : value.text}>
-                              {value.text}
-                            </Link>
-                          </Grid>
+                  <Grid item xs={12}>
+                    {!!relatedPropertyValues[property.ref] && relatedPropertyValues[property.ref].values.map((value, index) => (
+                      <Grid container key={index} spacing={0}>
+                        <Grid item xs={12}>
+                          <Link
+                            className={
+                              classNames(classes.link, {
+                                indent: false,
+                                property: !!value.ref && value.ref[0] === 'P',
+                                item: !!value.ref && value.ref[0] === 'Q',
+                                externalLink: !!value.url,
+                              })
+                            }
+                            to={{ pathname: getURL(value) }}
+                            target={!!value.url ? '_blank' : ''}
+                            title={value.url ? value.url : value.text}>
+                            {value.text}
+                          </Link>
                         </Grid>
-                      ))}
-                      {property.count > 10 && (
-                        <Pagination count={property.numPages} size="small"
-                          onChange={(event, page) =>
-                            handleOnPageChangeRelatedValues(property, page)} />
-                      )}
-                    </Grid>
-                  )}
+                      </Grid>
+                    ))}
+                    {property.count > 10 && (
+                      <Pagination count={property.numPages} size="small"
+                        onChange={(event, page) =>
+                          handleOnPageChangeRelatedValues(property, page)} />
+                    )}
+                  </Grid>
                 </Grid>
               </Grid>
             ))}
