@@ -7,7 +7,6 @@ import kgtk.kypher.api as kapi
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
 GRAPH_CACHE = './wikidata.sqlite3.db'
-# GRAPH_CACHE = '/Volumes/saggu-ssd/wikidata-dwd-v2/kgtk-search-6/temp.kgtk-search-6/wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
