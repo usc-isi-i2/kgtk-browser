@@ -494,7 +494,9 @@ const Data = ({ info }) => {
                   )}
                 </Grid>
                 <Grid item xs={1}>
-                  <ArrowRightAltIcon className={classes.arrow} />
+                  <Tooltip arrow placement="top" title="Reverse Relationship">
+                    <ArrowRightAltIcon className={classes.arrow} />
+                  </Tooltip>
                 </Grid>
                 <Grid item xs={8}>
                   { !relatedPropertyValues[property.ref] ? (
