@@ -23,6 +23,7 @@ from typing import MutableMapping
 from typing import Optional
 
 import flask
+from operator import itemgetter
 import browser.backend.kypher as kybe
 import tempfile
 
@@ -1963,8 +1964,20 @@ def create_initial_response_related_items(related_items_count_edges: List[Tuple]
     response_properties = list()
     for related_item_count in related_items_count_edges:
         property, count, label = related_item_count
-        response_properties.append({'mode': 'ajax', 'property': rb_unstringify(label), 'ref': property, 'count': count})
-    return response_properties
+        unstringified_label = rb_unstringify(label)
+        _ = {'mode': 'ajax', 'property': unstringified_label, 'ref': property, 'count': count}
+        if property == 'P31':
+            _['priority'] = '1'
+        elif property == 'P279':
+            _['priority'] = '2'
+        else:
+            _['priority'] = unstringified_label.lower()
+
+        response_properties.append(_)
+    sorted_properties = sorted(response_properties, key=itemgetter('priority'))
+    for sp in sorted_properties:
+        del sp['priority']
+    return sorted_properties
 
 
 @app.route('/kb/ritem', methods=['GET'])
