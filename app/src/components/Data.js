@@ -120,7 +120,12 @@ const Data = ({ info }) => {
 
     // fetch related properties for the `from related items` section
     fetchRelatedProperties(id).then(data => {
-      setRelatedProperties(data)
+      setRelatedProperties(
+        data.map(property => ({
+          ...property,
+          numPages: Math.round(property.count / 10)
+        }))
+      )
     })
 
   }, [id])
