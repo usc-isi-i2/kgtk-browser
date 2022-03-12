@@ -555,6 +555,113 @@ const Data = ({ info }) => {
                             title={value.url ? value.url : value.text}>
                             {value.text}
                           </Link>
+                          {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
+                            <Grid container spacing={0} key={index}>
+                              <Grid item xs={4}>
+                                {qualifier.url || qualifier.ref ? (
+                                  <Link
+                                    className={
+                                      classNames(classes.link, {
+                                        indent: true,
+                                        smaller: true,
+                                        property: true,
+                                        externalLink: !!value.url,
+                                      })
+                                    }
+                                    to={{ pathname: getURL(qualifier) }}
+                                    target={!!qualifier.url ? '_blank' : ''}
+                                    title={qualifier.url ? qualifier.url : qualifier.property}>
+                                    {qualifier.property}
+                                  </Link>
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    title={qualifier.text}
+                                    className={
+                                      classNames(classes.text, {
+                                        indent: true,
+                                        smaller: true,
+                                        property: true,
+                                      })
+                                    }>
+                                    {qualifier.text}
+                                    {qualifier.lang && (
+                                      <span className={classes.lang}>
+                                        [{qualifier.lang}]
+                                      </span>
+                                    )}
+                                  </Typography>
+                                )}
+                              </Grid>
+                              <Grid item xs={8}>
+                                {!!qualifier.values && qualifier.values.map((value, index) => (
+                                  <Grid item key={index}>
+                                    {value.units ? (
+                                      <React.Fragment>
+                                        <Typography
+                                          variant="body2"
+                                          component="span"
+                                          title={value.text}
+                                          className={
+                                            classNames(classes.text, {
+                                              smaller: true,
+                                            })
+                                          }>
+                                          {value.text}
+                                        </Typography>
+                                        <Link
+                                          className={
+                                            classNames(classes.link, {
+                                              property: !!value.ref && value.ref[0] === 'P',
+                                              item: !!value.ref && value.ref[0] === 'Q',
+                                              externalLink: !!value.url,
+                                              smaller: true,
+                                            })
+                                          }
+                                          to={{ pathname: getURL(value) }}
+                                          target={!!value.url ? '_blank' : ''}
+                                          title={value.url ? value.url : value.units}>
+                                          {value.units}
+                                        </Link>
+                                      </React.Fragment>
+                                    ) : value.url || value.ref ? (
+                                      <Link
+                                        className={
+                                          classNames(classes.link, {
+                                            indent: false,
+                                            smaller: true,
+                                            property: !!value.ref && value.ref[0] === 'P',
+                                            item: !!value.ref && value.ref[0] === 'Q',
+                                            externalLink: !!value.url,
+                                          })
+                                        }
+                                        to={{ pathname: getURL(value) }}
+                                        target={!!value.url ? '_blank' : ''}
+                                        title={value.url ? value.url : value.text}>
+                                        {value.text}
+                                      </Link>
+                                    ) : (
+                                      <Typography
+                                        variant="body2"
+                                        title={value.text}
+                                        className={
+                                          classNames(classes.text, {
+                                            smaller: true,
+                                          })
+                                        }>
+                                        {value.text}
+                                        {value.lang && (
+                                          <span className={classes.lang}>
+                                            [{value.lang}]
+                                          </span>
+                                        )}
+                                      </Typography>
+                                    )}
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Grid>
+                          ))}
                         </Grid>
                       </Grid>
                     ))}
