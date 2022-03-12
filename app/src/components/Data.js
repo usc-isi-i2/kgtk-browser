@@ -157,6 +157,20 @@ const Data = ({ info }) => {
     })
   }
 
+  const handleOnPageChangeRelatedValues = (property, page) => {
+    const skip = (page - 1) * 10
+    fetchRelatedValues(id, property.ref, skip).then(data => {
+      setRelatedPropertyValues(prevPropertyValues => {
+        const propertyValues = {...prevPropertyValues}
+        propertyValues[property.ref] = {
+          ...propertyValues[property.ref],
+          ...data,
+        }
+        return propertyValues
+      })
+    })
+  }
+
   const getURL = item => {
 
     // if there is an external url, return url that right away
@@ -528,7 +542,8 @@ const Data = ({ info }) => {
                         </Grid>
                       ))}
                       <Pagination count={property.numPages} size="small"
-                        onChange={(event, page) => handleOnPageChange(property, page)} />
+                        onChange={(event, page) =>
+                          handleOnPageChangeRelatedValues(property, page)} />
                     </Grid>
                   )}
                 </Grid>
