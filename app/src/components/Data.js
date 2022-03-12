@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
@@ -149,7 +149,7 @@ const Data = ({ info }) => {
 
   }, [id, relatedProperties])
 
-  const handleOnPageChange = (property, page) => {
+  const handleOnPageChange = useCallback((property, page) => {
     const skip = (page - 1) * 10
     fetchProperty(id, property.ref, skip).then(data => {
       setPropertyData(prevData => {
@@ -161,9 +161,9 @@ const Data = ({ info }) => {
         return propertyData
       })
     })
-  }
+  }, [id])
 
-  const handleOnPageChangeRelatedValues = (property, page) => {
+  const handleOnPageChangeRelatedValues = useCallback((property, page) => {
     const skip = (page - 1) * 10
     fetchRelatedValues(id, property.ref, skip).then(data => {
       setRelatedPropertyValues(prevPropertyValues => {
@@ -175,7 +175,7 @@ const Data = ({ info }) => {
         return propertyValues
       })
     })
-  }
+  }, [id])
 
   const getURL = item => {
 
