@@ -534,9 +534,7 @@ const Data = ({ info }) => {
                   )}
                 </Grid>
                 <Grid item xs={1}>
-                  <Tooltip arrow placement="top" title="Reverse Relationship">
-                    <ArrowRightAltIcon className={classes.arrow} />
-                  </Tooltip>
+                  <ArrowRightAltIcon className={classes.arrow} />
                 </Grid>
                 <Grid item xs={8}>
                   <Grid item xs={12}>
