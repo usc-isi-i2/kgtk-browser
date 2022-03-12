@@ -1,7 +1,6 @@
-const fetchRelatedProperties = (id, property, skip=0, limit=10) => {
+const fetchRelatedProperties = id => {
 
-  let url =
-    `/kb/rproperty?id=${id}&property=${property}&skip=${skip}&limit=${limit}`
+  let url = `/kb/ritem?id=${id}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
     url = `${process.env.REACT_APP_BACKEND_URL}${url}`
   }

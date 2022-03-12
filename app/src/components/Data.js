@@ -22,7 +22,7 @@ import useStyles from '../styles/data'
 import fetchData from '../utils/fetchData'
 import fetchProperty from '../utils/fetchProperty'
 import fetchClassGraphData from '../utils/fetchClassGraphData'
-import fetchRelatedData from '../utils/fetchRelatedData'
+import fetchRelatedProperties from '../utils/fetchRelatedProperties'
 import classNames from '../utils/classNames'
 
 
@@ -36,7 +36,7 @@ const Data = ({ info }) => {
   const [loading, setLoading] = useState()
 
   const [propertyData, setPropertyData] = useState({})
-  const [relatedData, setRelatedData] = useState({})
+  const [relatedProperties, setRelatedProperties] = useState({})
 
   const [classGraphData, setClassGraphData] = useState(null)
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
@@ -116,9 +116,9 @@ const Data = ({ info }) => {
 
   useEffect(() => {
 
-    // fetch `from related items` data
-    fetchRelatedData(id).then(data => {
-      setRelatedData(data)
+    // fetch related properties for the `from related items` section
+    fetchRelatedProperties(id).then(data => {
+      setRelatedProperties(data)
     })
 
   }, [id])
@@ -435,7 +435,7 @@ const Data = ({ info }) => {
   }
 
   const renderRelatedItems = () => {
-    if ( !relatedData.length ) { return }
+    if ( !relatedProperties.length ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
@@ -448,7 +448,7 @@ const Data = ({ info }) => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
-            {relatedData && relatedData.map((property, index) => (
+            {relatedProperties && relatedProperties.map((property, index) => (
               <Grid container key={index} className={classes.row} spacing={0}>
                 <Grid item xs={3}>
                   {property.url || property.ref ? (
