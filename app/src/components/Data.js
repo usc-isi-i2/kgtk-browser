@@ -62,7 +62,7 @@ const Data = ({ info }) => {
         data.properties
           .filter(property => property.mode === 'ajax')
           .forEach(property => {
-            const numPages = Math.round(property.count / 10)
+            const numPages = Math.ceil(property.count / 10)
             fetchProperty(id, property.ref).then(data => {
               setPropertyData(prevData => {
                 const propertyData = {...prevData}
@@ -126,7 +126,7 @@ const Data = ({ info }) => {
       setRelatedProperties(
         data.map(property => ({
           ...property,
-          numPages: Math.round(property.count / 10)
+          numPages: Math.ceil(property.count / 10)
         }))
       )
     })
