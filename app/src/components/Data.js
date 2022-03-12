@@ -133,8 +133,8 @@ const Data = ({ info }) => {
 
   }, [id])
 
-  useEffect(() => {
-    if ( !relatedProperties.length ) { return }
+  const handleOnRelatedItemsExpand = useCallback(expanded => {
+    if ( !expanded || !relatedProperties.length ) { return }
 
     // fetch the first page for each related property
     relatedProperties.forEach(property => {
@@ -484,7 +484,8 @@ const Data = ({ info }) => {
         <ExpansionPanel
           square={true}
           defaultExpanded={false}
-          TransitionProps={{ timeout: 0 }}>
+          TransitionProps={{ timeout: 0 }}
+          onChange={(event, expanded) => handleOnRelatedItemsExpand(expanded)}>
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" className={classes.heading}>
               From Related Items
