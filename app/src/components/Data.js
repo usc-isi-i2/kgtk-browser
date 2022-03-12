@@ -130,6 +130,25 @@ const Data = ({ info }) => {
 
   }, [id])
 
+  useEffect(() => {
+    if ( !relatedProperties.length ) { return }
+
+    // fetch the first page for each related property
+    relatedProperties.forEach(property => {
+      fetchRelatedValues(id, property.ref).then(data => {
+        setRelatedPropertyValues(prevPropertyValues => {
+          const propertyValues = {...prevPropertyValues}
+          propertyValues[property.ref] = {
+            ...propertyValues[property.ref],
+            ...data,
+          }
+          return propertyValues
+        })
+      })
+    })
+
+  }, [id, relatedProperties])
+
   const handleOnPageChange = (property, page) => {
     const skip = (page - 1) * 10
     fetchProperty(id, property.ref, skip).then(data => {
