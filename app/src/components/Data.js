@@ -490,10 +490,19 @@ const Data = ({ info }) => {
           </Grid>
         ))}
         {property.mode === 'ajax' && property.numPages > 1 && (
-          <div className={classes.pagination}>
-            <Pagination count={property.numPages} size="small"
-              onChange={(event, page) => handleOnPageChange(property, page)} />
-          </div>
+          <Grid container spacing={0} className={classes.pagination}>
+            <Grid item xs={4}>
+              <Pagination size="small"
+                count={property.numPages}
+                onChange={(event, page) =>
+                  handleOnPageChange(property, page)} />
+            </Grid>
+            <Grid item xs={8}>
+              <span className="smaller">
+                Total number of values: {property.count}
+              </span>
+            </Grid>
+          </Grid>
         )}
       </Grid>
     )
@@ -672,11 +681,19 @@ const Data = ({ info }) => {
                       </Grid>
                     ))}
                     {property.numPages > 1 && (
-                      <div className={classes.pagination}>
-                        <Pagination count={property.numPages} size="small"
-                          onChange={(event, page) =>
-                            handleOnPageChangeRelatedValues(property, page)} />
-                      </div>
+                      <Grid container spacing={0} className={classes.pagination}>
+                        <Grid item xs={4}>
+                          <Pagination size="small"
+                            count={property.numPages}
+                            onChange={(event, page) =>
+                              handleOnPageChangeRelatedValues(property, page)} />
+                        </Grid>
+                        <Grid item xs={8}>
+                          <span className="smaller">
+                            Total number of values: {property.count}
+                          </span>
+                        </Grid>
+                      </Grid>
                     )}
                   </Grid>
                 </Grid>

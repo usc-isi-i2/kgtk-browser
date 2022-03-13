@@ -140,6 +140,10 @@ const useStyles = makeStyles(theme => ({
   pagination: {
     marginTop: '0.5em',
     marginBottom: '1em',
+    '& .smaller': {
+      fontSize: '12px',
+      lineHeight: '28px',
+    },
   },
 }))
 
