@@ -56,6 +56,21 @@ let theme = createTheme({
         },
       },
     },
+    MuiPagination: {
+      root: {
+        '& .MuiPagination-ul': {
+          '& .MuiPaginationItem-page': {
+            color: '#333',
+            '&:hover': {
+              backgroundColor: 'rgba(222, 103, 32, 0.25)',
+            },
+          },
+          '& .MuiPaginationItem-page.Mui-selected': {
+            backgroundColor: 'rgba(222, 103, 32, 0.65)',
+          },
+        },
+      },
+    },
     MuiTooltip: {
       tooltip: {
         fontSize: '16px',

@@ -21,7 +21,7 @@ const ItemContent = () => {
       <div id="top" />
       <Header info={info} />
       <Container maxWidth="xl">
-        <Data />
+        <Data info={info} />
         <ArrowUp/>
       </Container>
     </React.Fragment>

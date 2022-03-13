@@ -1,6 +1,7 @@
-const fetchData = id => {
+const fetchProperty = (id, property, skip=0, limit=10) => {
 
-  let url = `/kb/xitem?id=${id}`
+  let url =
+    `/kb/property?id=${id}&property=${property}&skip=${skip}&limit=${limit}`
   if ( process.env.REACT_APP_BACKEND_URL ) {
     url = `${process.env.REACT_APP_BACKEND_URL}${url}`
   }
@@ -13,4 +14,4 @@ const fetchData = id => {
   })
 }
 
-export default fetchData
+export default fetchProperty

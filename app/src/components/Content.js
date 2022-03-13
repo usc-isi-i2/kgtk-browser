@@ -61,7 +61,7 @@ const Content = () => {
       <div id="top" />
       <Header getData={getData} info={info} />
       <Container maxWidth="xl" loading={loading}>
-        {!!data && <Data data={data} />}
+        {!!data && <Data info={info} data={data} />}
         {renderLoading()}
         <ArrowUp/>
       </Container>

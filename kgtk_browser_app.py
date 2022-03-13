@@ -17,8 +17,13 @@ import random
 import sys
 import traceback
 import typing
+from typing import Tuple
+from typing import List
+from typing import MutableMapping
+from typing import Optional
 
 import flask
+from operator import itemgetter
 import browser.backend.kypher as kybe
 import tempfile
 
@@ -93,6 +98,9 @@ DEFAULT_QUERY_LIMIT: int = 300000
 DEFAULT_QUAL_QUERY_LIMIT: int = 300000
 DEFAULT_VERBOSE: bool = False
 DEFAULT_KYPHER_OBJECTS_NUM: int = 5
+DEFAULT_PROPERTY_VALUES_COUNT_LIMIT: int = 25
+DEFAULT_PROPERTY_SKIP_NUM: int = 0
+DEFAULT_PROPERTY_LIMIT_NUM: int = 50
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -140,6 +148,10 @@ app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
 app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
 app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
 app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
+app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUNT_LIMIT',
+                                                           DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
+app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
+app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -175,6 +187,9 @@ def get_info():
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
         'version': app.config.get('VERSION'),
+        'hasClassGraphVisualization': True,
+        'hasIdentifiers': True,
+        'hasGallery': True,
     }
     return flask.jsonify(info), 200
 
@@ -222,7 +237,7 @@ def get_class_graph_data(qnode=None):
 
     temp_dir = tempfile.mkdtemp()
 
-    class_viz_dir = "class_viz_files"
+    class_viz_dir = "/data/class_viz_files"
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
@@ -1231,13 +1246,12 @@ def rb_get_property_priority(relationship: str) -> str:
     return str(priority).zfill(rb_property_priority_width)
 
 
-def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]]) -> typing.MutableMapping[
-    str, typing.List[str]]:
+def rb_build_keyed_item_edges(item_edges: List[List[str]]) -> typing.MutableMapping[str, List[str]]:
     # Sort the item edges
     keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
 
     idx: int
-    item_edge: typing.List[str]
+    item_edge: List[str]
     for idx, item_edge in enumerate(item_edges):
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
         if relationship_label is None:
@@ -1245,13 +1259,29 @@ def rb_build_keyed_item_edges(item_edges: typing.List[typing.List[str]]) -> typi
         if target_label is None:
             target_label = target_node
         priority: str = rb_get_property_priority(relationship)
-        item_edge_key: str = (
-                priority + "|" + relationship_label + "|" + target_label + "|" + str(idx + 1000000)).lower()
+        item_edge_key: str = f'{priority}|{relationship_label}|{target_label}|{str(idx + 1000000)}'.lower()
         keyed_item_edges[item_edge_key] = item_edge
     return keyed_item_edges
 
 
-def rb_build_sorted_item_edges(item_edges: typing.List[typing.List[str]]) -> typing.List[typing.List[str]]:
+def rb_build_keyed_related_item_edges(item_edges: List[List[str]]) -> typing.MutableMapping[str, List[str]]:
+    # Sort the item edges
+    keyed_item_edges: typing.MutableMapping[str, typing.List[str]] = dict()
+
+    idx: int
+    item_edge: List[str]
+    for idx, item_edge in enumerate(item_edges):
+        edge_id, node1, relationship, relationship_label, node1_label = item_edge
+        if relationship_label is None:
+            relationship_label = relationship
+
+        priority: str = rb_get_property_priority(relationship)
+        item_edge_key: str = f'{priority}|{relationship_label}|{node1_label}|{str(idx + 1000000)}'.lower()
+        keyed_item_edges[item_edge_key] = item_edge
+    return keyed_item_edges
+
+
+def rb_build_sorted_item_edges(item_edges: List[List[str]], is_related_items=False) -> List[List[str]]:
     # Sort the item edges:
     sorted_item_edges: typing.List[typing.List[str]] = list()
 
@@ -1377,6 +1407,51 @@ def rb_render_item_qualifiers(backend,
     return current_qualifiers
 
 
+def rb_render_related_kb_items(item_edges: List[List[str]],
+                               verbose: bool = False) -> List[MutableMapping[str, any]]:
+    response_properties: List[MutableMapping[str, any]] = list()
+
+    current_relationship: Optional[str] = None
+    current_values: List[MutableMapping[str, any]] = list()
+
+    item_edge: typing.List[str]
+    for item_edge in item_edges:
+        if verbose:
+            print(repr(item_edge), file=sys.stderr, flush=True)
+
+        edge_id: str
+        node1: str
+        relationship: str
+        relationship_label: Optional[str]
+        node1_label: str
+        edge_id, node1, relationship, relationship_label, node1_label = item_edge
+
+        value: KgtkValue = KgtkValue(node1)
+
+        # If a relationship has multiple values, they must be next to each
+        # other in the sorted list of item_edges.
+        if current_relationship is None or relationship != current_relationship:
+            # We are starting a new relationship.
+            current_relationship = relationship
+            current_values = list()
+            relationship_label: str = rb_unstringify(relationship_label, default=relationship)
+            current_property_map: MutableMapping[str, any] = {
+                "ref": relationship,
+                "property": relationship_label,
+                "values": current_values,
+            }
+
+            response_properties.append(current_property_map)
+
+        current_value: MutableMapping[str, any] = {}
+        current_value["ref"] = node1
+        current_value["text"] = rb_unstringify(node1_label, default=node1)
+        current_value["edge_id"] = edge_id  # temporarily save the current edge ID.
+        current_values.append(current_value)
+
+    return response_properties
+
+
 def rb_render_kb_items(backend,
                        item: str,
                        item_edges: typing.List[typing.List[str]],
@@ -1409,13 +1484,6 @@ def rb_render_kb_items(backend,
         target_description: typing.Optional[str]
         wikidatatype: typing.Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
-
-        # if current_edge_id is not None and current_edge_id == edge_id:
-        #     if verbose:
-        #         print("*** skipping duplicate %s" % repr(current_edge_id), file=sys.stderr, flush=True)
-        #     # Skip duplicates (say, multiple labels or descriptions).
-        #     continue
-        # current_edge_id = edge_id
 
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
@@ -1531,11 +1599,12 @@ def rb_fetch_qualifiers(backend,
                         edge_id_tuple,
                         qual_query_limit: int = 0,
                         lang: str = 'en',
-                        verbose: bool = False) -> typing.List[typing.List[str]]:
+                        verbose: bool = False,
+                        is_related_item: bool = False) -> typing.List[typing.List[str]]:
     verbose2: bool = verbose
 
     item_qualifier_edges: typing.List[typing.List[str]]
-    if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD:
+    if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
             item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
                                                                      qual_query_limit=qual_query_limit, lang=lang,
@@ -1564,7 +1633,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                    qual_valuelist_max_len: int = 0,
                                    qual_query_limit: int = 0,
                                    lang: str = 'en',
-                                   verbose: bool = False):
+                                   verbose: bool = False,
+                                   is_related_item: bool = False):
     scanned_property_map: typing.MutableMapping[str, any]
     scanned_value: typing.MutableMapping[str, any]
     scanned_edge_id: str
@@ -1575,7 +1645,8 @@ def rb_fetch_and_render_qualifiers(backend,
                                                                               edge_id_tuple,
                                                                               qual_query_limit=qual_query_limit,
                                                                               lang=lang,
-                                                                              verbose=verbose)
+                                                                              verbose=verbose,
+                                                                              is_related_item=is_related_item)
 
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
@@ -1712,7 +1783,8 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     qual_valuelist_max_len: int = 0,
                                     qual_query_limit: int = 0,
                                     lang: str = 'en',
-                                    verbose: bool = False) -> typing.Tuple[typing.List[typing.MutableMapping[str, any]],
+                                    verbose: bool = False,
+                                    is_related_item=False) -> typing.Tuple[typing.List[typing.MutableMapping[str, any]],
                                                                            typing.List[
                                                                                typing.MutableMapping[str, any]]]:
     # Sort the item edges:
@@ -1848,6 +1920,356 @@ def rb_send_kb_item(item: str,
 
             # The data source would also, presumably, be responsible for providing images.
             # response["gallery"] = [ ] # This is required by kb.js as a minimum element.
+            response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
+
+            return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int,
+                                         count_index: int = 1) -> (Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
+    high_cardinality_properties = list()
+    normal_properties = list()
+    for prop_edge in property_value_counts:
+        high_cardinality_properties.append(prop_edge) \
+            if prop_edge[count_index] >= prop_values_limit \
+            else normal_properties.append(prop_edge)
+    return high_cardinality_properties, normal_properties
+
+
+def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple]) -> List[typing.Dict]:
+    response = list()
+    for high_cardinality_property_edge in high_cardinality_properties:
+        property, count, wikidatatype, label = high_cardinality_property_edge
+        value: KgtkValue = KgtkValue(wikidatatype)
+        datatype = rb_find_type(property, value)
+        label_ = rb_unstringify(label, property)
+        response.append(
+            {
+                'property': label_,
+                'ref': property,
+                'type': datatype,
+                'count': count,
+                'values': [],
+                'mode': 'ajax'
+            }
+
+        )
+    return response
+
+
+def create_initial_response_high_cardinality_related_items(related_items_count_edges: List[Tuple]) -> List[dict]:
+    response_properties = list()
+    for related_item_count in related_items_count_edges:
+        property, count, label = related_item_count
+        response_properties.append({'mode': 'ajax', 'property': rb_unstringify(label), 'ref': property, 'count': count})
+
+    return response_properties
+
+
+def sort_related_item_properties(response_properties: List[dict]) -> List[dict]:
+    for rp in response_properties:
+        if rp['ref'] == 'P31':
+            rp['priority'] = '1'
+        elif rp['ref'] == 'P279':
+            rp['priority'] = '2'
+        else:
+            rp['priority'] = rp['property'].lower()
+
+    sorted_properties = sorted(response_properties, key=itemgetter('priority'))
+    for sp in sorted_properties:
+        del sp['priority']
+    return sorted_properties
+
+
+@app.route('/kb/ritem', methods=['GET'])
+def rb_get_related_items():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+    properties_values_limit = args.get('prop_val_limit', type=int,
+                                       default=app.config['PROPERTY_VALUES_COUNT_LIMIT'])
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+
+    if id is None:
+        return flask.make_response({'error': 'parameter `id` required.'}, 400)
+    try:
+        with get_backend() as backend:
+            incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang)
+            hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
+                                                                                    properties_values_limit)
+            normal_property_dict = {}
+            for normal_property_edge in normal_properties:
+                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+
+            low_cardinality_properties_list_str = ", ".join(
+                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
+                                                                                                              lc_properties=low_cardinality_properties_list_str,
+                                                                                                              limit=query_limit,
+                                                                                                              lang=lang
+                                                                                                              )
+
+            response: typing.MutableMapping[dict, any] = list()
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            sorted_item_edges: typing.List[typing.List[str]] = list()
+
+            keyed_item_edges: typing.MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_edges)
+
+            item_edge_key: str
+            for item_edge_key in sorted(keyed_item_edges.keys()):
+                sorted_item_edges.append(keyed_item_edges[item_edge_key])
+
+            response_properties = rb_render_related_kb_items(sorted_item_edges)
+
+            rb_fetch_and_render_qualifiers(backend,
+                                           item,
+                                           response_properties,
+                                           qual_proplist_max_len=qual_proplist_max_len,
+                                           qual_valuelist_max_len=qual_valuelist_max_len,
+                                           qual_query_limit=qual_query_limit,
+                                           lang=lang,
+                                           is_related_item=True)
+
+            for response_property in response_properties:
+                response_property['count'] = normal_property_dict[response_property['ref']]
+                response_property['mode'] = 'sync'
+
+            hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
+            response_properties.extend(hcp_response)
+            response = sort_related_item_properties(response_properties)
+
+            return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route('/kb/rproperty', methods=['GET'])
+def rb_get_related_items_property():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    property: str = args.get('property', None)
+    skip: int = args.get('skip', type=int, default=app.config.get('PROPERTY_SKIP_NUM'))
+    limit: int = args.get('limit', type=int, default=app.config.get('PROPERTY_LIMIT_NUM'))
+
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+
+    if id is None or property is None:
+        return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
+
+    try:
+        with get_backend() as backend:
+            item_rp_edges = backend.rb_get_node_one_property_related_edges(item, property, limit, skip, lang=lang)
+
+            response: typing.MutableMapping[str, any] = dict()
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            sorted_item_edges: typing.List[typing.List[str]] = list()
+
+            keyed_item_edges: typing.MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_rp_edges)
+
+            item_edge_key: str
+            for item_edge_key in sorted(keyed_item_edges.keys()):
+                sorted_item_edges.append(keyed_item_edges[item_edge_key])
+
+            response_properties = rb_render_related_kb_items(sorted_item_edges)
+
+            rb_fetch_and_render_qualifiers(backend,
+                                           item,
+                                           response_properties,
+                                           qual_proplist_max_len=qual_proplist_max_len,
+                                           qual_valuelist_max_len=qual_valuelist_max_len,
+                                           qual_query_limit=qual_query_limit,
+                                           lang=lang,
+                                           is_related_item=True)
+
+            assert len(response_properties) == 1
+            response = response_properties[0]
+            response['limit'] = limit
+            response['skip'] = skip
+            response['mode'] = 'ajax'
+
+            return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route('/kb/property', methods=['GET'])
+def rb_get_kb_property():
+    args = flask.request.args
+    item: str = args.get('id', None)
+    property: str = args.get('property', None)
+    skip: int = args.get('skip', type=int, default=app.config.get('PROPERTY_SKIP_NUM'))
+    limit: int = args.get('limit', type=int, default=app.config.get('PROPERTY_LIMIT_NUM'))
+
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+
+    if id is None or property is None:
+        return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
+
+    try:
+        with get_backend() as backend:
+            item_p_edges = backend.rb_get_node_one_property_edges(item, property, limit, skip, lang=lang)
+            response: typing.MutableMapping[str, any] = dict()
+
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+
+            response_properties, _ = rb_send_kb_items_and_qualifiers(backend,
+                                                                     item,
+                                                                     item_p_edges,
+                                                                     proplist_max_len=proplist_max_len,
+                                                                     valuelist_max_len=valuelist_max_len,
+                                                                     qual_proplist_max_len=qual_proplist_max_len,
+                                                                     qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                     qual_query_limit=qual_query_limit,
+                                                                     lang=lang)
+
+            # return the first property in the response object
+            if response_properties:
+                response = response_properties[0]
+                response['mode'] = 'ajax'
+                response['limit'] = limit
+                response['skip'] = skip
+
+            return flask.jsonify(response), 200
+
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+@app.route('/kb/xitem', methods=['GET'])
+def rb_get_kb_xitem():
+    args = flask.request.args
+    item: str = args.get('id')
+    lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
+    proplist_max_len: int = args.get('proplist_max_len', type=int,
+                                     default=app.config['PROPLIST_MAX_LEN'])
+    valuelist_max_len: int = args.get('valuelist_max_len', type=int,
+                                      default=app.config['VALUELIST_MAX_LEN'])
+    qual_proplist_max_len: int = args.get('qual_proplist_max_len', type=int,
+                                          default=app.config['QUAL_PROPLIST_MAX_LEN'])
+    qual_valuelist_max_len: int = args.get('qual_valuelist_max_len', type=int,
+                                           default=app.config['QUAL_VALUELIST_MAX_LEN'])
+    query_limit: int = args.get('query_limit', type=int,
+                                default=app.config['QUERY_LIMIT'])
+    qual_query_limit: int = args.get('qual_query_limit', type=int,
+                                     default=app.config['QUAL_QUERY_LIMIT'])
+    properties_values_limit = args.get('prop_val_limit', type=int,
+                                       default=app.config['PROPERTY_VALUES_COUNT_LIMIT'])
+    verbose: bool = args.get("verbose", type=rb_is_true,
+                             default=app.config['VERBOSE'])
+
+    if verbose:
+        print("rb_get_kb_item: %s" % repr(item))
+        print("lang: %s" % repr(lang))
+        print("proplist_max_len: %s" % repr(proplist_max_len))
+        print("valuelist_max_len: %s" % repr(valuelist_max_len))
+        print("qual_proplist_max_len: %s" % repr(qual_proplist_max_len))
+        print("qual_valuelist_max_len: %s" % repr(qual_valuelist_max_len))
+        print("query_limit: %s" % repr(query_limit))
+        print("qual_query_limit: %s" % repr(qual_query_limit))
+    try:
+        with get_backend() as backend:
+            property_values_count: typing.List[typing.List[str]] = backend.get_property_values_count_results(item, lang)
+            high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
+                                                                                                  properties_values_limit)
+
+            normal_property_dict = {}
+            for normal_property_edge in normal_properties:
+                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+
+            low_cardinality_properties_list_str = ", ".join(
+                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+
+            rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
+
+            verbose2: bool = verbose  # ***
+
+            if verbose2:
+                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
+                      file=sys.stderr, flush=True)  # ***
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=query_limit,
+                                                                                  lc_properties=low_cardinality_properties_list_str)
+
+            p = set()
+            for i in item_edges:
+                p.add(i[2])
+
+            for hcp in high_cardinality_properties:
+                assert hcp[0] not in p
+
+            if verbose2:
+                print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True)  # ***
+
+            if verbose2:
+                print("Done fetching edges", file=sys.stderr, flush=True)  # ***
+
+            response: typing.MutableMapping[str, any] = dict()
+            response["ref"] = item
+
+            item_labels: typing.List[typing.List[str]] = backend.get_node_labels(item, lang=lang)
+            response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+
+            item_aliases: typing.List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
+            response["aliases"] = [rb_unstringify(x) for x in item_aliases]
+
+            item_descriptions: typing.List[typing.List[str]] = backend.get_node_descriptions(item, lang=lang)
+            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
+
+            response_properties: typing.List[typing.MutableMapping[str, any]]
+            response_xrefs: typing.List[typing.MutableMapping[str, any]]
+            response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
+                                                                                  item,
+                                                                                  item_edges,
+                                                                                  proplist_max_len=proplist_max_len,
+                                                                                  valuelist_max_len=valuelist_max_len,
+                                                                                  qual_proplist_max_len=qual_proplist_max_len,
+                                                                                  qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                                  qual_query_limit=qual_query_limit,
+                                                                                  lang=lang,
+                                                                                  verbose=verbose)
+            for response_property in response_properties:
+                response_property['count'] = normal_property_dict[response_property['ref']]
+                response_property['mode'] = 'sync'
+
+            hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
+            response_properties.extend(hcp_response)
+            response["properties"] = response_properties
+            response["xrefs"] = response_xrefs
+
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
 
             return flask.jsonify(response), 200

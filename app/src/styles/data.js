@@ -133,6 +133,19 @@ const useStyles = makeStyles(theme => ({
     color: '#de6720',
     zIndex: 99999,
   },
+  arrow: {
+    transform: 'scaleX(-1)',
+    marginTop: '-2px',
+  },
+  pagination: {
+    marginTop: '0.5em',
+    marginBottom: '1em',
+    '& .smaller': {
+      padding: '0 3px',
+      fontSize: '12px',
+      lineHeight: '28px',
+    },
+  },
 }))
 
 

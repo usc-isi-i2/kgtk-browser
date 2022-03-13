@@ -13,6 +13,7 @@ import kgtk.kypher.sqlstore as sqlstore
 from kgtk.exceptions import KGTKException
 from browser.backend.fastdf import FastDataFrame
 import browser.backend.format as fmt
+from typing import List
 
 
 # TO DO:
@@ -463,11 +464,39 @@ class BrowserBackend(object):
                                   LANG=self.get_lang(lang),
                                   fmt=fmt)
 
-    def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
+    def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000,
+                          lc_properties: str = None):
         """Retrieve all edges that have 'node' as their node1.
         """
-        query = self.api.RB_NODE_EDGES_QUERY
-        return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        if lc_properties is not None:
+            query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY(node, lc_properties, self.get_lang(lang), limit)
+            return self.execute_query(query, fmt=fmt)
+        else:
+            query = self.api.RB_NODE_EDGES_QUERY
+            return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+
+    def rb_get_node_one_property_edges(self, node, property: str, limit: int, skip: int, lang=None, images=False,
+                                       fanouts=False, fmt=None):
+        """Retrieve all edges that have 'node' as their node1 for property=property
+        """
+
+        query = self.api.RB_NODE_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
+        return self.execute_query(query, fmt=fmt)
+
+    def rb_get_node_one_property_related_edges(self, node, property: str, limit: int, skip: int, lang=None, fmt=None):
+        """Retrieve all edges that have 'node' as their node1 for property=property
+        """
+
+        query = self.api.RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
+        return self.execute_query(query, fmt=fmt)
+
+    def rb_get_node_multiple_properties_related_edges(self, node, lc_properties: str, limit: int, lang=None, fmt=None):
+        """Retrieve all edges that have 'node' as their node1 for property in lc_properties
+        """
+
+        query = self.api.RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(node, lc_properties, self.get_lang(lang),
+                                                                         limit)
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have 'node' as their node1.
@@ -539,4 +568,14 @@ class BrowserBackend(object):
         node = node.upper()
         query = self.api.GET_CLASS_VIZ_NODE_QUERY(node)
 
+        return self.execute_query(query, fmt=fmt)
+
+    def get_property_values_count_results(self, node, lang, fmt=None):
+        node = node.upper()
+        query = self.api.GET_PROPERTY_VALUES_COUNT_QUERY(node, self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
+
+    def get_incoming_edges_count_results(self, node, lang, fmt=None):
+        node = node.upper()
+        query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(node, self.get_lang(lang))
         return self.execute_query(query, fmt=fmt)
