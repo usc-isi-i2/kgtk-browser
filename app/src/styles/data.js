@@ -135,6 +135,7 @@ const useStyles = makeStyles(theme => ({
   },
   arrow: {
     transform: 'scaleX(-1)',
+    marginTop: '-2px',
   },
 }))
 
