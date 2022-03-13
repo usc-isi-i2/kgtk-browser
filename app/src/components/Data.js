@@ -69,6 +69,7 @@ const Data = ({ info }) => {
               setPropertyData(prevData => {
                 const propertyData = {...prevData}
                 propertyData[property.ref] = {
+                  count: property.count,
                   ...data,
                   numPages,
                 }
