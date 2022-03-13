@@ -137,6 +137,10 @@ const useStyles = makeStyles(theme => ({
     transform: 'scaleX(-1)',
     marginTop: '-2px',
   },
+  pagination: {
+    marginTop: '0.5em',
+    marginBottom: '1em',
+  },
 }))
 
 

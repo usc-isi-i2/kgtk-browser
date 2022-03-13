@@ -490,8 +490,10 @@ const Data = ({ info }) => {
           </Grid>
         ))}
         {property.mode === 'ajax' && property.numPages > 1 && (
-          <Pagination count={property.numPages} size="small"
-            onChange={(event, page) => handleOnPageChange(property, page)} />
+          <div className={classes.pagination}>
+            <Pagination count={property.numPages} size="small"
+              onChange={(event, page) => handleOnPageChange(property, page)} />
+          </div>
         )}
       </Grid>
     )
@@ -670,9 +672,11 @@ const Data = ({ info }) => {
                       </Grid>
                     ))}
                     {property.numPages > 1 && (
-                      <Pagination count={property.numPages} size="small"
-                        onChange={(event, page) =>
-                          handleOnPageChangeRelatedValues(property, page)} />
+                      <div className={classes.pagination}>
+                        <Pagination count={property.numPages} size="small"
+                          onChange={(event, page) =>
+                            handleOnPageChangeRelatedValues(property, page)} />
+                      </div>
                     )}
                   </Grid>
                 </Grid>

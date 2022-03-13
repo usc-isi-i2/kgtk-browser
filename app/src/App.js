@@ -58,8 +58,6 @@ let theme = createTheme({
     },
     MuiPagination: {
       root: {
-        marginTop: '0.5em',
-        marginBottom: '1em',
         '& .MuiPagination-ul': {
           '& .MuiPaginationItem-page': {
             color: '#333',
