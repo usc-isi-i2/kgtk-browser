@@ -25,6 +25,7 @@ import fetchClassGraphData from '../utils/fetchClassGraphData'
 import fetchRelatedProperties from '../utils/fetchRelatedProperties'
 import fetchRelatedValues from '../utils/fetchRelatedValues'
 import classNames from '../utils/classNames'
+import formatNumber from '../utils/numbers'
 
 
 const Data = ({ info }) => {
@@ -500,7 +501,7 @@ const Data = ({ info }) => {
             </Grid>
             <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
               <span className="smaller">
-                {property.count} values
+                {formatNumber(property.count)} values
               </span>
             </Grid>
           </Grid>
@@ -691,7 +692,7 @@ const Data = ({ info }) => {
                         </Grid>
                         <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
                           <span className="smaller">
-                            {property.count} values
+                            {formatNumber(property.count)} values
                           </span>
                         </Grid>
                       </Grid>
