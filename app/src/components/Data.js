@@ -500,7 +500,7 @@ const Data = ({ info }) => {
             </Grid>
             <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
               <span className="smaller">
-                Total number of values: {property.count}
+                {property.count} values
               </span>
             </Grid>
           </Grid>
@@ -691,7 +691,7 @@ const Data = ({ info }) => {
                         </Grid>
                         <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
                           <span className="smaller">
-                            Total number of values: {property.count}
+                            {property.count} values
                           </span>
                         </Grid>
                       </Grid>
