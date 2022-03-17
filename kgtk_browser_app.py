@@ -31,7 +31,7 @@ from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 from kgtk.visualize.visualize_api import KgtkVisualize
 
-from kgtk_browser_config import KypherAPIObject
+from browser.backend.kypher_queries import KypherAPIObject
 
 import re
 import time
@@ -68,7 +68,7 @@ app = flask.Flask(__name__,
                   template_folder='web/templates')
 
 if 'KGTK_BROWSER_CONFIG' not in os.environ:
-    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
+    os.environ['KGTK_BROWSER_CONFIG'] = 'browser/backend/kgtk_browser_config.py'
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 # Allow urls with trailing slashes
