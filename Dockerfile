@@ -24,8 +24,8 @@ COPY requirements.txt /src/requirements.txt
 
 RUN pip install -r /src/requirements.txt
 
-COPY kgtk_browser_config.py /src/
 COPY kgtk_browser_app.py /src/
+COPY sort_metadata.json /src/
 COPY browser/backend/ /src/browser/backend/
 COPY app/ /src/app/
 
