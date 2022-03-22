@@ -31,7 +31,7 @@ from kgtk.kgtkformat import KgtkFormat
 from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 from kgtk.visualize.visualize_api import KgtkVisualize
 
-from kgtk_browser_config import KypherAPIObject
+from browser.backend.kypher_queries import KypherAPIObject
 
 import re
 import time
@@ -68,7 +68,7 @@ app = flask.Flask(__name__,
                   template_folder='web/templates')
 
 if 'KGTK_BROWSER_CONFIG' not in os.environ:
-    os.environ['KGTK_BROWSER_CONFIG'] = './kgtk_browser_config.py'
+    os.environ['KGTK_BROWSER_CONFIG'] = 'browser/backend/kgtk_browser_config.py'
 app.config.from_envvar('KGTK_BROWSER_CONFIG')
 
 # Allow urls with trailing slashes
@@ -152,6 +152,7 @@ app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUN
                                                            DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
 app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
 app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
+sort_metadata = app.config['SORT_METADATA']
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -2221,7 +2222,9 @@ def rb_get_kb_xitem():
             if verbose2:
                 print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
                       file=sys.stderr, flush=True)  # ***
-            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=query_limit,
+            item_edges: typing.List[typing.List[str]] = backend.rb_get_node_edges(item,
+                                                                                  lang=lang,
+                                                                                  limit=query_limit,
                                                                                   lc_properties=low_cardinality_properties_list_str)
 
             p = set()
@@ -2265,9 +2268,10 @@ def rb_get_kb_xitem():
                 response_property['count'] = normal_property_dict[response_property['ref']]
                 response_property['mode'] = 'sync'
 
+            sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
             hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
-            response_properties.extend(hcp_response)
-            response["properties"] = response_properties
+            sorted_response_properties.extend(hcp_response)
+            response["properties"] = sorted_response_properties
             response["xrefs"] = response_xrefs
 
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
@@ -2605,6 +2609,78 @@ def get_all_node_data():
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def sort_property_values_by_qualifiers(properties_values_list: List[dict]) -> List[dict]:
+    sorted_properties_values_list = list()
+    for prop_val_dict in properties_values_list:
+        _property = prop_val_dict['ref']
+        if len(prop_val_dict['values']) == 1:  # no point sorting a single value
+            sorted_properties_values_list.append(prop_val_dict)
+        else:
+            priority_qualifier = find_sort_qualifier(prop_val_dict)
+            sorted_properties_values_list.append(sort_values_for_a_property(prop_val_dict, priority_qualifier))
+
+    return sorted_properties_values_list
+
+
+def sort_values_for_a_property(property_values_dict: dict, priority_qualifier: str) -> dict:
+    _property = property_values_dict['ref']
+    values = property_values_dict['values']
+    if priority_qualifier is None:
+        sort_order = sort_metadata.get(_property, 'asc')
+        property_values_dict['values'] = sorted(values, key=itemgetter('text'), reverse=sort_order == 'desc')
+        return property_values_dict
+    sort_order = sort_metadata.get(f'{_property}_{priority_qualifier}')
+    padding = 'Z' * 1000 if sort_order == 'asc' else '0' * 1000
+    for val in values:
+        quals = val['qualifiers']
+        for qual in quals:
+            if qual['ref'] == priority_qualifier:
+                val['priority'] = f"{qual['values'][0]['text']}"  # can qualifiers have more than one value?
+                continue
+        if val.get('priority', None) is None:
+            val['priority'] = f"{padding}{val['text']}"
+
+    sorted_values = sorted(values, key=itemgetter('priority'), reverse=sort_order == 'desc')
+
+    for v in sorted_values:
+        del v['priority']
+    property_values_dict['values'] = sorted_values
+    return property_values_dict
+
+
+def find_sort_qualifier(property_value_dict: dict) -> str:
+    if property_value_dict.get('mode') == 'ajax':
+        return None
+
+    qualifiers_type_dict = {}
+    _property = property_value_dict['ref']
+    if property_value_dict.get('mode') == 'sync':  # mode == 'ajax' cannot be sorted here
+        prop_values: List[dict] = property_value_dict['values']
+        for prop_val in prop_values:
+            val_quals = prop_val.get('qualifiers', None)
+            if val_quals is not None:
+                for val_qual in val_quals:
+                    _type = val_qual['type']
+                    q_property = val_qual['ref']
+                    if _type not in qualifiers_type_dict:
+                        qualifiers_type_dict[_type] = {}
+                    if q_property not in qualifiers_type_dict[_type]:
+                        qualifiers_type_dict[_type][q_property] = 0
+                    qualifiers_type_dict[_type][q_property] += 1
+
+    if not qualifiers_type_dict:
+        return None
+    if '/w/time' in qualifiers_type_dict:
+        _ = qualifiers_type_dict['/w/time']
+        return max(_.items(), key=itemgetter(1))[0]
+    elif '/w/quantity' in qualifiers_type_dict:
+        _ = qualifiers_type_dict['/w/quantity']
+        return max(_.items(), key=itemgetter(1))[0]
+    else:
+        # return min(qualifiers_type_dict[list(qualifiers_type_dict)[0]])
+        return None
 
 
 if __name__ == '__main__':
