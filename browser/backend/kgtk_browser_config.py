@@ -1,11 +1,15 @@
 # KGTK browser configuration
+import os
 import json
 
 # Basic configuration section:
 
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
-GRAPH_CACHE = './wikidata.sqlite3.db'
+if 'KGTK_BROWSER_GRAPH_CACHE' in os.environ and os.environ['KGTK_BROWSER_GRAPH_CACHE'] is not None:
+    GRAPH_CACHE = os.environ['KGTK_BROWSER_GRAPH_CACHE']
+else:
+    GRAPH_CACHE = './wikidata.sqlite3.db'
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
