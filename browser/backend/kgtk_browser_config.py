@@ -1,15 +1,18 @@
 # KGTK browser configuration
 import os
+
 import json
 
 # Basic configuration section:
 
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
+
 if 'KGTK_BROWSER_GRAPH_CACHE' in os.environ and os.environ['KGTK_BROWSER_GRAPH_CACHE'] is not None:
     GRAPH_CACHE = os.environ['KGTK_BROWSER_GRAPH_CACHE']
 else:
     GRAPH_CACHE = './wikidata.sqlite3.db'
+
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -41,4 +44,6 @@ KYPHER_OBJECTS_NUM = 5
 VALUELIST_MAX_LEN: int = 100
 PROPERTY_VALUES_COUNT_LIMIT: int = 10
 
-SORT_METADATA = json.load(open('sort_metadata.json'))
+PROPERTIES_SORT_METADATA = json.load(open('properties_sort_metadata.json'))
+SYNC_PROPERTIES_SORT_METADATA = PROPERTIES_SORT_METADATA['sync_properties']
+AJAX_PROPERTIES_SORT_METADATA = PROPERTIES_SORT_METADATA['ajax_properties']
