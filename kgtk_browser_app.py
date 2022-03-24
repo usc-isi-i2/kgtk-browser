@@ -152,7 +152,8 @@ app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUN
                                                            DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
 app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
 app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
-sort_metadata = app.config['SORT_METADATA']
+sync_properties_sort_metadata = app.config['SYNC_PROPERTIES_SORT_METADATA']
+ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -1785,11 +1786,16 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     qual_query_limit: int = 0,
                                     lang: str = 'en',
                                     verbose: bool = False,
-                                    is_related_item=False) -> typing.Tuple[typing.List[typing.MutableMapping[str, any]],
-                                                                           typing.List[
-                                                                               typing.MutableMapping[str, any]]]:
-    # Sort the item edges:
-    sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
+                                    is_related_item=False,
+                                    sort_edges: bool = True) -> typing.Tuple[
+    typing.List[typing.MutableMapping[str, any]],
+    typing.List[
+        typing.MutableMapping[str, any]]]:
+    if sort_edges:
+        # Sort the item edges:
+        sorted_item_edges: typing.List[typing.List[str]] = rb_build_sorted_item_edges(item_edges)
+    else:
+        sorted_item_edges = item_edges
     if verbose:
         print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True)  # ***
 
@@ -2139,9 +2145,30 @@ def rb_get_kb_property():
     if id is None or property is None:
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
+    property = property.upper()
+    sort_metadata = ajax_properties_sort_metadata.get(property, {})
+    sort_order = sync_properties_sort_metadata.get(property, 'asc')
+    qualifier_property = None
+
+    sort_by = 'n2label' if sort_metadata['property_datatype'] == 'wikibase-item' else 'n2'  # for kypher query ordering
+    qualifier_property_ratio = sort_metadata['qratio']
+
+    if 'qualifier' in sort_metadata and qualifier_property_ratio >= 0.5:
+        qualifier_property = sort_metadata['qualifier']
+        sort_by = 'qn2label' if sort_metadata['qualifier_datatype'] == 'wikibase-item' else 'qn2'
+        sort_order = sort_metadata.get('sort_by', 'asc')
+
     try:
         with get_backend() as backend:
-            item_p_edges = backend.rb_get_node_one_property_edges(item, property, limit, skip, lang=lang)
+            item_p_edges = backend.rb_get_node_one_property_with_qualifiers_edges(item,
+                                                                                  property,
+                                                                                  limit,
+                                                                                  skip,
+                                                                                  qualifier_property=qualifier_property,
+                                                                                  sort_by=sort_by,
+                                                                                  lang=lang,
+                                                                                  sort_order=sort_order)
+
             response: typing.MutableMapping[str, any] = dict()
 
             response_properties: typing.List[typing.MutableMapping[str, any]]
@@ -2154,7 +2181,8 @@ def rb_get_kb_property():
                                                                      qual_proplist_max_len=qual_proplist_max_len,
                                                                      qual_valuelist_max_len=qual_valuelist_max_len,
                                                                      qual_query_limit=qual_query_limit,
-                                                                     lang=lang)
+                                                                     lang=lang,
+                                                                     sort_edges=False)
 
             # return the first property in the response object
             if response_properties:
@@ -2628,10 +2656,10 @@ def sort_values_for_a_property(property_values_dict: dict, priority_qualifier: s
     _property = property_values_dict['ref']
     values = property_values_dict['values']
     if priority_qualifier is None:
-        sort_order = sort_metadata.get(_property, 'asc')
+        sort_order = sync_properties_sort_metadata.get(_property, 'asc')
         property_values_dict['values'] = sorted(values, key=itemgetter('text'), reverse=sort_order == 'desc')
         return property_values_dict
-    sort_order = sort_metadata.get(f'{_property}_{priority_qualifier}')
+    sort_order = sync_properties_sort_metadata.get(f'{_property}_{priority_qualifier}')
     padding = 'Z' * 1000 if sort_order == 'asc' else '0' * 1000
     for val in values:
         quals = val['qualifiers']
