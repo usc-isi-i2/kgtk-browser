@@ -38,7 +38,7 @@ ENV FLASK_ENV=$FLASK_ENV
 ARG FLASK_APP=kgtk_browser_app.py
 ENV FLASK_APP=$FLASK_APP
 
-ARG KGTK_BROWSER_CONFIG=kgtk_browser_config.py
+ARG KGTK_BROWSER_CONFIG=browser/backend/kgtk_browser_config.py
 ENV KGTK_BROWSER_CONFIG=$KGTK_BROWSER_CONFIG
 
 WORKDIR /src
