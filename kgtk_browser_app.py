@@ -2662,11 +2662,12 @@ def sort_values_for_a_property(property_values_dict: dict, priority_qualifier: s
     sort_order = sync_properties_sort_metadata.get(f'{_property}_{priority_qualifier}')
     padding = 'Z' * 1000 if sort_order == 'asc' else '0' * 1000
     for val in values:
-        quals = val['qualifiers']
-        for qual in quals:
-            if qual['ref'] == priority_qualifier:
-                val['priority'] = f"{qual['values'][0]['text']}"  # can qualifiers have more than one value?
-                continue
+        quals = val.get('qualifiers', None)
+        if quals is not None:
+            for qual in quals:
+                if qual['ref'] == priority_qualifier:
+                    val['priority'] = f"{qual['values'][0]['text']}"  # can qualifiers have more than one value?
+                    continue
         if val.get('priority', None) is None:
             val['priority'] = f"{padding}{val['text']}"
 
