@@ -818,7 +818,7 @@ class KypherAPIObject(object):
             owhere6=f'"{lang}"="any" or kgtk_lqstring_lang(qllabel)="{lang}"',
             opt7='$labels: (qn2)-[:label]->(qn2label)',
             owhere7=f'"{lang}"="any" or kgtk_lqstring_lang(qn2label)="{lang}"',
-            ret='r as id, ' +
+            ret='distinct r as id, ' +
                 'n1 as node1, ' +
                 'r.label as relationship, ' +
                 'n2 as node2, ' +
