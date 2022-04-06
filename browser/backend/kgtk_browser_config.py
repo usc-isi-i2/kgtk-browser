@@ -13,6 +13,17 @@ if 'KGTK_BROWSER_GRAPH_CACHE' in os.environ and os.environ['KGTK_BROWSER_GRAPH_C
 else:
     GRAPH_CACHE = './wikidata.sqlite3.db'
 
+if 'KGTK_BROWSER_CLASS_VIZ_DIR' in os.environ and os.environ['KGTK_BROWSER_CLASS_VIZ_DIR'] is not None:
+    CLASS_VIZ_DIR = os.environ['KGTK_BROWSER_CLASS_VIZ_DIR']
+else:
+    CLASS_VIZ_DIR = "/data/class_viz_files"
+
+# Color for nodes and edges
+ORANGE_NODE_HEX = '#FF8C00'
+BLUE_NODE_HEX = '#1874CD'
+RED_EDGE_HEX = '#CD2626'
+BLUE_EDGE_HEX = '#1874CD'
+
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
