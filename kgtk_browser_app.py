@@ -162,7 +162,7 @@ for i in range(app.config['KYPHER_OBJECTS_NUM']):
     _api.set_app_config(app)
     kgtk_backends[i] = _api
 
-item_regex = re.compile(f"^[q|Q|p|P]\d+$")
+item_regex = re.compile(r"^[q|Q|p|P]\d+$")
 
 
 def get_backend():
@@ -2149,16 +2149,13 @@ def rb_get_kb_property():
 
     property = property.upper()
     sort_metadata = ajax_properties_sort_metadata.get(property, {})
-    sort_order = sync_properties_sort_metadata.get(property, 'asc')
-    qualifier_property = None
+    sort_order = sort_metadata.get('Psort_order', 'asc')
+    qualifier_property = sort_metadata.get('Psort_qualifier', None)
 
-    sort_by = 'n2label' if sort_metadata['property_datatype'] == 'wikibase-item' else 'n2'  # for kypher query ordering
-    qualifier_property_ratio = sort_metadata['qratio']
-
-    if 'qualifier' in sort_metadata and qualifier_property_ratio >= 0.5:
-        qualifier_property = sort_metadata['qualifier']
+    if qualifier_property is not None:
         sort_by = 'qn2label' if sort_metadata['qualifier_datatype'] == 'wikibase-item' else 'qn2'
-        sort_order = sort_metadata.get('sort_by', 'asc')
+    else:
+        sort_by = 'n2label' if sort_metadata['datatype'] == 'wikibase-item' else 'n2'
 
     try:
         with get_backend() as backend:
