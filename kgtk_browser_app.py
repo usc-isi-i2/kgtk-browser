@@ -171,16 +171,6 @@ def get_backend():
     return kgtk_backends[key]
 
 
-# Multi-threading
-
-# Proper locking is now supported by the backend like this:
-
-
-# with get_backend(app) as backend:
-#    edges = backend.get_node_edges(node)
-#    ...
-
-
 @app.route('/kb/info', methods=['GET'])
 def get_info():
     """
@@ -239,7 +229,7 @@ def get_class_graph_data(qnode=None):
 
     temp_dir = tempfile.mkdtemp()
 
-    class_viz_dir = "/data/class_viz_files"
+    class_viz_dir = app.config['CLASS_VIZ_DIR']
     if not Path(class_viz_dir).exists():
         Path(class_viz_dir).mkdir(parents=True, exist_ok=True)
 
@@ -266,6 +256,18 @@ def get_class_graph_data(qnode=None):
                 open(empty_output_file_name, 'w').write(json.dumps({}))
                 return flask.jsonify({}), 200
 
+            for edge_result in edge_results:
+                if edge_result['edge_type'] == 'subclass':
+                    edge_result['color'] = app.config['RED_EDGE_HEX']
+                elif edge_result['edge_type'] == 'superclass':
+                    edge_result['color'] = app.config['BLUE_EDGE_HEX']
+
+            for node_result in node_results:
+                if node_result['node_type'] == 'few_subclasses':
+                    node_result['color'] = app.config['BLUE_NODE_HEX']
+                elif node_result['node_type'] == 'many_subclasses':
+                    node_result['color'] = app.config['ORANGE_NODE_HEX']
+
             edge_df = pd.DataFrame(edge_results)
             node_df = pd.DataFrame(node_results)
             edge_df.to_csv(edge_file_name, sep='\t', index=False)
@@ -275,21 +277,21 @@ def get_class_graph_data(qnode=None):
                                output_file=html_file_name,
                                node_file=node_file_name,
                                direction='arrow',
-                               edge_color_column='edge_type',
-                               edge_color_style='categorical',
-                               node_color_column='node_type',
-                               node_color_style='categorical',
+                               edge_color_column='color',
+                               edge_color_hex=True,
+                               node_color_column='color',
+                               node_color_hex=True,
                                node_size_column='instance_count',
                                node_size_default=5.0,
                                node_size_minimum=2.0,
                                node_size_maximum=8.0,
                                node_size_scale='log',
                                tooltip_column='tooltip',
-                               text_node='above',
+                               show_text='above',
                                node_categorical_scale='d3.schemeCategory10',
                                edge_categorical_scale='d3.schemeCategory10',
                                node_file_id='node1')
-            visualization_graph, _ = kv.compute_visualization_graph()
+            visualization_graph = kv.compute_visualization_graph()
 
             # check nodes for incoming edges and set showLabel prop
             # count all incoming edges and save that number as a node property
