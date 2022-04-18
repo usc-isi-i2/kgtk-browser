@@ -483,6 +483,29 @@ class BrowserBackend(object):
         query = self.api.RB_NODE_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
         return self.execute_query(query, fmt=fmt)
 
+    def rb_get_node_one_property_with_qualifiers_edges(self,
+                                                       node,
+                                                       property: str,
+                                                       limit: int,
+                                                       skip: int,
+                                                       qualifier_property: str = None,
+                                                       lang=None,
+                                                       sort_order: str = 'asc',
+                                                       sort_by: str = 'qn2',
+                                                       fmt=None):
+        """Retrieve all edges that have 'node' as their node1 for property=property with qualifiers
+        """
+
+        query = self.api.RB_NODE_EDGES_ONE_PROPERTY_WITH_QUALIFIERS_QUERY(node,
+                                                                          property,
+                                                                          self.get_lang(lang),
+                                                                          skip,
+                                                                          limit,
+                                                                          sort_order,
+                                                                          qualifier_property,
+                                                                          sort_by)
+        return self.execute_query(query, fmt=fmt)
+
     def rb_get_node_one_property_related_edges(self, node, property: str, limit: int, skip: int, lang=None, fmt=None):
         """Retrieve all edges that have 'node' as their node1 for property=property
         """

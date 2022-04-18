@@ -1,15 +1,62 @@
 # KGTK browser configuration
 import os
 import json
+import sys
+from pathlib import Path
+from kgtk.io.kgtkreader import KgtkReader, KgtkReaderMode
+
+
+def read_sorting_metadata_ajax(metadata_file):
+    kr: KgtkReader = KgtkReader.open(Path(metadata_file),
+                                     error_file=sys.stderr,
+                                     mode=KgtkReaderMode.EDGE
+                                     )
+
+    node1_idx = kr.column_name_map['node1']
+    node2_idx = kr.column_name_map['node2']
+    label_idx = kr.column_name_map['label']
+    sorting_metadata = {}
+
+    for row in kr:
+        node1 = row[node1_idx]
+        label = row[label_idx]
+        node2 = row[node2_idx]
+
+        if node1 not in sorting_metadata and '-' not in node1:
+            sorting_metadata[node1] = dict()
+
+        if '-' in node1:
+            node1 = node1.split('-')[0]
+            if label == 'datatype':
+                label = 'qualifier_datatype'
+
+        prop_val_dict = sorting_metadata.get(node1, None)
+        if prop_val_dict is not None:
+            prop_val_dict[label] = node2
+    return sorting_metadata
+
 
 # Basic configuration section:
 
 VERSION = '0.1.0'
 GRAPH_ID = 'my-knowledge-graph'
+
 if 'KGTK_BROWSER_GRAPH_CACHE' in os.environ and os.environ['KGTK_BROWSER_GRAPH_CACHE'] is not None:
     GRAPH_CACHE = os.environ['KGTK_BROWSER_GRAPH_CACHE']
 else:
     GRAPH_CACHE = './wikidata.sqlite3.db'
+
+if 'KGTK_BROWSER_CLASS_VIZ_DIR' in os.environ and os.environ['KGTK_BROWSER_CLASS_VIZ_DIR'] is not None:
+    CLASS_VIZ_DIR = os.environ['KGTK_BROWSER_CLASS_VIZ_DIR']
+else:
+    CLASS_VIZ_DIR = "/data/class_viz_files"
+
+# Color for nodes and edges
+ORANGE_NODE_HEX = '#FF8C00'
+BLUE_NODE_HEX = '#1874CD'
+RED_EDGE_HEX = '#CD2626'
+BLUE_EDGE_HEX = '#1874CD'
+
 LOG_LEVEL = 0
 INDEX_MODE = 'auto'
 MAX_RESULTS = 10000
@@ -41,4 +88,8 @@ KYPHER_OBJECTS_NUM = 5
 VALUELIST_MAX_LEN: int = 100
 PROPERTY_VALUES_COUNT_LIMIT: int = 10
 
-SORT_METADATA = json.load(open('sort_metadata.json'))
+KGTK_BROWSER_SORTING_METADATA = 'kgtk_browser_sorting_metadata.tsv'
+
+PROPERTIES_SORT_METADATA = json.load(open('sync_properties_sort_metadata.json'))
+SYNC_PROPERTIES_SORT_METADATA = PROPERTIES_SORT_METADATA['sync_properties']
+AJAX_PROPERTIES_SORT_METADATA = read_sorting_metadata_ajax(KGTK_BROWSER_SORTING_METADATA)

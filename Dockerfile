@@ -25,12 +25,9 @@ COPY requirements.txt /src/requirements.txt
 RUN pip install -r /src/requirements.txt
 
 COPY kgtk_browser_app.py /src/
-COPY sort_metadata.json /src/
+COPY properties_sort_metadata.json /src/
 COPY browser/backend/ /src/browser/backend/
 COPY app/ /src/app/
-
-RUN git clone -b dev --single-branch https://github.com/usc-isi-i2/kgtk.git
-RUN pip install -e kgtk
 
 ARG FLASK_ENV=production
 ENV FLASK_ENV=$FLASK_ENV
@@ -38,7 +35,7 @@ ENV FLASK_ENV=$FLASK_ENV
 ARG FLASK_APP=kgtk_browser_app.py
 ENV FLASK_APP=$FLASK_APP
 
-ARG KGTK_BROWSER_CONFIG=kgtk_browser_config.py
+ARG KGTK_BROWSER_CONFIG=browser/backend/kgtk_browser_config.py
 ENV KGTK_BROWSER_CONFIG=$KGTK_BROWSER_CONFIG
 
 WORKDIR /src

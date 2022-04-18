@@ -774,6 +774,64 @@ class KypherAPIObject(object):
             skip=skip
         )
 
+    def RB_NODE_EDGES_ONE_PROPERTY_WITH_QUALIFIERS_QUERY(self,
+                                                         node: str,
+                                                         property: str,
+                                                         lang: str,
+                                                         skip: int,
+                                                         limit: int,
+                                                         sort_order: str,
+                                                         qualifier_property: str,
+                                                         sort_by: str):
+
+        where_clause = f'n1="{node}" AND rl="{property}"'
+        if qualifier_property is None:
+            optional_qualifier_where_clause = "1=1"
+        else:
+            optional_qualifier_where_clause = f'ql="{qualifier_property}"'
+        return self.kapi.get_query(
+            doc="""
+                    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
+                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1 for a given property.
+                    Additionally retrieve descriptive information for all relationship labels.
+                    Additionally retrieve the node2 descriptions.
+                    Parameter 'LANG' controls the language for retrieved labels.
+                    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
+                    and label's 'label_label'.
+                    Limit the number of return edges to LIMIT.
+
+                    """,
+            name=f'rb_{node}_{property}_{skip}_{limit}_{sort_order}_{sort_by}_{str(qualifier_property)}_edges_one_property_with_qualifiers_query',
+            inputs=('edges', 'labels', 'descriptions', 'datatypes', 'qualifiers'),
+            match='$edges: (n1)-[r {label: rl}]->(n2)',
+            where=where_clause,
+            opt='$labels: (rl)-[:label]->(llabel)',
+            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            opt2='$labels: (n2)-[:label]->(n2label)',
+            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
+            opt3='$descriptions: (n2)-[r:description]->(n2desc)',
+            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
+            opt4='$datatypes: (rl)-[:datatype]->(rlwdt)',
+            opt5='$qualifiers: (r)-[q {label: ql}]->(qn2)',
+            owhere5=optional_qualifier_where_clause,
+            opt6='$labels: (ql)-[:label]->(qllabel)',
+            owhere6=f'"{lang}"="any" or kgtk_lqstring_lang(qllabel)="{lang}"',
+            opt7='$labels: (qn2)-[:label]->(qn2label)',
+            owhere7=f'"{lang}"="any" or kgtk_lqstring_lang(qn2label)="{lang}"',
+            ret='distinct r as id, ' +
+                'n1 as node1, ' +
+                'r.label as relationship, ' +
+                'n2 as node2, ' +
+                'llabel as relationship_label, ' +
+                'n2 as target_node, ' +
+                'n2label as target_label, ' +
+                'n2desc as target_description, ' +
+                'rlwdt as wikidatatype',
+            limit=f"{limit}",
+            skip=skip,
+            order=f'{sort_by} {sort_order}'
+        )
+
     def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
         """This code generates a new name for each query, thus
         rendering the query cache ineffective and filled with junk.
