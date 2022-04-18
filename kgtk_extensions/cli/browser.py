@@ -13,7 +13,6 @@ Example usage:
 """
 
 from argparse import Namespace, SUPPRESS
-import typing
 
 from kgtk.cli_argparse import KGTKArgumentParser, KGTKFiles
 
@@ -111,14 +110,6 @@ def run(
 
     # Select where to send error messages, defaulting to stderr.
     error_file: typing.TextIO = sys.stdout if errors_to_stdout else sys.stderr
-
-    # Show the final option structures for debugging and documentation.
-    if show_options:
-        print("--input-file=%s" % repr(str(input_file_path)), file=error_file, flush=True)
-        print("--output-file=%s" % repr(str(output_file_path)), file=error_file, flush=True)
-
-        idbuilder_options.show(out=error_file)
-        print("=======", file=error_file, flush=True)
 
     try:
 
