@@ -2155,7 +2155,7 @@ def rb_get_kb_property():
     if qualifier_property is not None:
         sort_by = 'qn2label' if sort_metadata['qualifier_datatype'] == 'wikibase-item' else 'qn2'
     else:
-        sort_by = 'n2label' if sort_metadata['datatype'] == 'wikibase-item' else 'n2'
+        sort_by = 'n2label' if sort_metadata.get('datatype', 'wikibase-item') == 'wikibase-item' else 'n2'
 
     try:
         with get_backend() as backend:
@@ -2482,12 +2482,12 @@ def get_request_args():
     }
 
 
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'test_get_edges'), methods=['GET'])
-def test_get_edges():
-    node = flask.request.args.get('node')
-    if node is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    return 'get_edges %s ' % node
+# @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'test_get_edges'), methods=['GET'])
+# def test_get_edges():
+#     node = flask.request.args.get('node')
+#     if node is None:
+#         flask.abort(HTTPStatus.BAD_REQUEST.value)
+#     return 'get_edges %s ' % node
 
 
 @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_labels'), methods=['GET'])

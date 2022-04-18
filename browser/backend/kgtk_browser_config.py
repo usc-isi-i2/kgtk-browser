@@ -39,7 +39,10 @@ def read_sorting_metadata_ajax(metadata_file):
 # Basic configuration section:
 
 VERSION = '0.1.0'
-GRAPH_ID = 'my-knowledge-graph'
+if 'KGTK_BROWSER_GRAPH_ID' in os.environ and os.environ['KGTK_BROWSER_GRAPH_ID'] is not None:
+    GRAPH_ID = os.environ['KGTK_BROWSER_GRAPH_ID']
+else:
+    GRAPH_ID = 'my-knowledge-graph'
 
 if 'KGTK_BROWSER_GRAPH_CACHE' in os.environ and os.environ['KGTK_BROWSER_GRAPH_CACHE'] is not None:
     GRAPH_CACHE = os.environ['KGTK_BROWSER_GRAPH_CACHE']

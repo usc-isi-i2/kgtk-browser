@@ -13,10 +13,8 @@ Example usage:
 """
 
 from argparse import Namespace, SUPPRESS
-import typing
 
 from kgtk.cli_argparse import KGTKArgumentParser, KGTKFiles
-
 
 # Define the name of the command and its alias.
 BROWSER_COMMAND: str = "browser"
@@ -25,7 +23,7 @@ BROWSE_COMMAND: str = "browse"
 
 def parser():
     return {
-        'aliases': [ BROWSE_COMMAND ],
+        'aliases': [BROWSE_COMMAND],
         'help': 'Run the KGTK-Browser Flask app.',
         'description': 'Open a new browser with the KGTK-Browser app running.',
     }
@@ -47,7 +45,7 @@ def add_arguments_extended(parser: KGTKArgumentParser, parsed_shared_args: Names
     # This helper function makes it easy to suppress options from
     # The help message.  The options are still there, and initialize
     # what they need to initialize.
-    def h(msg: str)->str:
+    def h(msg: str) -> str:
         if _expert:
             return msg
         else:
@@ -98,8 +96,8 @@ def run(
         verbose: bool = False,
         very_verbose: bool = False,
 
-        **kwargs # Whatever KgtkFileOptions and KgtkValueOptions want.
-)->int:
+        **kwargs  # Whatever KgtkFileOptions and KgtkValueOptions want.
+) -> int:
     # import modules locally
     from pathlib import Path
     import simplejson as json
@@ -112,14 +110,6 @@ def run(
 
     # Select where to send error messages, defaulting to stderr.
     error_file: typing.TextIO = sys.stdout if errors_to_stdout else sys.stderr
-
-    # Show the final option structures for debugging and documentation.
-    if show_options:
-        print("--input-file=%s" % repr(str(input_file_path)), file=error_file, flush=True)
-        print("--output-file=%s" % repr(str(output_file_path)), file=error_file, flush=True)
-
-        idbuilder_options.show(out=error_file)
-        print("=======", file=error_file, flush=True)
 
     try:
 
