@@ -17,7 +17,6 @@ import typing
 
 from kgtk.cli_argparse import KGTKArgumentParser, KGTKFiles
 
-
 # Define the name of the command and its alias.
 BROWSER_COMMAND: str = "browser"
 BROWSE_COMMAND: str = "browse"
@@ -25,7 +24,7 @@ BROWSE_COMMAND: str = "browse"
 
 def parser():
     return {
-        'aliases': [ BROWSE_COMMAND ],
+        'aliases': [BROWSE_COMMAND],
         'help': 'Run the KGTK-Browser Flask app.',
         'description': 'Open a new browser with the KGTK-Browser app running.',
     }
@@ -47,7 +46,7 @@ def add_arguments_extended(parser: KGTKArgumentParser, parsed_shared_args: Names
     # This helper function makes it easy to suppress options from
     # The help message.  The options are still there, and initialize
     # what they need to initialize.
-    def h(msg: str)->str:
+    def h(msg: str) -> str:
         if _expert:
             return msg
         else:
@@ -98,8 +97,8 @@ def run(
         verbose: bool = False,
         very_verbose: bool = False,
 
-        **kwargs # Whatever KgtkFileOptions and KgtkValueOptions want.
-)->int:
+        **kwargs  # Whatever KgtkFileOptions and KgtkValueOptions want.
+) -> int:
     # import modules locally
     from pathlib import Path
     import simplejson as json
