@@ -269,6 +269,9 @@ const Data = ({ info }) => {
           <Typography variant="subtitle1" className={classes.description}>
             {data.description}
           </Typography>
+          <Typography variant="subtitle2" className={classes.abstract}>
+            {data.abstract}
+          </Typography>
         </Paper>
       </Grid>
     )
