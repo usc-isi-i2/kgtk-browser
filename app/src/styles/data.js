@@ -24,6 +24,9 @@ const useStyles = makeStyles(theme => ({
   aliases: {
     color: '#999',
   },
+  abstract: {
+    color: '#7896b7'
+  },
   heading: {
     color: '#333',
     fontWeight: 'bold',
