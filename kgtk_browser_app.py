@@ -2141,7 +2141,8 @@ def rb_get_kb_property():
     if id is None or property is None:
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
-    property = property.upper()
+    if re.match(item_regex, property):
+        property = property.upper()
     sort_metadata = ajax_properties_sort_metadata.get(property, {})
     sort_order = sort_metadata.get('Psort_order', 'asc')
     qualifier_property = sort_metadata.get('Psort_qualifier', None)
@@ -2307,7 +2308,8 @@ def rb_get_kb_xitem():
             sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
             hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
             sorted_response_properties.extend(hcp_response)
-            response["properties"] = sorted_response_properties
+
+            response["properties"] = sort_related_item_properties(sorted_response_properties)
             response["xrefs"] = response_xrefs
 
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
