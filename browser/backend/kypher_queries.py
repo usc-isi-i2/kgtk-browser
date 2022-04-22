@@ -682,11 +682,9 @@ class KypherAPIObject(object):
         :return: KypherQuery object
         """
         query_name = f'{node}_property_values_count_query'
-        # match_clause = f'claims: (:{node})-[eid {{label: property}}]->(), ' \
-        #                f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
         match_clause = f'claims: (:{node})-[eid {{label: property}}]->(), ' \
-                       f'datatypes: (property)-[]->(rlwdt)'
-
+                       f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
+       
         return self.kapi.get_query(
             doc="""
                     Find property value counts for a Qnode
