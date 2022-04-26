@@ -2005,6 +2005,9 @@ def rb_get_related_items():
     qual_query_limit: int = args.get('qual_query_limit', type=int,
                                      default=app.config['QUAL_QUERY_LIMIT'])
 
+    if re.match(item_regex, item):
+        item = item.upper()
+
     if id is None:
         return flask.make_response({'error': 'parameter `id` required.'}, 400)
     try:
@@ -2226,6 +2229,10 @@ def rb_get_kb_xitem():
         print("qual_valuelist_max_len: %s" % repr(qual_valuelist_max_len))
         print("query_limit: %s" % repr(query_limit))
         print("qual_query_limit: %s" % repr(qual_query_limit))
+
+    if re.match(item_regex, item):
+        item = item.upper()
+
     try:
         with get_backend() as backend:
             property_values_count: List[List[str]] = backend.get_property_values_count_results(item, lang)

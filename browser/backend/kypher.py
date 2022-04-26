@@ -594,11 +594,9 @@ class BrowserBackend(object):
         return self.execute_query(query, fmt=fmt)
 
     def get_property_values_count_results(self, node, lang, fmt=None):
-        node = node.upper()
         query = self.api.GET_PROPERTY_VALUES_COUNT_QUERY(node, self.get_lang(lang))
         return self.execute_query(query, fmt=fmt)
 
     def get_incoming_edges_count_results(self, node, lang, fmt=None):
-        node = node.upper()
         query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(node, self.get_lang(lang))
         return self.execute_query(query, fmt=fmt)
