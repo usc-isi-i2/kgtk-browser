@@ -89,6 +89,13 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     fgRef.current.centerAt(node.x, node.y, 1000)
   }, [fgRef])
 
+  const getNodeColor = node => {
+    if ( node.color[0] === '#' ) {
+      return node.color
+    }
+    return d3.schemeCategory10[node.color]
+  }
+
   const renderNodeCanvasObject = useCallback((node, ctx, globalScale) => {
     const label = node.label
     const fontSize = 12 / globalScale
@@ -99,7 +106,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
     // add outline for the highlighted node
     ctx.beginPath()
     ctx.arc(node.x, node.y, node.size * 1.4, 0, 2 * Math.PI, false)
-    ctx.fillStyle = node === hoverNode ? '#d62728' : d3.schemeCategory10[node.color]
+    ctx.fillStyle = node === hoverNode ? '#d62728' : getNodeColor(node)
     ctx.fill()
 
     // render node labels only for nodes with incoming edges
@@ -111,14 +118,14 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
 
-      ctx.fillStyle = d3.schemeCategory10[node.color]
+      ctx.fillStyle = getNodeColor(node)
       if ( node.id === id ) {
         ctx.fillStyle = 'limegreen'
       }
 
       ctx.fillText(label, node.x, node.y - (node.size + 5))
     } else {
-      ctx.fillStyle = d3.schemeCategory10[node.color]
+      ctx.fillStyle = getNodeColor(node)
       if ( node.id === id ) {
         ctx.fillStyle = 'limegreen'
       }
@@ -151,12 +158,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
             width={size.width}
             height={size.height}
 
-            nodeColor={node => {
-              if ( node.color[0] === '#' ) {
-                return node.color
-              }
-              return d3.schemeCategory10[node.color]
-            }}
+            nodeColor={node => getNodeColor(node)}
 
             onNodeClick={selectNode}
             onNodeHover={handleNodeHover}
@@ -167,12 +169,7 @@ const ClassGraphViz = ({ data, loading, hideClassGraphViz, size }) => {
             linkDirectionalArrowLength={6}
             linkDirectionalArrowRelPos={1}
 
-            linkColor={link => {
-              if ( link.color[0] === "#" ) {
-                return link.color
-              }
-              return d3.schemeSet1[link.color]
-            }}
+            linkColor={link => getNodeColor(link)}
 
             nodeCanvasObject={renderNodeCanvasObject}
 
