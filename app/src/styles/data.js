@@ -31,6 +31,13 @@ const useStyles = makeStyles(theme => ({
     color: '#333',
     fontWeight: 'bold',
   },
+  instance:{
+    color: '#F32'
+  },
+  instanceStar:{
+    color: '#F32',
+    fontWeight: "bold"
+  },
   graphIcon: {
     width: theme.spacing(3),
     height: theme.spacing(3),
