@@ -261,6 +261,12 @@ const Data = ({ info }) => {
           <Typography variant="subtitle1" className={classes.nodeId}>
             { !!data.ref ? `(${data.ref})` : '' }
           </Typography>
+          <Typography variant="subtitle1" className={classes.instance}>
+              {data.instance_count}
+            </Typography>
+            <Typography variant="subtitle2" className={classes.instanceStar}>
+              {data.instance_count_star}
+            </Typography>
           {data.aliases && (
             <Typography variant="subtitle2" className={classes.aliases}>
               {data.aliases.join(' | ')}
