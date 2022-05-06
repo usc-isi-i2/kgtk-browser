@@ -84,6 +84,8 @@ KG_IMAGES_LABEL = 'P18'
 KG_FANOUTS_LABEL = 'count_distinct_properties'
 KG_DATATYPES_LABEL = 'datatype'
 KG_ABSTRACT_LABEL = 'Pshort_abstract'
+KG_INSTANCE_COUNT = 'Pinstance_count'
+KG_INSTANCE_COUNT_STAR = 'Pinstance_count_star'
 
 # number of parallel kypher api objects
 KYPHER_OBJECTS_NUM = 5
