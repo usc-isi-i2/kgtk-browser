@@ -2216,6 +2216,8 @@ def rb_get_kb_xitem():
                              default=app.config['VERBOSE'])
 
     abstract_property: str = app.config['KG_ABSTRACT_LABEL']
+    instance_count_property = app.config['KG_INSTANCE_COUNT']
+    instance_count_start_property = app.config['KG_INSTANCE_COUNT_STAR']
 
     if verbose:
         print("rb_get_kb_item: %s" % repr(item))
@@ -2279,6 +2281,8 @@ def rb_get_kb_xitem():
 
             # get the wikipedia abstract from the tuple
             response['abstract'] = ''
+            response['instance_count'] = ''
+            response['instance_count_star'] = ''
 
             for item_edge in _item_edges:
                 if item_edge[2] == abstract_property:
@@ -2286,6 +2290,10 @@ def rb_get_kb_xitem():
                     if abstract.endswith('@en'):
                         abstract = abstract[:-3].replace("'", "").replace('"', '')
                     response['abstract'] = abstract
+                elif item_edge[2] == instance_count_property:
+                    response['instance_count'] = item_edge[3]
+                elif item_edge[2] == instance_count_start_property:
+                    response['instance_count_star'] = item_edge[3]
                 else:
                     item_edges.append(item_edge)
 
