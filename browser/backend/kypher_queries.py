@@ -684,7 +684,7 @@ class KypherAPIObject(object):
         query_name = f'{node}_property_values_count_query'
         match_clause = f'claims: (:{node})-[eid {{label: property}}]->(), ' \
                        f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
-       
+
         return self.kapi.get_query(
             doc="""
                     Find property value counts for a Qnode
@@ -783,13 +783,19 @@ class KypherAPIObject(object):
                                                          limit: int,
                                                          sort_order: str,
                                                          qualifier_property: str,
-                                                         sort_by: str):
+                                                         sort_by: str,
+                                                         is_sort_by_quantity: bool):
 
         where_clause = f'n1="{node}" AND rl="{property}"'
         if qualifier_property is None:
             optional_qualifier_where_clause = "1=1"
         else:
             optional_qualifier_where_clause = f'ql="{qualifier_property}"'
+
+        if is_sort_by_quantity:
+            order_clause = f'cast({sort_by}, float) {sort_order}'
+        else:
+            order_clause = f'{sort_by} {sort_order}'
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
@@ -830,7 +836,7 @@ class KypherAPIObject(object):
                 'rlwdt as wikidatatype',
             limit=f"{limit}",
             skip=skip,
-            order=f'{sort_by} {sort_order}'
+            order=order_clause
         )
 
     def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
