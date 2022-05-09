@@ -1852,86 +1852,6 @@ def rb_send_kb_categories(backend,
         response_categories.append(response)
 
 
-def rb_send_kb_item(item: str,
-                    lang: str = "en",
-                    proplist_max_len: int = 0,
-                    valuelist_max_len: int = 0,
-                    query_limit: int = 10000,
-                    qual_proplist_max_len: int = 0,
-                    qual_valuelist_max_len: int = 0,
-                    qual_query_limit: int = 10000,
-                    verbose: bool = False):
-    try:
-        with get_backend() as backend:
-            rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
-
-            verbose2: bool = verbose  # ***
-
-            if verbose2:
-                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
-                      file=sys.stderr, flush=True)  # ***
-            item_edges: List[List[str]] = backend.rb_get_node_edges(item, lang=lang, limit=query_limit)
-            if len(item_edges) > query_limit:  # Forcibly truncate!
-                item_edges = item_edges[:query_limit]
-            if verbose2:
-                print("Fetched %d item edges" % len(item_edges), file=sys.stderr, flush=True)  # ***
-
-            # item_inverse_edges: List[List[str]] = backend.rb_get_node_inverse_edges(item, lang=lang)
-            # item_inverse_qualifier_edges: List[List[str]] = backend.rb_get_node_inverse_edge_
-            # qualifiers(item, lang=lang)
-            # if verbose:
-            #     print("Fetching category edges", file=sys.stderr, flush=True) # ***
-            # item_category_edges: List[List[str]] = backend.rb_get_node_categories(item, lang=lang)
-            if verbose2:
-                print("Done fetching edges", file=sys.stderr, flush=True)  # ***
-
-            response: MutableMapping[str, any] = dict()
-            response["ref"] = item
-
-            item_labels: List[List[str]] = backend.get_node_labels(item, lang=lang)
-            response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
-
-            item_aliases: List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
-            response["aliases"] = [rb_unstringify(x) for x in item_aliases]
-
-            item_descriptions: List[List[str]] = backend.get_node_descriptions(item, lang=lang)
-            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
-
-            response_properties: List[MutableMapping[str, any]]
-            response_xrefs: List[MutableMapping[str, any]]
-            response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
-                                                                                  item,
-                                                                                  item_edges,
-                                                                                  proplist_max_len=proplist_max_len,
-                                                                                  valuelist_max_len=valuelist_max_len,
-                                                                                  qual_proplist_max_len=qual_proplist_max_len,
-                                                                                  qual_valuelist_max_len=qual_valuelist_max_len,
-                                                                                  qual_query_limit=qual_query_limit,
-                                                                                  lang=lang,
-                                                                                  verbose=verbose)
-            response["properties"] = response_properties
-            response["xrefs"] = response_xrefs
-
-            # response_categories: List[MutableMapping[str, any]] = [ ]
-            # response["categories"] = response_categories
-            # rb_send_kb_categories(backend, item, response_categories, item_category_edges, lang=lang, verbose=verbose)
-
-            # We cound assume a link to Wikipedia, but that won't be valid when
-            # using KGTK for other data sources.
-            # response["url"] = "https://sample.url"
-            # response["document"] = "Sample document: " + item
-
-            # The data source would also, presumably, be responsible for providing images.
-            # response["gallery"] = [ ] # This is required by kb.js as a minimum element.
-            response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
-
-            return flask.jsonify(response), 200
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        traceback.print_exc()
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
 def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int,
                                          count_index: int = 1) -> (Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
     high_cardinality_properties = list()
@@ -2150,8 +2070,11 @@ def rb_get_kb_property():
     sort_order = sort_metadata.get('Psort_order', 'asc')
     qualifier_property = sort_metadata.get('Psort_qualifier', None)
 
+    is_sort_by_quantity = False
     if qualifier_property is not None:
         sort_by = 'qn2label' if sort_metadata['qualifier_datatype'] == 'wikibase-item' else 'qn2'
+        if sort_metadata['qualifier_datatype'] == 'quantity':
+            is_sort_by_quantity = True
     else:
         sort_by = 'n2label' if sort_metadata.get('datatype', 'wikibase-item') == 'wikibase-item' else 'n2'
 
@@ -2164,7 +2087,8 @@ def rb_get_kb_property():
                                                                                   qualifier_property=qualifier_property,
                                                                                   sort_by=sort_by,
                                                                                   lang=lang,
-                                                                                  sort_order=sort_order)
+                                                                                  sort_order=sort_order,
+                                                                                  is_sort_by_quantity=is_sort_by_quantity)
 
             response: MutableMapping[str, any] = dict()
 
