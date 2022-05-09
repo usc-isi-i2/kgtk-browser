@@ -492,6 +492,7 @@ class BrowserBackend(object):
                                                        lang=None,
                                                        sort_order: str = 'asc',
                                                        sort_by: str = 'qn2',
+                                                       is_sort_by_quantity: bool = False,
                                                        fmt=None):
         """Retrieve all edges that have 'node' as their node1 for property=property with qualifiers
         """
@@ -503,7 +504,8 @@ class BrowserBackend(object):
                                                                           limit,
                                                                           sort_order,
                                                                           qualifier_property,
-                                                                          sort_by)
+                                                                          sort_by,
+                                                                          is_sort_by_quantity)
         return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_one_property_related_edges(self, node, property: str, limit: int, skip: int, lang=None, fmt=None):
