@@ -6,7 +6,13 @@ from pathlib import Path
 from kgtk.io.kgtkreader import KgtkReader, KgtkReaderMode
 
 
-def read_sorting_metadata_ajax(metadata_file):
+def read_sorting_metadata_ajax(metadata_file, metadata_supplementary_file):
+    sorting_metadata = read_metadata_file(metadata_file)
+    sorting_metadata.update(read_metadata_file(metadata_supplementary_file))
+    return sorting_metadata
+
+
+def read_metadata_file(metadata_file):
     kr: KgtkReader = KgtkReader.open(Path(metadata_file),
                                      error_file=sys.stderr,
                                      mode=KgtkReaderMode.EDGE
@@ -95,7 +101,9 @@ VALUELIST_MAX_LEN: int = 100
 PROPERTY_VALUES_COUNT_LIMIT: int = 10
 
 KGTK_BROWSER_SORTING_METADATA = 'kgtk_browser_sorting_metadata.tsv'
+KGTK_BROWSER_SORTING_METADATA_SUPPLEMENTARY = 'kgtk_browser_sorting_metadata_supplementary.tsv'
 
 PROPERTIES_SORT_METADATA = json.load(open('sync_properties_sort_metadata.json'))
 SYNC_PROPERTIES_SORT_METADATA = PROPERTIES_SORT_METADATA['sync_properties']
-AJAX_PROPERTIES_SORT_METADATA = read_sorting_metadata_ajax(KGTK_BROWSER_SORTING_METADATA)
+AJAX_PROPERTIES_SORT_METADATA = read_sorting_metadata_ajax(KGTK_BROWSER_SORTING_METADATA,
+                                                           KGTK_BROWSER_SORTING_METADATA_SUPPLEMENTARY)
