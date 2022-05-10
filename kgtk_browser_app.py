@@ -150,6 +150,7 @@ app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
 app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
 sync_properties_sort_metadata = app.config['SYNC_PROPERTIES_SORT_METADATA']
 ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
+profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -1870,6 +1871,11 @@ def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple
         value: KgtkValue = KgtkValue(wikidatatype)
         datatype = rb_find_type(property, value)
         label_ = rb_unstringify(label, property)
+        if property in profiled_property_metadata:
+            profiled = '1'
+        else:
+            profiled = '0'
+
         response.append(
             {
                 'property': label_,
@@ -1877,7 +1883,8 @@ def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple
                 'type': datatype,
                 'count': count,
                 'values': [],
-                'mode': 'ajax'
+                'mode': 'ajax',
+                'profiled': profiled
             }
 
         )
@@ -2243,6 +2250,10 @@ def rb_get_kb_xitem():
             for response_property in response_properties:
                 response_property['count'] = normal_property_dict[response_property['ref']]
                 response_property['mode'] = 'sync'
+                if response_property['ref'] in profiled_property_metadata:
+                    response_property['profiled'] = '1'
+                else:
+                    response_property['profiled'] = '0'
 
             sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
             hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
