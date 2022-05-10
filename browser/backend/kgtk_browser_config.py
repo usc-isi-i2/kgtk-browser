@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from kgtk.io.kgtkreader import KgtkReader, KgtkReaderMode
 
+PROFILED_PROPERTY_METADATA = {}
+
 
 def read_sorting_metadata_ajax(metadata_file, metadata_supplementary_file):
     sorting_metadata = read_metadata_file(metadata_file)
@@ -27,6 +29,9 @@ def read_metadata_file(metadata_file):
         node1 = row[node1_idx]
         label = row[label_idx]
         node2 = row[node2_idx]
+
+        if label == 'P7482' and node2 == 'Q108739856':
+            PROFILED_PROPERTY_METADATA[node1] = 1
 
         if node1 not in sorting_metadata and '-' not in node1:
             sorting_metadata[node1] = dict()
