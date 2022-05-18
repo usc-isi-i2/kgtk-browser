@@ -32,10 +32,13 @@ const useStyles = makeStyles(theme => ({
     fontWeight: 'bold',
   },
   instance:{
-    color: '#F32'
+    color: '#e0b0ff'
+  },
+  subclassStar:{
+    color: '#9400d3'
   },
   instanceStar:{
-    color: '#F32',
+    color: '#ba55d3',
     fontWeight: "bold"
   },
   graphIcon: {
