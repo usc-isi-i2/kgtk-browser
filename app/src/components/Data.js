@@ -260,20 +260,21 @@ const Data = ({ info }) => {
             )}
           { data.instance_count &&
               <Tooltip title="number of instances">
-                <Chip label={ data.instance_count } className={classes.instance} variant='outlined'></Chip>
+                <Chip label={ formatNumber(data.instance_count) } className={classes.instance} variant='outlined'></Chip>
               </Tooltip>
           }
           { data.instance_count_star &&
              <Tooltip title="number of instances including subclasses">
-              <Chip label={ data.instance_count_star } className={classes.instanceStar} variant='outlined'></Chip>
+              <Chip label={ formatNumber(data.instance_count_star) } className={classes.instanceStar} variant='outlined'></Chip>
               </Tooltip>
           }
           { data.subclass_count_star &&
              <Tooltip title="number of subclasses">
-              <Chip label={ data.subclass_count_star } className={classes.subclassStar} variant='outlined'></Chip>
+              <Chip label={ formatNumber(data.subclass_count_star) } className={classes.subclassStar} variant='outlined'></Chip>
               </Tooltip>
           }
-          
+
+
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
             { !!data.ref ? `(${data.ref})` : '' }
