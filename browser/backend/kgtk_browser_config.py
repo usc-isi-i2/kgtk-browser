@@ -97,6 +97,8 @@ KG_DATATYPES_LABEL = 'datatype'
 KG_ABSTRACT_LABEL = 'Pshort_abstract'
 KG_INSTANCE_COUNT = 'Pinstance_count'
 KG_INSTANCE_COUNT_STAR = 'Pinstance_count_star'
+KG_SUBCLASS_COUNT_STAR = 'Psubclass_count_star'
+KG_HIDE_PROPERTIES_RELATED_ITEMS = ["Pproperty_domain"]
 
 # number of parallel kypher api objects
 KYPHER_OBJECTS_NUM = 5
