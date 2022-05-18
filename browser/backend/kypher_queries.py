@@ -880,7 +880,7 @@ class KypherAPIObject(object):
             limit="$LIMIT"
         )
 
-    def GET_INCOMING_EDGES_COUNT_QUERY(self, node: str, lang) -> kapi.KypherQuery:
+    def GET_INCOMING_EDGES_COUNT_QUERY(self, node: str, lang: str, properties_to_hide: str) -> kapi.KypherQuery:
         """
         This function returns all the incoming edges counts per property for a Qnode.
         :param node: Qnode
@@ -888,6 +888,7 @@ class KypherAPIObject(object):
         """
         query_name = f'{node}_incoming_edges_count_query'
         match_clause = f'claims: ()-[eid {{label: property}}]->(:{node})'
+        where_clause = f'NOT property IN [{properties_to_hide}]'
         return self.kapi.get_query(
             doc="""
                     Find incoming properties for the qnode and their counts
@@ -896,6 +897,7 @@ class KypherAPIObject(object):
             inputs=('claims', 'labels'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause,
+            where=where_clause,
             opt='$labels: (property)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
             owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
             ret='distinct property as node1, count(eid) as node2, llabel as property_label'
