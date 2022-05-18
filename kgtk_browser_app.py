@@ -1932,6 +1932,9 @@ def rb_get_related_items():
     qual_query_limit: int = args.get('qual_query_limit', type=int,
                                      default=app.config['QUAL_QUERY_LIMIT'])
 
+    properties_to_hide = app.config['KG_HIDE_PROPERTIES_RELATED_ITEMS']
+    properties_to_hide_str = ", ".join(list(map(lambda x: '"{}"'.format(x), [x for x in properties_to_hide])))
+
     if re.match(item_regex, item):
         item = item.upper()
 
@@ -1939,7 +1942,7 @@ def rb_get_related_items():
         return flask.make_response({'error': 'parameter `id` required.'}, 400)
     try:
         with get_backend() as backend:
-            incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang)
+            incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang, properties_to_hide_str)
             hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
                                                                                     properties_values_limit)
             normal_property_dict = {}
@@ -2151,7 +2154,8 @@ def rb_get_kb_xitem():
 
     abstract_property: str = app.config['KG_ABSTRACT_LABEL']
     instance_count_property = app.config['KG_INSTANCE_COUNT']
-    instance_count_start_property = app.config['KG_INSTANCE_COUNT_STAR']
+    instance_count_star_property = app.config['KG_INSTANCE_COUNT_STAR']
+    subclass_count_star_property = app.config['KG_SUBCLASS_COUNT_STAR']
 
     if verbose:
         print("rb_get_kb_item: %s" % repr(item))
@@ -2221,6 +2225,7 @@ def rb_get_kb_xitem():
             response['abstract'] = ''
             response['instance_count'] = ''
             response['instance_count_star'] = ''
+            response['subclass_count_star'] = ''
 
             for item_edge in _item_edges:
                 if item_edge[2] == abstract_property:
@@ -2230,8 +2235,10 @@ def rb_get_kb_xitem():
                     response['abstract'] = abstract
                 elif item_edge[2] == instance_count_property:
                     response['instance_count'] = item_edge[3]
-                elif item_edge[2] == instance_count_start_property:
+                elif item_edge[2] == instance_count_star_property:
                     response['instance_count_star'] = item_edge[3]
+                elif item_edge[2] == subclass_count_star_property:
+                    response['subclass_count_star'] = item_edge[3]
                 else:
                     item_edges.append(item_edge)
 
