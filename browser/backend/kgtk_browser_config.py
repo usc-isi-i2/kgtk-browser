@@ -5,8 +5,16 @@ import sys
 from pathlib import Path
 from kgtk.io.kgtkreader import KgtkReader, KgtkReaderMode
 
+PROFILED_PROPERTY_METADATA = {}
 
-def read_sorting_metadata_ajax(metadata_file):
+
+def read_sorting_metadata_ajax(metadata_file, metadata_supplementary_file):
+    sorting_metadata = read_metadata_file(metadata_file)
+    sorting_metadata.update(read_metadata_file(metadata_supplementary_file))
+    return sorting_metadata
+
+
+def read_metadata_file(metadata_file):
     kr: KgtkReader = KgtkReader.open(Path(metadata_file),
                                      error_file=sys.stderr,
                                      mode=KgtkReaderMode.EDGE
@@ -21,6 +29,9 @@ def read_sorting_metadata_ajax(metadata_file):
         node1 = row[node1_idx]
         label = row[label_idx]
         node2 = row[node2_idx]
+
+        if label == 'P7482' and node2 == 'Q108739856':
+            PROFILED_PROPERTY_METADATA[node1] = 1
 
         if node1 not in sorting_metadata and '-' not in node1:
             sorting_metadata[node1] = dict()
@@ -83,6 +94,11 @@ KG_DESCRIPTIONS_LABEL = 'description'
 KG_IMAGES_LABEL = 'P18'
 KG_FANOUTS_LABEL = 'count_distinct_properties'
 KG_DATATYPES_LABEL = 'datatype'
+KG_ABSTRACT_LABEL = 'Pshort_abstract'
+KG_INSTANCE_COUNT = 'Pinstance_count'
+KG_INSTANCE_COUNT_STAR = 'Pinstance_count_star'
+KG_SUBCLASS_COUNT_STAR = 'Psubclass_count_star'
+KG_HIDE_PROPERTIES_RELATED_ITEMS = ["Pproperty_domain"]
 
 # number of parallel kypher api objects
 KYPHER_OBJECTS_NUM = 5
@@ -92,7 +108,9 @@ VALUELIST_MAX_LEN: int = 100
 PROPERTY_VALUES_COUNT_LIMIT: int = 10
 
 KGTK_BROWSER_SORTING_METADATA = 'kgtk_browser_sorting_metadata.tsv'
+KGTK_BROWSER_SORTING_METADATA_SUPPLEMENTARY = 'kgtk_browser_sorting_metadata_supplementary.tsv'
 
 PROPERTIES_SORT_METADATA = json.load(open('sync_properties_sort_metadata.json'))
 SYNC_PROPERTIES_SORT_METADATA = PROPERTIES_SORT_METADATA['sync_properties']
-AJAX_PROPERTIES_SORT_METADATA = read_sorting_metadata_ajax(KGTK_BROWSER_SORTING_METADATA)
+AJAX_PROPERTIES_SORT_METADATA = read_sorting_metadata_ajax(KGTK_BROWSER_SORTING_METADATA,
+                                                           KGTK_BROWSER_SORTING_METADATA_SUPPLEMENTARY)

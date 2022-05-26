@@ -24,9 +24,22 @@ const useStyles = makeStyles(theme => ({
   aliases: {
     color: '#999',
   },
+  abstract: {
+    color: '#7896b7'
+  },
   heading: {
     color: '#333',
     fontWeight: 'bold',
+  },
+  instance:{
+    color: '#e0b0ff'
+  },
+  subclassStar:{
+    color: '#9400d3'
+  },
+  instanceStar:{
+    color: '#ba55d3',
+    fontWeight: "bold"
   },
   graphIcon: {
     width: theme.spacing(3),

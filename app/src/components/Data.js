@@ -15,6 +15,7 @@ import CircularProgress from '@material-ui/core/CircularProgress'
 import IconButton from '@material-ui/core/IconButton'
 import Pagination from '@material-ui/lab/Pagination'
 import Tooltip from '@material-ui/core/Tooltip'
+import { Chip } from '@material-ui/core'
 
 import GraphIcon from './GraphIcon'
 import ClassGraphViz from './ClassGraphViz'
@@ -257,6 +258,23 @@ const Data = ({ info }) => {
                 </IconButton>
               </Tooltip>
             )}
+          { data.instance_count &&
+              <Tooltip title="number of instances">
+                <Chip label={ formatNumber(data.instance_count) } className={classes.instance} variant='outlined'></Chip>
+              </Tooltip>
+          }
+          { data.instance_count_star &&
+             <Tooltip title="number of instances including subclasses">
+              <Chip label={ formatNumber(data.instance_count_star) } className={classes.instanceStar} variant='outlined'></Chip>
+              </Tooltip>
+          }
+          { data.subclass_count_star &&
+             <Tooltip title="number of subclasses">
+              <Chip label={ formatNumber(data.subclass_count_star) } className={classes.subclassStar} variant='outlined'></Chip>
+              </Tooltip>
+          }
+
+
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
             { !!data.ref ? `(${data.ref})` : '' }
@@ -268,6 +286,9 @@ const Data = ({ info }) => {
           )}
           <Typography variant="subtitle1" className={classes.description}>
             {data.description}
+          </Typography>
+          <Typography variant="subtitle2" className={classes.abstract}>
+            {data.abstract}
           </Typography>
         </Paper>
       </Grid>

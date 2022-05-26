@@ -492,6 +492,7 @@ class BrowserBackend(object):
                                                        lang=None,
                                                        sort_order: str = 'asc',
                                                        sort_by: str = 'qn2',
+                                                       is_sort_by_quantity: bool = False,
                                                        fmt=None):
         """Retrieve all edges that have 'node' as their node1 for property=property with qualifiers
         """
@@ -503,7 +504,8 @@ class BrowserBackend(object):
                                                                           limit,
                                                                           sort_order,
                                                                           qualifier_property,
-                                                                          sort_by)
+                                                                          sort_by,
+                                                                          is_sort_by_quantity)
         return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_one_property_related_edges(self, node, property: str, limit: int, skip: int, lang=None, fmt=None):
@@ -594,11 +596,9 @@ class BrowserBackend(object):
         return self.execute_query(query, fmt=fmt)
 
     def get_property_values_count_results(self, node, lang, fmt=None):
-        node = node.upper()
         query = self.api.GET_PROPERTY_VALUES_COUNT_QUERY(node, self.get_lang(lang))
         return self.execute_query(query, fmt=fmt)
 
-    def get_incoming_edges_count_results(self, node, lang, fmt=None):
-        node = node.upper()
-        query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(node, self.get_lang(lang))
+    def get_incoming_edges_count_results(self, node, lang, properties_to_hide_str, fmt=None):
+        query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(node, self.get_lang(lang), properties_to_hide_str)
         return self.execute_query(query, fmt=fmt)

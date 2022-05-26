@@ -27,6 +27,7 @@ RUN pip install -r /src/requirements.txt
 COPY kgtk_browser_app.py /src/
 COPY sync_properties_sort_metadata.json /src/
 COPY kgtk_browser_sorting_metadata.tsv /src/
+COPY kgtk_browser_sorting_metadata_supplementary.tsv /src/
 COPY browser/backend/ /src/browser/backend/
 COPY app/ /src/app/
 
