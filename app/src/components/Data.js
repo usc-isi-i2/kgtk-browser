@@ -277,7 +277,17 @@ const Data = ({ info }) => {
 
           </Typography>
           <Typography variant="subtitle1" className={classes.nodeId}>
-            { !!data.ref ? `(${data.ref})` : '' }
+            { !!data.ref ? <Link
+                              className={
+                                classNames(classes.link, {
+                                  wikidata: true
+                                })
+                              }
+                              to={{ pathname: `https://www.wikidata.org/wiki/${data.ref}` }}
+                              target='_blank'
+                              >
+                              {data.ref}
+                    </Link> : '' }
           </Typography>
           {data.aliases && (
             <Typography variant="subtitle2" className={classes.aliases}>
@@ -308,7 +318,54 @@ const Data = ({ info }) => {
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
-            {data.properties && data.properties.map((property, index) => (
+            {data.properties && data.properties.filter(property => property.profiled === false).map((property, index) => (
+              <Grid container key={index} className={classes.row} spacing={0}>
+                <Grid item xs={3}>
+                  {property.url || property.ref ? (
+                    <Link
+                      className={
+                        classNames(classes.link, {
+                          property: true,
+                          externalLink: !!property.url,
+                        })
+                      }
+                      to={{ pathname: getURL(property) }}
+                      target={!!property.url ? '_blank' : ''}
+                      title={property.url ? property.url : property.property}>
+                      {property.property}
+                    </Link>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      title={property.property}
+                      className={classes.text}>
+                      {property.property}
+                    </Typography>
+                  )}
+                </Grid>
+                {renderPropertyValues(property)}
+              </Grid>
+            ))}
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+      </Grid>
+    )
+  }
+
+  const renderProfiledProperties = () => {
+    return (
+      <Grid item xs={12}>
+        <ExpansionPanel
+          square={true}
+          defaultExpanded={false}
+          TransitionProps={{ timeout: 0 }}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography variant="h6" className={classes.heading}>
+              Profiled Properties
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={classes.paper}>
+            {data.properties && data.properties.filter(property => property.profiled === true).map((property, index) => (
               <Grid container key={index} className={classes.row} spacing={0}>
                 <Grid item xs={3}>
                   {property.url || property.ref ? (
@@ -948,6 +1005,7 @@ const Data = ({ info }) => {
           {renderDescription()}
           {renderProperties()}
           {renderRelatedItems()}
+          {renderProfiledProperties()}
         </Grid>
       </Grid>
       <Grid item xs={4} style={{ 'opacity': loading ? '0.25' : '1' }}>
