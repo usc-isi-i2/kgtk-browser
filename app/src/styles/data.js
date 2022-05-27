@@ -95,6 +95,11 @@ const useStyles = makeStyles(theme => ({
     '&.item': {
       color: '#de6720',
     },
+    '&.wikidata' :{
+      color: '#66cdaa ',
+      fontWeight: 'bold',
+      fontSize: '18px'
+    }
   },
   text: {
     display: 'inline-block',
