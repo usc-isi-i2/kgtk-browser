@@ -1872,9 +1872,9 @@ def create_intial_hc_properties_response(high_cardinality_properties: List[Tuple
         datatype = rb_find_type(property, value)
         label_ = rb_unstringify(label, property)
         if property in profiled_property_metadata:
-            profiled = '1'
+            profiled = True
         else:
-            profiled = '0'
+            profiled = False
 
         response.append(
             {
@@ -2258,9 +2258,9 @@ def rb_get_kb_xitem():
                 response_property['count'] = normal_property_dict[response_property['ref']]
                 response_property['mode'] = 'sync'
                 if response_property['ref'] in profiled_property_metadata:
-                    response_property['profiled'] = '1'
+                    response_property['profiled'] = True
                 else:
-                    response_property['profiled'] = '0'
+                    response_property['profiled'] = False
 
             sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
             hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
