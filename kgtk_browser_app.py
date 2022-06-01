@@ -55,11 +55,13 @@ import time
 # http://ckg07.isi.edu:1234/kb
 # http://ckg07.isi.edu:1234/kb/Q42
 
+STATIC_URL_PATH = '/'
+if 'KGTK_BROWSER_STATIC_URL' in os.environ:
+    STATIC_URL_PATH = os.environ['KGTK_BROWSER_STATIC_URL']
 
 # Flask application
-
 app = flask.Flask(__name__,
-                  static_url_path='/browser',
+                  static_url_path=STATIC_URL_PATH,
                   static_folder='app/build',
                   template_folder='web/templates')
 
