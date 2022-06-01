@@ -185,8 +185,8 @@ def get_info():
     return flask.jsonify(info), 200
 
 
-@app.route('/browser', methods=['GET'])
-@app.route('/browser/<string:node>', methods=['GET'])
+@app.route('/', methods=['GET'])
+@app.route('/<string:node>', methods=['GET'])
 def rb_get_kb(node=None):
     """This is the basic entrypoint for starting the KGTK browser.
        It sends the initial HTML file, "kb.html".
