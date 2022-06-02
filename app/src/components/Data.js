@@ -221,6 +221,15 @@ const Data = ({ info }) => {
     return url
   }
 
+  const getWikidataURL = node => {
+    if (node.startsWith('Q')) {
+      return `https://www.wikidata.org/wiki/${ node }`
+    }
+    if (node.startsWith('P')) {
+      return `https://www.wikidata.org/wiki/Property:${ node }`
+    }
+  }
+
   const showClassGraphViz = () => {
     setClassGraphViz(true)
   }
@@ -283,7 +292,7 @@ const Data = ({ info }) => {
                                   wikidata: true
                                 })
                               }
-                              to={{ pathname: `https://www.wikidata.org/wiki/${data.ref}` }}
+                              to={{ pathname: getWikidataURL(`${data.ref}`)}}
                               target='_blank'
                               >
                               {data.ref}
@@ -353,6 +362,7 @@ const Data = ({ info }) => {
   }
 
   const renderProfiledProperties = () => {
+    if (data.properties && !data.properties.filter(property => property.profiled === true).length ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
@@ -361,7 +371,7 @@ const Data = ({ info }) => {
           TransitionProps={{ timeout: 0 }}>
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
             <Typography variant="h6" className={classes.heading}>
-              Profiled Properties
+              Profiling Data
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
