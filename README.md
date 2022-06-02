@@ -121,9 +121,10 @@ Open a terminal and type in the following commands
 cd kgtk-browser
 export REACT_APP_FRONTEND_URL='/browser'
 export REACT_APP_BACKEND_URL='/browser'
+
+cd app
 npm run build
 
 cd ..
-
 docker build -t docker-reg.ads.isi.edu:443/kgtk-browser:06022022 . && docker push docker-reg.ads.isi.edu:443/kgtk-browser:06022022
 ```
