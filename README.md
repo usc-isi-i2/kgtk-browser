@@ -110,3 +110,20 @@ NOTE: using development mode turns on JSON pretty-printing which about
 doubles the size of response objects.  For faster server response,
 set `FLASK_ENV` to `production`.
 
+
+## Build a docker image for [KGTK Browser](https://kgtk.isi.edu/browser/) deployment (internal use only)
+
+Running the following commands will create and push a new docker image with  the tag `kgtk-browser:06022022`
+
+Open a terminal and type in the following commands
+
+```
+cd kgtk-browser
+export REACT_APP_FRONTEND_URL='/browser'
+export REACT_APP_BACKEND_URL='/browser'
+npm run build
+
+cd ..
+
+docker build -t docker-reg.ads.isi.edu:443/kgtk-browser:06022022 . && docker push docker-reg.ads.isi.edu:443/kgtk-browser:06022022
+```
