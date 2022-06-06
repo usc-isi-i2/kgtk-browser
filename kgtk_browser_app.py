@@ -55,11 +55,13 @@ import time
 # http://ckg07.isi.edu:1234/kb
 # http://ckg07.isi.edu:1234/kb/Q42
 
+STATIC_URL_PATH = '/'
+if 'KGTK_BROWSER_STATIC_URL' in os.environ:
+    STATIC_URL_PATH = os.environ['KGTK_BROWSER_STATIC_URL']
 
 # Flask application
-
 app = flask.Flask(__name__,
-                  static_url_path='/browser',
+                  static_url_path=STATIC_URL_PATH,
                   static_folder='app/build',
                   template_folder='web/templates')
 
@@ -183,8 +185,8 @@ def get_info():
     return flask.jsonify(info), 200
 
 
-@app.route('/browser', methods=['GET'])
-@app.route('/browser/<string:node>', methods=['GET'])
+@app.route('/', methods=['GET'])
+@app.route('/<string:node>', methods=['GET'])
 def rb_get_kb(node=None):
     """This is the basic entrypoint for starting the KGTK browser.
        It sends the initial HTML file, "kb.html".

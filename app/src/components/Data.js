@@ -46,6 +46,7 @@ const Data = ({ info }) => {
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
 
   const [classGraphViz, setClassGraphViz] = useState(false)
+  const [showProfiledProperties, setShowProfiledProperties] = useState(false)
 
   useEffect(() => {
 
@@ -54,6 +55,7 @@ const Data = ({ info }) => {
     setRelatedProperties([])
     setClassGraphData(null)
     setClassGraphViz(false)
+    setShowProfiledProperties(false)
 
     // fetch item data
     setLoading(true)
@@ -221,6 +223,15 @@ const Data = ({ info }) => {
     return url
   }
 
+  const getWikidataURL = node => {
+    if (node.startsWith('Q')) {
+      return `https://www.wikidata.org/wiki/${ node }`
+    }
+    if (node.startsWith('P')) {
+      return `https://www.wikidata.org/wiki/Property:${ node }`
+    }
+  }
+  
   const showClassGraphViz = () => {
     setClassGraphViz(true)
   }
@@ -283,7 +294,7 @@ const Data = ({ info }) => {
                                   wikidata: true
                                 })
                               }
-                              to={{ pathname: `https://www.wikidata.org/wiki/${data.ref}` }}
+                              to={{ pathname: getWikidataURL(`${data.ref}`)}}
                               target='_blank'
                               >
                               {data.ref}
@@ -353,15 +364,17 @@ const Data = ({ info }) => {
   }
 
   const renderProfiledProperties = () => {
+    if (data.properties && !data.properties.filter(property => property.profiled === true).length ) { return }
     return (
       <Grid item xs={12}>
         <ExpansionPanel
           square={true}
           defaultExpanded={false}
+          expanded={showProfiledProperties}
           TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} onClick={() => setShowProfiledProperties(!showProfiledProperties)}>
             <Typography variant="h6" className={classes.heading}>
-              Profiled Properties
+              Profiling Data
             </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={classes.paper}>
