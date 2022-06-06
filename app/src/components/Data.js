@@ -46,6 +46,7 @@ const Data = ({ info }) => {
   const [loadingClassGraphData, setLoadingClassGraphData] = useState(false)
 
   const [classGraphViz, setClassGraphViz] = useState(false)
+  const [showProfiledProperties, setShowProfiledProperties] = useState(false)
 
   useEffect(() => {
 
@@ -54,6 +55,7 @@ const Data = ({ info }) => {
     setRelatedProperties([])
     setClassGraphData(null)
     setClassGraphViz(false)
+    setShowProfiledProperties(false)
 
     // fetch item data
     setLoading(true)
@@ -229,7 +231,7 @@ const Data = ({ info }) => {
       return `https://www.wikidata.org/wiki/Property:${ node }`
     }
   }
-
+  
   const showClassGraphViz = () => {
     setClassGraphViz(true)
   }
@@ -368,8 +370,9 @@ const Data = ({ info }) => {
         <ExpansionPanel
           square={true}
           defaultExpanded={false}
+          expanded={showProfiledProperties}
           TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} onClick={() => setShowProfiledProperties(!showProfiledProperties)}>
             <Typography variant="h6" className={classes.heading}>
               Profiling Data
             </Typography>
