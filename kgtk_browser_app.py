@@ -162,6 +162,7 @@ for i in range(app.config['KYPHER_OBJECTS_NUM']):
     kgtk_backends[i] = _api
 
 item_regex = re.compile(r"^[q|Q|p|P]\d+$")
+wikipedia_url_regex = re.compile(r'https:\/\/(.*)\.wikipedia\.org\/wiki\/(.*)')
 
 
 def get_backend():
@@ -2158,6 +2159,9 @@ def rb_get_kb_xitem():
     instance_count_property = app.config['KG_INSTANCE_COUNT']
     instance_count_star_property = app.config['KG_INSTANCE_COUNT_STAR']
     subclass_count_star_property = app.config['KG_SUBCLASS_COUNT_STAR']
+    wikipedia_url_property = app.config['KG_WIKIPEDIA_URL_LABEL']
+
+    wikipedia_urls = []
 
     if verbose:
         print("rb_get_kb_item: %s" % repr(item))
@@ -2241,6 +2245,13 @@ def rb_get_kb_xitem():
                     response['instance_count_star'] = item_edge[3]
                 elif item_edge[2] == subclass_count_star_property:
                     response['subclass_count_star'] = item_edge[3]
+                elif item_edge[2] == wikipedia_url_property:
+                    wiki_lang, wiki_url_part = parse_wikipedia_url(item_edge[3])
+                    wikipedia_urls.append({
+                        'lang': wiki_lang,
+                        'text': wiki_url_part,
+                        'url': f'https://{wiki_lang}.wikipedia.org/wiki/{wiki_url_part}'
+                    })
                 else:
                     item_edges.append(item_edge)
 
@@ -2270,6 +2281,7 @@ def rb_get_kb_xitem():
 
             response["properties"] = sort_related_item_properties(sorted_response_properties)
             response["xrefs"] = response_xrefs
+            response['sitelinks'] = wikipedia_urls
 
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
 
@@ -2611,6 +2623,14 @@ def find_sort_qualifier(property_value_dict: dict) -> str:
     else:
         # return min(qualifiers_type_dict[list(qualifiers_type_dict)[0]])
         return None
+
+
+def parse_wikipedia_url(wiki_url: str) -> Tuple[str, str]:
+    if wiki_url.startswith('http:'):  # hack until we import a new wikidata dump
+        wiki_url.replace('http:', 'https:')
+
+    wiki_match = re.search(wikipedia_url_regex, wiki_url)
+    return wiki_match.group(1), wiki_match.group(2)
 
 
 if __name__ == '__main__':
