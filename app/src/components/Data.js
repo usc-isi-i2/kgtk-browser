@@ -231,7 +231,7 @@ const Data = ({ info }) => {
       return `https://www.wikidata.org/wiki/Property:${ node }`
     }
   }
-  
+
   const showClassGraphViz = () => {
     setClassGraphViz(true)
   }
@@ -999,6 +999,43 @@ const Data = ({ info }) => {
     )
   }
 
+  const renderSitelinks = () => {
+    if ( !data.sitelinks ) { return }
+    return (
+      <Grid item xs={12}>
+          <ExpansionPanel
+            square={true}
+            defaultExpanded={true}
+            TransitionProps={{ timeout: 0 }}>
+              <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="h6" className={classes.heading}>
+                Wikipedia
+                <span className={classNames(classes.heading,{ smaller: true})}> ({data.sitelinks.length} entries)</span>
+              </Typography>
+            </ExpansionPanelSummary>
+            <ExpansionPanelDetails className={classes.paper}>
+              {data.sitelinks && data.sitelinks.map((wikiUrlDetails, index) => (
+                <Typography variant='caption'>
+                  <span className={classes.wikiLang}>{wikiUrlDetails.lang}</span>
+                  <Link
+                        className={
+                          classNames(classes.wikipediaLink, {
+                            wikipedia: true
+                          })
+                        }
+                        to={{ pathname: `${wikiUrlDetails.url}`}}
+                        target='_blank'
+                        >
+                    {wikiUrlDetails.text}
+                  </Link>
+                </Typography>
+              ))}
+            </ExpansionPanelDetails>
+          </ExpansionPanel>
+      </Grid>
+    )
+  }
+
   const renderClassGraph = () => {
     if ( !classGraphViz ) { return }
     return (
@@ -1025,6 +1062,7 @@ const Data = ({ info }) => {
         <Grid container spacing={1}>
           {renderGallery()}
           {renderIdentifiers()}
+          {renderSitelinks()}
         </Grid>
       </Grid>
     </Grid>
