@@ -1073,7 +1073,7 @@ const Data = ({ info }) => {
           <ExpansionPanelDetails className={ classes.paper }>
             { data.sitelinks && data.sitelinks.map((wikiUrlDetails, index) => (
               <Typography variant="caption">
-                <span className={ classes.wikiLang }>{ wikiUrlDetails.lang }</span>
+                <span className={ classes.wikiLang } title={ wikiUrlDetails.label }>{ wikiUrlDetails.lang }</span>
 
                 <Link
                   className={ classes.wikipediaLink }
