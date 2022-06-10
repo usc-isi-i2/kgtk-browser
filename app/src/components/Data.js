@@ -28,7 +28,6 @@ import fetchRelatedValues from '../utils/fetchRelatedValues'
 import classNames from '../utils/classNames'
 import formatNumber from '../utils/numbers'
 
-
 const Data = ({ info }) => {
 
   const { id } = useParams()
@@ -91,33 +90,33 @@ const Data = ({ info }) => {
   useEffect(() => {
     // fetch class graph data
     // (but only if the API supports that)
-    if ( !!info && info.hasClassGraphVisualization ) {
+    if (!!info && info.hasClassGraphVisualization) {
       setLoadingClassGraphData(true)
       fetchClassGraphData(id).then(data => {
         setLoadingClassGraphData(false)
-        if ( !!Object.keys(data).length ) {
+        if (!!Object.keys(data).length) {
 
           // add links and neighbors to the node data
           data.links.forEach(link => {
             const a = data.nodes.find(node => node.id === link.source)
             const b = data.nodes.find(node => node.id === link.target)
 
-            if ( !a.neighbors ) {
+            if (!a.neighbors) {
               a.neighbors = []
             }
 
-            if ( !b.neighbors ) {
+            if (!b.neighbors) {
               b.neighbors = []
             }
 
             a.neighbors.push(b)
             b.neighbors.push(a)
 
-            if ( !a.links ) {
+            if (!a.links) {
               a.links = []
             }
 
-            if ( !b.links ) {
+            if (!b.links) {
               b.links = []
             }
 
@@ -138,23 +137,23 @@ const Data = ({ info }) => {
       setRelatedProperties(
         data.map(property => ({
           ...property,
-          numPages: Math.ceil(property.count / 10)
-        }))
+          numPages: Math.ceil(property.count / 10),
+        })),
       )
     })
 
   }, [id])
 
   const handleOnRelatedItemsExpand = useCallback(expanded => {
-    if ( !expanded || !relatedProperties.length ) { return }
+    if (!expanded || !relatedProperties.length) { return }
 
     // get the first page for all related property values
     relatedProperties.forEach(property => {
 
       // in `sync` mode use the values that came with the original request
-      if ( property.mode === 'sync' ) {
+      if (property.mode === 'sync') {
         setRelatedPropertyValues(prevPropertyValues => {
-          const propertyValues = {...prevPropertyValues}
+          const propertyValues = { ...prevPropertyValues }
           propertyValues[property.ref] = {
             ...propertyValues[property.ref],
             values: property.values,
@@ -164,10 +163,10 @@ const Data = ({ info }) => {
       }
 
       // in `ajax` mode fetch the first page from the server
-      if ( property.mode === 'ajax' ) {
+      if (property.mode === 'ajax') {
         fetchRelatedValues(id, property.ref).then(data => {
           setRelatedPropertyValues(prevPropertyValues => {
-            const propertyValues = {...prevPropertyValues}
+            const propertyValues = { ...prevPropertyValues }
             propertyValues[property.ref] = {
               ...propertyValues[property.ref],
               ...data,
@@ -184,7 +183,7 @@ const Data = ({ info }) => {
     const skip = (page - 1) * 10
     fetchProperty(id, property.ref, skip).then(data => {
       setPropertyData(prevData => {
-        const propertyData = {...prevData}
+        const propertyData = { ...prevData }
         propertyData[property.ref] = {
           ...propertyData[property.ref],
           ...data,
@@ -198,7 +197,7 @@ const Data = ({ info }) => {
     const skip = (page - 1) * 10
     fetchRelatedValues(id, property.ref, skip).then(data => {
       setRelatedPropertyValues(prevPropertyValues => {
-        const propertyValues = {...prevPropertyValues}
+        const propertyValues = { ...prevPropertyValues }
         propertyValues[property.ref] = {
           ...propertyValues[property.ref],
           ...data,
@@ -211,16 +210,16 @@ const Data = ({ info }) => {
   const getURL = item => {
 
     // if there is an external url, return url that right away
-    if ( item.url ) {
+    if (item.url) {
       return item.url
     }
 
     // if there is no external url, link internally to `/kb/item/<node_id>`
-    let url = `/${item.ref}`
+    let url = `/${ item.ref }`
 
     // prefix the url with the location of where the app is hosted
-    if ( process.env.REACT_APP_FRONTEND_URL ) {
-      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    if (process.env.REACT_APP_FRONTEND_URL) {
+      url = `${ process.env.REACT_APP_FRONTEND_URL }${ url }`
     }
 
     return url
