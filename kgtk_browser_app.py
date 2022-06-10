@@ -154,6 +154,8 @@ sync_properties_sort_metadata = app.config['SYNC_PROPERTIES_SORT_METADATA']
 ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
 profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
 
+WIKIDATA_URL_LABEL = app.config['KG_WIKIPEDIA_URL_LABEL']
+
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
     k_api = KypherAPIObject()
@@ -1856,13 +1858,14 @@ def rb_send_kb_categories(backend,
         response_categories.append(response)
 
 
-def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int,
+def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]],
+                                         prop_values_limit: int,
                                          count_index: int = 1) -> (Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
     high_cardinality_properties = list()
     normal_properties = list()
     for prop_edge in property_value_counts:
         high_cardinality_properties.append(prop_edge) \
-            if prop_edge[count_index] >= prop_values_limit \
+            if prop_edge[count_index] >= prop_values_limit and prop_edge[0] != WIKIDATA_URL_LABEL \
             else normal_properties.append(prop_edge)
     return high_cardinality_properties, normal_properties
 
@@ -2159,7 +2162,6 @@ def rb_get_kb_xitem():
     instance_count_property = app.config['KG_INSTANCE_COUNT']
     instance_count_star_property = app.config['KG_INSTANCE_COUNT_STAR']
     subclass_count_star_property = app.config['KG_SUBCLASS_COUNT_STAR']
-    wikipedia_url_property = app.config['KG_WIKIPEDIA_URL_LABEL']
 
     wikipedia_urls = []
 
@@ -2245,7 +2247,7 @@ def rb_get_kb_xitem():
                     response['instance_count_star'] = item_edge[3]
                 elif item_edge[2] == subclass_count_star_property:
                     response['subclass_count_star'] = item_edge[3]
-                elif item_edge[2] == wikipedia_url_property:
+                elif item_edge[2] == WIKIDATA_URL_LABEL:
                     wiki_lang, wiki_url_part = parse_wikipedia_url(item_edge[3])
                     wikipedia_urls.append({
                         'lang': wiki_lang,
@@ -2284,7 +2286,7 @@ def rb_get_kb_xitem():
             response['sitelinks'] = wikipedia_urls
 
             response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
-
+            # return flask.jsonify(json.load(open('/tmp/obama.json'))), 200
             return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2627,7 +2629,7 @@ def find_sort_qualifier(property_value_dict: dict) -> str:
 
 def parse_wikipedia_url(wiki_url: str) -> Tuple[str, str]:
     if wiki_url.startswith('http:'):  # hack until we import a new wikidata dump
-        wiki_url.replace('http:', 'https:')
+        wiki_url = wiki_url.replace('http:', 'https:')
 
     wiki_match = re.search(wikipedia_url_regex, wiki_url)
     return wiki_match.group(1), wiki_match.group(2)
