@@ -155,6 +155,7 @@ ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
 profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
 
 WIKIDATA_URL_LABEL = app.config['KG_WIKIPEDIA_URL_LABEL']
+wikidata_languages = app.config['WIKIDATA_LANGUAGES']
 
 kgtk_backends = {}
 for i in range(app.config['KYPHER_OBJECTS_NUM']):
@@ -2252,7 +2253,8 @@ def rb_get_kb_xitem():
                     wikipedia_urls.append({
                         'lang': wiki_lang,
                         'text': wiki_url_part,
-                        'url': f'https://{wiki_lang}.wikipedia.org/wiki/{wiki_url_part}'
+                        'url': f'https://{wiki_lang}.wikipedia.org/wiki/{wiki_url_part}',
+                        'label': wikidata_languages.get(wiki_lang, wiki_lang)
                     })
                 else:
                     item_edges.append(item_edge)
