@@ -106,7 +106,7 @@ const useStyles = makeStyles(theme => ({
   },
   wikipediaLink: {
     color: '#468499',
-      marginLeft: theme.spacing(1)
+    marginLeft: theme.spacing(0),
   },
   text: {
     display: 'inline-block',
@@ -131,7 +131,8 @@ const useStyles = makeStyles(theme => ({
   },
     wikiLang: {
       color: '#696969',
-      fontWeight: 'bolder'
+      fontWeight: 'bolder',
+      marginRight: theme.spacing(3)
   },
   row: {
     paddingTop: theme.spacing(0),
