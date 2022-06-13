@@ -46,6 +46,7 @@ const Data = ({ info }) => {
 
   const [classGraphViz, setClassGraphViz] = useState(false)
   const [showProfiledProperties, setShowProfiledProperties] = useState(false)
+  const [showSiteLinks, setShowSiteLinks] = useState(false)
 
   const profiledProperties = [
     'P1963computed',
@@ -60,6 +61,7 @@ const Data = ({ info }) => {
     setClassGraphData(null)
     setClassGraphViz(false)
     setShowProfiledProperties(false)
+    setShowSiteLinks(false)
 
     // fetch item data
     setLoading(true)
@@ -1062,9 +1064,10 @@ const Data = ({ info }) => {
       <Grid item xs={ 12 }>
         <ExpansionPanel
           square={ true }
-          defaultExpanded={ true }
+          defaultExpanded={ false }
+          expanded={showSiteLinks}
           TransitionProps={ { timeout: 0 } }>
-          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/>} onClick={ () => setShowSiteLinks(!showSiteLinks)}>
             <Typography variant="h6" className={ classes.heading }>
               Wikipedia
               <span className={ classNames(classes.heading, { smaller: true }) }> ({ data.sitelinks.length } entries)</span>
