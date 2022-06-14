@@ -132,7 +132,11 @@ const useStyles = makeStyles(theme => ({
     wikiLang: {
       color: '#696969',
       fontWeight: 'bolder',
-      marginRight: theme.spacing(3)
+      '&.wikiLabel' : {
+        color: '#cccccc',
+        fontWeight: 'lighter'
+      }
+
   },
   row: {
     paddingTop: theme.spacing(0),
