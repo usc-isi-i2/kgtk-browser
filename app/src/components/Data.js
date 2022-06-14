@@ -46,7 +46,7 @@ const Data = ({ info }) => {
 
   const [classGraphViz, setClassGraphViz] = useState(false)
   const [showProfiledProperties, setShowProfiledProperties] = useState(false)
-  const [showSiteLinks, setShowSiteLinks] = useState(false)
+  const [showSiteLinks, setShowSiteLinks] = useState(true)
 
   const profiledProperties = [
     'P1963computed',
@@ -61,7 +61,7 @@ const Data = ({ info }) => {
     setClassGraphData(null)
     setClassGraphViz(false)
     setShowProfiledProperties(false)
-    setShowSiteLinks(false)
+    setShowSiteLinks(true)
 
     // fetch item data
     setLoading(true)
@@ -1064,7 +1064,7 @@ const Data = ({ info }) => {
       <Grid item xs={ 12 }>
         <ExpansionPanel
           square={ true }
-          defaultExpanded={ false }
+          defaultExpanded={ true }
           expanded={showSiteLinks}
           TransitionProps={ { timeout: 0 } }>
           <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/>} onClick={ () => setShowSiteLinks(!showSiteLinks)}>
@@ -1075,19 +1075,22 @@ const Data = ({ info }) => {
           </ExpansionPanelSummary>
           <ExpansionPanelDetails className={ classes.paper }>
             { data.sitelinks && data.sitelinks.map((wikiUrlDetails, index) => (
-              <Typography variant="caption">
-                <span className={ classes.wikiLang } title={ wikiUrlDetails.label }>{ wikiUrlDetails.lang }</span>
-
-                <Link
+              <Grid container key={ index } className={ classes.row }>
+                <Grid item xs={ 6 }>
+                  <span className={classes.wikiLang} >{ wikiUrlDetails.lang }
+                    <span className={ classNames(classes.wikiLang, {wikiLabel: true})}> { wikiUrlDetails.label }</span>
+                  </span>
+                </Grid>
+                <Grid item xs={ 6 }>
+                  <Link
                   className={ classes.wikipediaLink }
                   to={ { pathname: `${ wikiUrlDetails.url }` } }
                   target="_blank"
                 >
                   { wikiUrlDetails.text }
                 </Link>
-
-
-              </Typography>
+                </Grid>
+              </Grid>
             )) }
           </ExpansionPanelDetails>
         </ExpansionPanel>
