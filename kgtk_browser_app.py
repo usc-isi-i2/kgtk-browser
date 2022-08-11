@@ -29,8 +29,6 @@ from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 from kgtk.visualize.visualize_api import KgtkVisualize
 
 from browser.backend.kypher_queries import KypherAPIObject
-
-from multiprocessing import Process
 import re
 
 # How to run for local-system access:
@@ -502,22 +500,16 @@ def rb_get_kb_query():
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
     try:
-        queue = multiprocessing.Queue()
-        process = Process(target=query_helper, args=(queue,
-                                                     q,
-                                                     lang,
-                                                     match_item_exactly,
-                                                     match_label_exactly,
-                                                     match_label_ignore_case,
-                                                     match_label_prefixes,
-                                                     match_label_prefixes_limit,
-                                                     match_label_text_like,
-                                                     verbose,))
 
-        process.start()
-        response_data = queue.get()
-        process.join()
-        process.close()
+        response_data = p.apply(query_helper, args=(q,
+                                                    lang,
+                                                    match_item_exactly,
+                                                    match_label_exactly,
+                                                    match_label_ignore_case,
+                                                    match_label_prefixes,
+                                                    match_label_prefixes_limit,
+                                                    match_label_text_like,
+                                                    verbose,))
 
         return flask.jsonify(response_data), 200
     except Exception as e:
@@ -525,8 +517,7 @@ def rb_get_kb_query():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def query_helper(queue,
-                 q: str,
+def query_helper(q: str,
                  lang: str,
                  match_item_exactly: bool,
                  match_label_exactly: bool,
@@ -701,8 +692,8 @@ def query_helper(queue,
     response_data = {
         "matches": matches
     }
-    queue.put(response_data)
-    # return response_data
+
+    return response_data
 
 
 def rb_link_to_url(text_value, current_value, lang: str = "en", prop: Optional[str] = None) -> bool:
@@ -1950,20 +1941,14 @@ def rb_get_related_items():
     if id is None:
         return flask.make_response({'error': 'parameter `id` required.'}, 400)
     try:
-        queue = multiprocessing.Queue()
-        process = Process(target=ritem_helper, args=(queue,
-                                                     item,
-                                                     lang,
-                                                     properties_values_limit,
-                                                     qual_proplist_max_len,
-                                                     qual_query_limit,
-                                                     qual_valuelist_max_len,
-                                                     query_limit,))
 
-        process.start()
-        response = queue.get()
-        process.join()
-        process.close()
+        response = p.apply(ritem_helper, args=(item,
+                                               lang,
+                                               properties_values_limit,
+                                               qual_proplist_max_len,
+                                               qual_query_limit,
+                                               qual_valuelist_max_len,
+                                               query_limit,))
 
         return flask.jsonify(response), 200
     except Exception as e:
@@ -1972,8 +1957,7 @@ def rb_get_related_items():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def ritem_helper(queue,
-                 item: str,
+def ritem_helper(item: str,
                  lang: str,
                  properties_values_limit: int,
                  qual_proplist_max_len: int,
@@ -2025,7 +2009,7 @@ def ritem_helper(queue,
     hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
     response_properties.extend(hcp_response)
     response = sort_related_item_properties(response_properties)
-    queue.put(response)
+    return response
 
 
 @app.route('/kb/rproperty', methods=['GET'])
@@ -2048,21 +2032,15 @@ def rb_get_related_items_property():
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
     try:
-        queue = multiprocessing.Queue()
-        process = Process(target=rproperty_helper, args=(queue,
-                                                         item,
-                                                         lang,
-                                                         limit,
-                                                         property,
-                                                         qual_proplist_max_len,
-                                                         qual_query_limit,
-                                                         qual_valuelist_max_len,
-                                                         skip,))
 
-        process.start()
-        response = queue.get()
-        process.join()
-        process.close()
+        response = p.apply(rproperty_helper, args=(item,
+                                                   lang,
+                                                   limit,
+                                                   property,
+                                                   qual_proplist_max_len,
+                                                   qual_query_limit,
+                                                   qual_valuelist_max_len,
+                                                   skip,))
 
         return flask.jsonify(response), 200
     except Exception as e:
@@ -2071,8 +2049,7 @@ def rb_get_related_items_property():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def rproperty_helper(queue,
-                     item: str,
+def rproperty_helper(item: str,
                      lang: str,
                      limit: int,
                      property: str,
@@ -2106,7 +2083,7 @@ def rproperty_helper(queue,
     response['limit'] = limit
     response['skip'] = skip
     response['mode'] = 'ajax'
-    queue.put(response)
+    return response
 
 
 @app.route('/kb/property', methods=['GET'])
@@ -2133,24 +2110,17 @@ def rb_get_kb_property():
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
     try:
-        queue = multiprocessing.Queue()
 
-        process = Process(target=property_helper, args=(queue,
-                                                        item,
-                                                        lang,
-                                                        limit,
-                                                        property,
-                                                        proplist_max_len,
-                                                        qual_proplist_max_len,
-                                                        qual_query_limit,
-                                                        qual_valuelist_max_len,
-                                                        skip,
-                                                        valuelist_max_len,))
-
-        process.start()
-        response = queue.get()
-        process.join()
-        process.close()
+        response = p.apply(property_helper, args=(item,
+                                                  lang,
+                                                  limit,
+                                                  property,
+                                                  proplist_max_len,
+                                                  qual_proplist_max_len,
+                                                  qual_query_limit,
+                                                  qual_valuelist_max_len,
+                                                  skip,
+                                                  valuelist_max_len,))
 
         return flask.jsonify(response), 200
 
@@ -2160,8 +2130,7 @@ def rb_get_kb_property():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def property_helper(queue,
-                    item: str,
+def property_helper(item: str,
                     lang: str,
                     limit: int,
                     property: str,
@@ -2217,8 +2186,7 @@ def property_helper(queue,
         response['mode'] = 'ajax'
         response['limit'] = limit
         response['skip'] = skip
-    queue.put(response)
-    # return response
+    return response
 
 
 @app.route('/kb/xitem', methods=['GET'])
@@ -2264,27 +2232,21 @@ def rb_get_kb_xitem():
         item = item.upper()
 
     try:
-        queue = multiprocessing.Queue()
-        process = Process(target=xitem_helper, args=(queue,
-                                                     abstract_property,
-                                                     instance_count_property,
-                                                     instance_count_star_property,
-                                                     item,
-                                                     lang,
-                                                     properties_values_limit,
-                                                     proplist_max_len,
-                                                     qual_proplist_max_len,
-                                                     qual_query_limit,
-                                                     qual_valuelist_max_len,
-                                                     query_limit,
-                                                     subclass_count_star_property,
-                                                     valuelist_max_len,
-                                                     verbose,))
+        response = p.apply(xitem_helper, args=(abstract_property,
+                                               instance_count_property,
+                                               instance_count_star_property,
+                                               item,
+                                               lang,
+                                               properties_values_limit,
+                                               proplist_max_len,
+                                               qual_proplist_max_len,
+                                               qual_query_limit,
+                                               qual_valuelist_max_len,
+                                               query_limit,
+                                               subclass_count_star_property,
+                                               valuelist_max_len,
+                                               verbose,))
 
-        process.start()
-        response = queue.get()
-        process.join()
-        process.close()
         return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2292,8 +2254,7 @@ def rb_get_kb_xitem():
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
 
-def xitem_helper(queue,
-                 abstract_property,
+def xitem_helper(abstract_property,
                  instance_count_property,
                  instance_count_star_property,
                  item,
@@ -2400,7 +2361,8 @@ def xitem_helper(queue,
     response["xrefs"] = response_xrefs
     response['sitelinks'] = wikipedia_urls
     response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
-    queue.put(response)
+    # queue.put(response)
+    return response
 
 
 @app.route('/kb/item/<string:item>', methods=['GET'])
@@ -2576,7 +2538,6 @@ def find_sort_qualifier(property_value_dict: dict) -> str:
         _ = qualifiers_type_dict['/w/quantity']
         return max(_.items(), key=itemgetter(1))[0]
     else:
-        # return min(qualifiers_type_dict[list(qualifiers_type_dict)[0]])
         return None
 
 
@@ -2592,5 +2553,7 @@ if __name__ == '__main__':
     k_api = KypherAPIObject()
     backend = kybe.BrowserBackend(api=k_api)
     backend.set_app_config(app)
+
+    p = multiprocessing.Pool(multiprocessing.cpu_count())
 
     app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
