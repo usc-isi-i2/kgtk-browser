@@ -2,18 +2,12 @@
 Kypher backend support for the KGTK browser and visualizer.
 """
 
-import os.path
 import io
 from functools import lru_cache
 import itertools
-import sys
 
-import kgtk.kypher.query as kyquery
-import kgtk.kypher.sqlstore as sqlstore
-from kgtk.exceptions import KGTKException
 from browser.backend.fastdf import FastDataFrame
 import browser.backend.format as fmt
-from typing import List
 
 
 # TO DO:
@@ -82,54 +76,50 @@ class BrowserBackend(object):
     def get_node_labels(self, node, lang=None, fmt=None):
         """Retrieve all labels for 'node'.
         """
-        query = self.api.NODE_LABELS_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.NODE_LABELS_QUERY(node, self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_aliases(self, node, lang=None, fmt=None):
         """Retrieve all aliases for 'node'.
         """
-        query = self.api.NODE_ALIASES_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.NODE_ALIASES_QUERY(node, self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_descriptions(self, node, lang=None, fmt=None):
         """Retrieve all descriptions for 'node'.
         """
-        query = self.api.NODE_DESCRIPTIONS_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.NODE_DESCRIPTIONS_QUERY(node, self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_images(self, node, fmt=None):
         """Retrieve all images for 'node'.
         """
-        query = self.api.NODE_IMAGES_QUERY
-        return self.execute_query(query, NODE=node, fmt=fmt)
+        query = self.api.NODE_IMAGES_QUERY(node)
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node1.
         """
-        query = self.api.NODE_EDGES_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
-                                  FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.api.NODE_EDGES_QUERY(node, self.get_lang(lang), images, fanouts)
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all edges that have 'node' as their node2.
         """
-        query = self.api.NODE_INVERSE_EDGES_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
-                                  FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.api.NODE_INVERSE_EDGES_QUERY(node, self.get_lang(lang), images, fanouts)
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node1.
         """
-        query = self.api.NODE_EDGE_QUALIFIERS_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
-                                  FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.api.NODE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang), images, fanouts)
+        return self.execute_query(query, fmt=fmt)
 
     def get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve all qualifiers for edges that have 'node' as their node2.
         """
-        query = self.api.NODE_INVERSE_EDGE_QUALIFIERS_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), FETCH_IMAGES=images,
-                                  FETCH_FANOUTS=fanouts, fmt=fmt)
+        query = self.api.NODE_INVERSE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang), images, fanouts)
+        return self.execute_query(query, fmt=fmt)
 
     ### Utilities:
 
@@ -356,49 +346,49 @@ class BrowserBackend(object):
 
         # Raise the case of the label to implement a case-insensitive search.
         node = node.upper()
-        query = self.api.MATCH_ITEMS_EXACTLY_QUERY
+        query = self.api.MATCH_ITEMS_EXACTLY_QUERY(node)
 
-        return self.execute_query(query, NODE=node, fmt=fmt)
+        return self.execute_query(query, fmt=fmt)
 
-    def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
-        """Retrieve all nodes with label 'label'.
+    # def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
+    #     """Retrieve all nodes with label 'label'.
+    #
+    #     This search method supports rb_get_kb_query(), which generates a list
+    #     of candidate nodes.  The label is searched for a complete match, which
+    #     may or may not be case-insensitive.  The search must be fast.
+    #     """
+    #
+    #     if ignore_case:
+    #         # Raise the case of the label to implement a case-insensitive search.
+    #         label = label.upper()
+    #         query = self.api.RB_NODES_WITH_UPPER_LABEL_QUERY
+    #
+    #     else:
+    #         # This query relies on making an exact match for the label.
+    #         query = self.api.RB_NODES_WITH_LABEL_QUERY(label, self.get_lang(lang))
+    #
+    #     return self.execute_query(query, fmt=fmt)
 
-        This search method supports rb_get_kb_query(), which generates a list
-        of candidate nodes.  The label is searched for a complete match, which
-        may or may not be case-insensitive.  The search must be fast.
-        """
-
-        if ignore_case:
-            # Raise the case of the label to implement a case-insensitive search.
-            label = label.upper()
-            query = self.api.RB_NODES_WITH_UPPER_LABEL_QUERY
-
-        else:
-            # This query relies on making an exact match for the label.
-            query = self.get_config('RB_NODES_WITH_LABEL_QUERY')
-
-        return self.execute_query(query, LABEL=label, LANG=self.get_lang(lang), fmt=fmt)
-
-    @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
-        """Retrieve nodes and labels for all nodes starting with 'node'.
-
-        Node names are assumed to always be in upper case in the database and
-        the search is always assumed to be case-insensitive.  We don't have
-        seperate exact case/case-insensitive queries for this retreival.
-
-        This search method supports rb_get_kb_query(), which generates a list of
-        candidate nodes.  The search must be fast.
-        """
-
-        # Raise the case of the label to implement a case-insensitive search.
-        node = node.upper()
-        query = self.api.MATCH_ITEM_TEXTSEARCH_QUERY
-
-        # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
-        safe_node: str = node.translate({ord(i): None for i in '*[?'})
-
-        return self.execute_query(query, NODE=safe_node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+    # @lru_cache(maxsize=LRU_CACHE_SIZE)
+    # def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
+    #     """Retrieve nodes and labels for all nodes starting with 'node'.
+    #
+    #     Node names are assumed to always be in upper case in the database and
+    #     the search is always assumed to be case-insensitive.  We don't have
+    #     seperate exact case/case-insensitive queries for this retreival.
+    #
+    #     This search method supports rb_get_kb_query(), which generates a list of
+    #     candidate nodes.  The search must be fast.
+    #     """
+    #
+    #     # Raise the case of the label to implement a case-insensitive search.
+    #     node = node.upper()
+    #     query = self.api.MATCH_ITEM_TEXTSEARCH_QUERY
+    #
+    #     # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
+    #     safe_node: str = node.translate({ord(i): None for i in '*[?'})
+    #
+    #     return self.execute_query(query, NODE=safe_node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def search_labels_exactly(self, label, limit: int = 20, lang=None, fmt=None):
@@ -413,17 +403,14 @@ class BrowserBackend(object):
 
         _lang = self.get_lang(lang)
 
-        query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY
-
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
         search_label = f"'{safe_label}'@{_lang}".upper()
 
-        return self.execute_query(query,
-                                  LABEL=search_label,
-                                  LIMIT=limit,
-                                  fmt=fmt)
+        query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY(search_label, limit)
+
+        return self.execute_query(query, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def search_labels_textlike(self, label, limit: int = 20, lang=None, fmt=None):
@@ -433,16 +420,12 @@ class BrowserBackend(object):
            The search must be fast.
         """
 
-        query = self.api.MATCH_LABELS_TEXTLIKE_QUERY
-
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        return self.execute_query(query,
-                                  LABEL=safe_label,
-                                  LANG=self.get_lang(lang),
-                                  LIMIT=limit,
-                                  fmt=fmt)
+        query = self.api.MATCH_LABELS_TEXTLIKE_QUERY(safe_label, self.get_lang(lang), limit)
+
+        return self.execute_query(query, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def search_labels(self, label, limit: int = 20, lang=None, fmt=None):
@@ -453,16 +436,12 @@ class BrowserBackend(object):
         may or may not be case-insensitive.  The search must be fast.
         """
 
-        query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY
-
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        return self.execute_query(query,
-                                  LABEL=safe_label,
-                                  LIMIT=limit,
-                                  LANG=self.get_lang(lang),
-                                  fmt=fmt)
+        query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY(safe_label, self.get_lang(lang), limit)
+
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000,
                           lc_properties: str = None):
@@ -472,16 +451,16 @@ class BrowserBackend(object):
             query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY(node, lc_properties, self.get_lang(lang), limit)
             return self.execute_query(query, fmt=fmt)
         else:
-            query = self.api.RB_NODE_EDGES_QUERY
-            return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+            query = self.api.RB_NODE_EDGES_QUERY(node, self.get_lang(lang), limit)
+            return self.execute_query(query, fmt=fmt)
 
-    def rb_get_node_one_property_edges(self, node, property: str, limit: int, skip: int, lang=None, images=False,
-                                       fanouts=False, fmt=None):
-        """Retrieve all edges that have 'node' as their node1 for property=property
-        """
-
-        query = self.api.RB_NODE_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
-        return self.execute_query(query, fmt=fmt)
+    # def rb_get_node_one_property_edges(self, node, property: str, limit: int, skip: int, lang=None, images=False,
+    #                                    fanouts=False, fmt=None):
+    #     """Retrieve all edges that have 'node' as their node1 for property=property
+    #     """
+    #
+    #     query = self.api.RB_NODE_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
+    #     return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_one_property_with_qualifiers_edges(self,
                                                        node,
@@ -526,15 +505,15 @@ class BrowserBackend(object):
     def rb_get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have 'node' as their node1.
         """
-        query = self.api.RB_NODE_EDGE_QUALIFIERS_QUERY
-        return self.execute_query(query, NODE=node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.RB_NODE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang), limit)
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_edge_qualifiers_by_edge_id(self, edge_id, lang=None, images=False, fanouts=False, fmt=None,
                                                limit: int = 10000):
         """Retrieve all edge qualifiers for the edge with edge ID edge_id..
         """
-        query = self.api.RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY
-        return self.execute_query(query, EDGE_ID=edge_id, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY(edge_id, self.get_lang(lang), limit)
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None,
                                        limit: int = 10000):
@@ -545,41 +524,41 @@ class BrowserBackend(object):
         query.clear()  # Since we don't plan to re-issue this query, release its resources.
         return results
 
-    def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
-        """Retrieve all edges that have 'node' as their node2.
-        """
-        query = self.api.RB_NODE_INVERSE_EDGES_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+    # def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
+    #     """Retrieve all edges that have 'node' as their node2.
+    #     """
+    #     query = self.api.RB_NODE_INVERSE_EDGES_QUERY(node, self.get_lang(lang))
+    #     return self.execute_query(query, fmt=fmt)
 
-    def rb_get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
-        """Retrieve all edge qualifiers for edges that have 'node' as their node2.
-        """
-        query = self.api.RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+    # def rb_get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
+    #     """Retrieve all edge qualifiers for edges that have 'node' as their node2.
+    #     """
+    #     query = self.api.RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang))
+    #     return self.execute_query(query, fmt=fmt)
 
-    def rb_get_node_categories(self, node, lang=None, images=False, fanouts=False, fmt=None):
-        """Retrieve all categories that have 'node' as their node2.
-        """
-        query = self.api.RB_NODE_CATEGORIES_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+    # def rb_get_node_categories(self, node, lang=None, images=False, fanouts=False, fmt=None):
+    #     """Retrieve all categories that have 'node' as their node2.
+    #     """
+    #     query = self.api.RB_NODE_CATEGORIES_QUERY(node, self.get_lang(lang))
+    #     return self.execute_query(query, fmt=fmt)
 
     def rb_get_image_formatter(self, node, lang=None, fmt=None):
         """Retrieve the first matching image formatter.
         """
-        query = self.api.RB_IMAGE_FORMATTER_QUERY
-        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.RB_IMAGE_FORMATTER_QUERY(node)
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_subproperty_relationships(self, lang=None, fmt=None):
         """Retrieve all subproperty relationships.
         """
-        query = self.api.RB_SUBPROPERTY_RELATIONSHIPS_QUERY
-        return self.execute_query(query, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.RB_SUBPROPERTY_RELATIONSHIPS_QUERY(self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
 
     def rb_get_language_labels(self, code, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve language names for language code 'code'.
         """
-        query = self.api.RB_LANGUAGE_LABELS_QUERY
-        return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
+        query = self.api.RB_LANGUAGE_LABELS_QUERY(code, self.get_lang(lang))
+        return self.execute_query(query, fmt=fmt)
 
     def get_classviz_edge_results(self, node, fmt=FORMAT_FAST_DF):
 
