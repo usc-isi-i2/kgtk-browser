@@ -2554,6 +2554,6 @@ if __name__ == '__main__':
     backend = kybe.BrowserBackend(api=k_api)
     backend.set_app_config(app)
 
-    p = multiprocessing.Pool(int(multiprocessing.cpu_count()/2))
+    p = multiprocessing.Pool(int(multiprocessing.cpu_count()/4))
 
     app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
