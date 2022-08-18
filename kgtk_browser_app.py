@@ -30,6 +30,8 @@ from kgtk.visualize.visualize_api import KgtkVisualize
 
 from browser.backend.kypher_queries import KypherAPIObject
 import re
+import logging
+import time
 
 # How to run for local-system access:
 # > export FLASK_APP=kgtk_browser_app.py
@@ -214,6 +216,7 @@ def get_class_graph_data(qnode=None):
         }]
     }
     """
+    s = time.time()
     args = flask.request.args
     refresh: bool = args.get("refresh", type=rb_is_true,
                              default=False)
@@ -330,7 +333,8 @@ def get_class_graph_data(qnode=None):
         # write visualization graph to the output file
         open(output_file_name, 'w').write(json.dumps(visualization_graph))
         shutil.rmtree(temp_dir)
-
+        logger.error(
+            f'{multiprocessing.Process().pid}\tEndpoint:classviz\tQnode:{qnode}\tTime taken:{time.time() - s}')
         return flask.jsonify(visualization_graph), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -500,7 +504,7 @@ def rb_get_kb_query():
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
     try:
-
+        s = time.time()
         response_data = p.apply(query_helper, args=(q,
                                                     lang,
                                                     match_item_exactly,
@@ -510,7 +514,7 @@ def rb_get_kb_query():
                                                     match_label_prefixes_limit,
                                                     match_label_text_like,
                                                     verbose,))
-
+        logger.error(f'{multiprocessing.Process().pid}\tEndpoint:query\tQnode:{q}\tTime taken:{time.time() - s}')
         return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -1941,7 +1945,7 @@ def rb_get_related_items():
     if id is None:
         return flask.make_response({'error': 'parameter `id` required.'}, 400)
     try:
-
+        s = time.time()
         response = p.apply(ritem_helper, args=(item,
                                                lang,
                                                properties_values_limit,
@@ -1949,7 +1953,8 @@ def rb_get_related_items():
                                                qual_query_limit,
                                                qual_valuelist_max_len,
                                                query_limit,))
-
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:ritem\tQnode:{item}\tTime taken:{time.time() - s}')
         return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2032,7 +2037,7 @@ def rb_get_related_items_property():
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
     try:
-
+        s = time.time()
         response = p.apply(rproperty_helper, args=(item,
                                                    lang,
                                                    limit,
@@ -2041,7 +2046,8 @@ def rb_get_related_items_property():
                                                    qual_query_limit,
                                                    qual_valuelist_max_len,
                                                    skip,))
-
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:rproperty\tQnode/Property:{item}/{property}\tTime taken:{time.time() - s}')
         return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2110,7 +2116,7 @@ def rb_get_kb_property():
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
     try:
-
+        s = time.time()
         response = p.apply(property_helper, args=(item,
                                                   lang,
                                                   limit,
@@ -2121,7 +2127,8 @@ def rb_get_kb_property():
                                                   qual_valuelist_max_len,
                                                   skip,
                                                   valuelist_max_len,))
-
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:property\tQnode/Property:{item}/{property}\tTime taken:{time.time() - s}')
         return flask.jsonify(response), 200
 
     except Exception as e:
@@ -2232,6 +2239,7 @@ def rb_get_kb_xitem():
         item = item.upper()
 
     try:
+        s = time.time()
         response = p.apply(xitem_helper, args=(abstract_property,
                                                instance_count_property,
                                                instance_count_star_property,
@@ -2247,6 +2255,8 @@ def rb_get_kb_xitem():
                                                valuelist_max_len,
                                                verbose,))
 
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:xitem\tQnode:{item}\tTime taken:{time.time() - s}')
         return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2554,6 +2564,8 @@ if __name__ == '__main__':
     backend = kybe.BrowserBackend(api=k_api)
     backend.set_app_config(app)
 
-    p = multiprocessing.Pool(int(multiprocessing.cpu_count()/2))
+    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 2))
+    logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
+    logger = logging.getLogger('perf')
 
     app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
