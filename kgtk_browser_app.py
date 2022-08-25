@@ -57,8 +57,8 @@ import time
 # http://ckg07.isi.edu:1234/kb/Q42
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
-ID_SEARCH_THRESHOLD: int = 40
-ID_SEARCH_USING_IN: bool = False
+ID_SEARCH_THRESHOLD: int = 150
+ID_SEARCH_USING_IN: bool = True
 
 DEFAULT_MATCH_ITEM_EXACTLY: bool = True
 DEFAULT_MATCH_ITEM_PREFIXES: bool = True
@@ -1813,13 +1813,11 @@ def rb_send_kb_items_and_qualifiers(backend,
     List[MutableMapping[str, any]],
     List[
         MutableMapping[str, any]]]:
-    s = time.time()
+
     if sort_edges:
-        # Sort the item edges:
         sorted_item_edges: List[List[str]] = rb_build_sorted_item_edges(item_edges)
     else:
         sorted_item_edges = item_edges
-    # print(f'%%%%SORTED:{time.time() - s}')
     if verbose:
         print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True)  # ***
 
@@ -2613,4 +2611,4 @@ if __name__ == '__main__':
 
     logger = logging.getLogger('perf')
 
-    app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
+    app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
