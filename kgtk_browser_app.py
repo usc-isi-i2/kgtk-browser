@@ -134,6 +134,7 @@ profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
 
 WIKIDATA_URL_LABEL = app.config['KG_WIKIPEDIA_URL_LABEL']
 wikidata_languages = app.config['WIKIDATA_LANGUAGES']
+url_formatter_templates = app.config['KGTK_URL_FORMATTER_TEMPLATES']
 
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
@@ -726,13 +727,18 @@ rb_image_formatter_cache: MutableMapping[str, Optional[str]] = dict()
 
 
 def get_image_formatter(backend, relationship: str) -> Optional[str]:
-    if relationship not in rb_image_formatter_cache:
-        result: List[List[str]] = backend.rb_get_image_formatter(relationship)
-        if len(result) == 0:
-            rb_image_formatter_cache[relationship] = None
-        else:
-            rb_image_formatter_cache[relationship] = rb_unstringify(result[0][0])
-    return rb_image_formatter_cache[relationship]
+    # if relationship not in rb_image_formatter_cache:
+    #     result: List[List[str]] = backend.rb_get_image_formatter(relationship)
+    #     if len(result) == 0:
+    #         rb_image_formatter_cache[relationship] = None
+    #     else:
+    #         rb_image_formatter_cache[relationship] = rb_unstringify(result[0][0])
+    #
+    # return rb_image_formatter_cache[relationship]
+    url_formatter = url_formatter_templates.get(relationship, None)
+    if url_formatter is not None:
+        url_formatter = rb_unstringify(url_formatter[0])
+    return url_formatter
 
 
 rb_units_node_cache: MutableMapping[str, Optional[str]] = dict()
@@ -1468,6 +1474,7 @@ def rb_render_kb_items(backend,
                        lang: str = 'en',
                        verbose: bool = False) -> Tuple[List[MutableMapping[str, any]],
                                                        List[MutableMapping[str, any]]]:
+    s = time.time()
     response_properties: List[MutableMapping[str, any]] = list()
     response_xrefs: List[MutableMapping[str, any]] = list()
 
@@ -1478,6 +1485,7 @@ def rb_render_kb_items(backend,
     value_drop_count: int = 0
 
     item_edge: List[str]
+    debug_dict = {}
     for item_edge in item_edges:
         if verbose:
             print(repr(item_edge), file=sys.stderr, flush=True)
@@ -1492,7 +1500,9 @@ def rb_render_kb_items(backend,
         target_description: Optional[str]
         wikidatatype: Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
-
+        if wikidatatype not in debug_dict:
+            debug_dict[wikidatatype] = {'c': 0, 't': 0}
+        debug_dict[wikidatatype]['c'] += 1
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
 
@@ -1526,7 +1536,6 @@ def rb_render_kb_items(backend,
                                                                          lang,
                                                                          relationship,
                                                                          wikidatatype)
-
         current_value["edge_id"] = edge_id  # temporarily save the current edge ID.
         current_values.append(current_value)
 
@@ -1612,6 +1621,7 @@ def rb_fetch_qualifiers(backend,
     verbose2: bool = verbose
 
     item_qualifier_edges: List[List[str]]
+    s = time.time()
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
             item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
@@ -1630,7 +1640,7 @@ def rb_fetch_qualifiers(backend,
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
     if verbose2:
         print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True)  # ***
-
+    # print(f'%%%%4:{time.time() - s}')
     return item_qualifier_edges
 
 
@@ -1706,6 +1716,7 @@ def rb_render_kb_items_and_qualifiers(backend,
     List[MutableMapping[str, any]]]:
     response_properties: List[MutableMapping[str, any]] = list()
     response_xrefs: List[MutableMapping[str, any]] = list()
+    s = time.time()
     response_properties, response_xrefs = rb_render_kb_items(backend,
                                                              item,
                                                              item_edges,
@@ -1714,6 +1725,8 @@ def rb_render_kb_items_and_qualifiers(backend,
                                                              lang=lang,
                                                              verbose=verbose)
 
+    # print(f'%%%1:{time.time() - s}')
+    s = time.time()
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_properties,
@@ -1722,6 +1735,8 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose)
+    # print(f'%%%2:{time.time() - s}')
+    s = time.time()
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_xrefs,
@@ -1730,6 +1745,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose)
+    # print(f'%%%3:{time.time() - s}')
     return response_properties, response_xrefs
 
 
@@ -1797,11 +1813,13 @@ def rb_send_kb_items_and_qualifiers(backend,
     List[MutableMapping[str, any]],
     List[
         MutableMapping[str, any]]]:
+    s = time.time()
     if sort_edges:
         # Sort the item edges:
         sorted_item_edges: List[List[str]] = rb_build_sorted_item_edges(item_edges)
     else:
         sorted_item_edges = item_edges
+    # print(f'%%%%SORTED:{time.time() - s}')
     if verbose:
         print("len(sorted_item_edges) = %d" % len(sorted_item_edges), file=sys.stderr, flush=True)  # ***
 
@@ -2198,6 +2216,7 @@ def property_helper(item: str,
 
 @app.route('/kb/xitem', methods=['GET'])
 def rb_get_kb_xitem():
+    s = time.time()
     args = flask.request.args
     item: str = args.get('id')
     lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
@@ -2253,10 +2272,11 @@ def rb_get_kb_xitem():
                                                query_limit,
                                                subclass_count_star_property,
                                                valuelist_max_len,
-                                               verbose,))
+                                               verbose, logger,))
 
         logger.error(
             f'{multiprocessing.current_process().pid}\tEndpoint:xitem\tQnode:{item}\tTime taken:{time.time() - s}')
+        print(f'xitem time: {time.time() - s}')
         return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -2277,15 +2297,24 @@ def xitem_helper(abstract_property,
                  query_limit,
                  subclass_count_star_property,
                  valuelist_max_len,
-                 verbose):
+                 verbose, logger):
+    s = time.time()
     k_api = KypherAPIObject()
     backend = kybe.BrowserBackend(api=k_api)
     backend.set_app_config(app)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-create-kypher-api\tQnode:{item}\tTime taken:{time.time() - s}')
 
+    s = time.time()
     wikipedia_urls = []
     property_values_count: List[List[str]] = backend.get_property_values_count_results(item, lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-prop-values\tQnode:{item}\tTime taken:{time.time() - s}')
+    s = time.time()
     high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
                                                                                           properties_values_limit)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-sep-hc-props\tQnode:{item}\tTime taken:{time.time() - s}')
     normal_property_dict = {}
     for normal_property_edge in normal_properties:
         normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
@@ -2297,10 +2326,13 @@ def xitem_helper(abstract_property,
         print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
               file=sys.stderr, flush=True)  # ***
     item_edges: List[List[str]] = []
+    s = time.time()
     _item_edges: List[List[str]] = backend.rb_get_node_edges(item,
                                                              lang=lang,
                                                              limit=query_limit,
                                                              lc_properties=low_cardinality_properties_list_str)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-edges\tQnode:{item}\tTime taken:{time.time() - s}')
     p = set()
     for i in _item_edges:
         p.add(i[2])
@@ -2312,11 +2344,20 @@ def xitem_helper(abstract_property,
         print("Done fetching edges", file=sys.stderr, flush=True)  # ***
     response: MutableMapping[str, any] = dict()
     response["ref"] = item
+    s = time.time()
     item_labels: List[List[str]] = backend.get_node_labels(item, lang=lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-egt-node-labels\tQnode:{item}\tTime taken:{time.time() - s}')
     response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+    s = time.time()
     item_aliases: List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-aliases\tQnode:{item}\tTime taken:{time.time() - s}')
     response["aliases"] = [rb_unstringify(x) for x in item_aliases]
+    s = time.time()
     item_descriptions: List[List[str]] = backend.get_node_descriptions(item, lang=lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-descriptions\tQnode:{item}\tTime taken:{time.time() - s}')
     response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
     # get the wikipedia abstract from the tuple
     response['abstract'] = ''
@@ -2347,6 +2388,7 @@ def xitem_helper(abstract_property,
             item_edges.append(item_edge)
     response_properties: List[MutableMapping[str, any]]
     response_xrefs: List[MutableMapping[str, any]]
+    s = time.time()
     response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
                                                                           item,
                                                                           item_edges,
@@ -2357,6 +2399,8 @@ def xitem_helper(abstract_property,
                                                                           qual_query_limit=qual_query_limit,
                                                                           lang=lang,
                                                                           verbose=verbose)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-qualifiers\tQnode:{item}\tTime taken:{time.time() - s}')
     for response_property in response_properties:
         response_property['count'] = normal_property_dict[response_property['ref']]
         response_property['mode'] = 'sync'
@@ -2566,6 +2610,7 @@ if __name__ == '__main__':
 
     p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 2))
     logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
+
     logger = logging.getLogger('perf')
 
     app.run(host='0.0.0.0', port=8080, debug=False, use_reloader=False)
