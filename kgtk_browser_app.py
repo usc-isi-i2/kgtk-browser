@@ -57,7 +57,7 @@ import time
 # http://ckg07.isi.edu:1234/kb/Q42
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
-ID_SEARCH_THRESHOLD: int = 150
+ID_SEARCH_THRESHOLD: int = -1  # force the code to not use IN queries for fetching qualifiers
 ID_SEARCH_USING_IN: bool = True
 
 DEFAULT_MATCH_ITEM_EXACTLY: bool = True
@@ -1813,7 +1813,6 @@ def rb_send_kb_items_and_qualifiers(backend,
     List[MutableMapping[str, any]],
     List[
         MutableMapping[str, any]]]:
-
     if sort_edges:
         sorted_item_edges: List[List[str]] = rb_build_sorted_item_edges(item_edges)
     else:
