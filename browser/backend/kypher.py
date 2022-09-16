@@ -444,11 +444,11 @@ class BrowserBackend(object):
         return self.execute_query(query, fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000,
-                          lc_properties: str = None):
+                          hc_properties: str = None):
         """Retrieve all edges that have 'node' as their node1.
         """
-        if lc_properties is not None:
-            query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY(node, lc_properties, self.get_lang(lang), limit)
+        if hc_properties is not None:
+            query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY(node, hc_properties, self.get_lang(lang), limit)
             return self.execute_query(query, fmt=fmt)
         else:
             query = self.api.RB_NODE_EDGES_QUERY(node, self.get_lang(lang), limit)
