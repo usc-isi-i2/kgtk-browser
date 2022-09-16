@@ -602,8 +602,8 @@ class KypherAPIObject(object):
             ret='distinct property as node1, count(eid) as node2, rlwdt as wikidatatype, llabel as property_label'
         )
 
-    def RB_NODE_EDGES_CONDITIONAL_QUERY(self, node: str, lc_properties: str, lang: str, limit: int):
-        where_clause = f'n1="{node}" AND rl IN [{lc_properties}]'
+    def RB_NODE_EDGES_CONDITIONAL_QUERY(self, node: str, hc_properties: str, lang: str, limit: int):
+        where_clause = f'n1="{node}" AND NOT (rl IN [{hc_properties}])'
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
@@ -617,7 +617,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{lc_properties}edges_conditional_query',
+            name=f'rb_{node}_{hc_properties}edges_conditional_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
