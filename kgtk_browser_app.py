@@ -164,6 +164,10 @@ rb_qualifier_priority_map: Mapping[str, int] = {val: idx for idx, val in enumera
 item_regex = re.compile(r"^[q|Q|p|P]\d+$")
 wikipedia_url_regex = re.compile(r'https:\/\/(.*)\.wikipedia\.org\/wiki\/(.*)')
 
+k_api = KypherAPIObject()
+backend = kybe.BrowserBackend(api=k_api)
+backend.set_app_config(app)
+
 
 @app.route('/kb/info', methods=['GET'])
 def get_info():
@@ -531,10 +535,6 @@ def query_helper(q: str,
                  match_label_prefixes_limit: int,
                  match_label_text_like: bool,
                  verbose: bool):
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
-
     matches = []
     # We keep track of the matches we've seen and produce only one match per node.
     items_seen: Set[str] = set()
@@ -1984,10 +1984,6 @@ def ritem_helper(item: str,
                  qual_query_limit: int,
                  qual_valuelist_max_len: int,
                  query_limit: int):
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
-
     properties_to_hide = app.config['KG_HIDE_PROPERTIES_RELATED_ITEMS']
     properties_to_hide_str = ", ".join(list(map(lambda x: '"{}"'.format(x), [x for x in properties_to_hide])))
 
@@ -2078,10 +2074,6 @@ def rproperty_helper(item: str,
                      qual_query_limit: int,
                      qual_valuelist_max_len: int,
                      skip: int):
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
-
     item_rp_edges = backend.rb_get_node_one_property_related_edges(item, property, limit, skip, lang=lang)
     response: MutableMapping[str, any] = dict()
     response_properties: List[MutableMapping[str, any]]
@@ -2162,10 +2154,6 @@ def property_helper(item: str,
                     qual_valuelist_max_len: int,
                     skip: int,
                     valuelist_max_len: int):
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
-
     if re.match(item_regex, property):
         property = property.upper()
 
@@ -2296,9 +2284,6 @@ def xitem_helper(abstract_property,
                  valuelist_max_len,
                  verbose, logger):
     s = time.time()
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
     logger.error(
         f'{multiprocessing.current_process().pid}\tEndpoint:xitem-create-kypher-api\tQnode:{item}\tTime taken:{time.time() - s}')
 
@@ -2601,11 +2586,7 @@ def parse_wikipedia_url(wiki_url: str) -> Tuple[str, str]:
 
 
 if __name__ == '__main__':
-    k_api = KypherAPIObject()
-    backend = kybe.BrowserBackend(api=k_api)
-    backend.set_app_config(app)
-
-    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 2))
+    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 4))
     logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
 
     logger = logging.getLogger('perf')
