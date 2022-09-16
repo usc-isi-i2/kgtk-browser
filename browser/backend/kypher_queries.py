@@ -837,8 +837,8 @@ class KypherAPIObject(object):
             skip=skip
         )
 
-    def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self, node: str, lc_properties: str, lang: str, limit: int):
-        where_clause = f'n2="{node}" AND rl IN [{lc_properties}]'
+    def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self, node: str, hc_properties: str, lang: str, limit: int):
+        where_clause = f'n2="{node}" AND NOT (rl IN [{hc_properties}])'
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_one_property_related_edges()'.
@@ -850,7 +850,7 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{lc_properties}_{limit}_related_edges_multiple_properties_query',
+            name=f'rb_{node}_{hc_properties}_{limit}_related_edges_multiple_properties_query',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
