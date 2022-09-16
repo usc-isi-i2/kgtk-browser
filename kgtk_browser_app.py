@@ -1999,10 +1999,10 @@ def ritem_helper(item: str,
     normal_property_dict = {}
     for normal_property_edge in normal_properties:
         normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
-    high_cardinality_properties_list_str = ", ".join(
-        list(map(lambda x: '"{}"'.format(x), [x[0] for x in hc_properties])))
+    lc_properties_list_str = ", ".join(
+        list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
     item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
-                                                                                        hc_properties=high_cardinality_properties_list_str,
+                                                                                        lc_properties=lc_properties_list_str,
                                                                                         limit=query_limit,
                                                                                         lang=lang
                                                                                         )

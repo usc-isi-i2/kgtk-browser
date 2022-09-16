@@ -494,11 +494,11 @@ class BrowserBackend(object):
         query = self.api.RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
         return self.execute_query(query, fmt=fmt)
 
-    def rb_get_node_multiple_properties_related_edges(self, node, hc_properties: str, limit: int, lang=None, fmt=None):
+    def rb_get_node_multiple_properties_related_edges(self, node, lc_properties: str, limit: int, lang=None, fmt=None):
         """Retrieve all edges that have 'node' as their node1 for property in lc_properties
         """
 
-        query = self.api.RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(node, hc_properties, self.get_lang(lang),
+        query = self.api.RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(node, lc_properties, self.get_lang(lang),
                                                                          limit)
         return self.execute_query(query, fmt=fmt)
 
