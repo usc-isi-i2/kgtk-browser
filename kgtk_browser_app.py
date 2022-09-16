@@ -2295,13 +2295,14 @@ def xitem_helper(abstract_property,
     s = time.time()
     high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
                                                                                           properties_values_limit)
+
     logger.error(
         f'{multiprocessing.current_process().pid}\tEndpoint:xitem-sep-hc-props\tQnode:{item}\tTime taken:{time.time() - s}')
     normal_property_dict = {}
     for normal_property_edge in normal_properties:
         normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
-    low_cardinality_properties_list_str = ", ".join(
-        list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+    high_cardinality_properties_list_str = ", ".join(
+        list(map(lambda x: '"{}"'.format(x), [x[0] for x in high_cardinality_properties])))
     rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
     verbose2: bool = verbose  # ***
     if verbose2:
@@ -2312,9 +2313,10 @@ def xitem_helper(abstract_property,
     _item_edges: List[List[str]] = backend.rb_get_node_edges(item,
                                                              lang=lang,
                                                              limit=query_limit,
-                                                             lc_properties=low_cardinality_properties_list_str)
+                                                             hc_properties=high_cardinality_properties_list_str)
     logger.error(
         f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-edges\tQnode:{item}\tTime taken:{time.time() - s}')
+
     p = set()
     for i in _item_edges:
         p.add(i[2])
