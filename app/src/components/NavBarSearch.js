@@ -46,7 +46,7 @@ const useStyles = makeStyles(theme => ({
 }))
 
 
-const Search = () => {
+const NavBarSearch = () => {
 
   const classes = useStyles()
 
@@ -153,4 +153,4 @@ const Search = () => {
   )
 }
 
-export default Search
+export default NavBarSearch
