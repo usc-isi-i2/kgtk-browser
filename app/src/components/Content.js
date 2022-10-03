@@ -21,6 +21,7 @@ const Content = () => {
       <div id="top" />
       <Header info={info} />
       <Container maxWidth="xl">
+        <Search />
         <ArrowUp/>
       </Container>
     </React.Fragment>
