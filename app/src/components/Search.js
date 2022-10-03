@@ -8,6 +8,9 @@ import { withStyles } from '@material-ui/core/styles'
 import Input from './Input'
 import WikidataLogo from './WikidataLogo'
 
+import fetchSearchResults from '../utils/fetchSearchResults'
+import fetchESSearchResults from '../utils/fetchESSearchResults'
+
 
 const styles = theme => ({
   paper: {
@@ -122,9 +125,9 @@ class Search extends React.Component {
   }
 
   handleOnChange(query) {
-    this.setState({ query }, () => {
+    this.setState({ loading: true, query }, () => {
       if ( !query ) {
-        this.setState({results: []})
+        this.setState({ loading: false, results: []})
       } else {
         clearTimeout(this.timeoutID)
         this.timeoutID = setTimeout(() => {
@@ -134,41 +137,24 @@ class Search extends React.Component {
     })
   }
 
-  submitQuery(isClass=false) {
-    return new Promise((resolve, reject) => {
-      const { query } = this.state
+  submitQuery() {
+    const { query } = this.state
 
-      // Construct the url with correct parameters
-      let url = `/api?`
-      if ( query ) {
-        url += `&q=${query}`
-      } else {
-        return reject(false)
-      }
-
-      url += `&extra_info=true`
-
-      if ( query ) {
+    if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
+      fetchSearchResults(query).then((results) => {
         this.setState({
-          loading: true,
+          results: results,
+          loading: false,
         })
-        return fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      })
+    } else {
+      fetchESSearchResults(query).then((results) => {
+        this.setState({
+          results: results,
+          loading: false,
         })
-        .then((response) => response.json())
-        .then((results) => {
-          this.setState({
-            results: results,
-            loading: false,
-          }, () => {
-            resolve()
-          })
-        })
-      }
-    })
+      })
+    }
   }
 
   submit(event) {
