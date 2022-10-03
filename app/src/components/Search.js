@@ -162,6 +162,17 @@ class Search extends React.Component {
     this.submitQuery()
   }
 
+  getBrowsertUrl(node) {
+    let url = `/${node.ref}`
+
+    // prefix the url with the location of where the app is hosted
+    if ( process.env.REACT_APP_FRONTEND_URL ) {
+      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    }
+
+    return url
+  }
+
   getWikidataUrl(result) {
     // check if result is a qnode or a property
     if ( result.qnode[0] === 'Q' ) {
@@ -198,11 +209,11 @@ class Search extends React.Component {
           <Typography
             variant="a"
             component="a"
-            target="_blank"
             className={classes.label}
-            href={`https://kgtk.isi.edu/browser/${result.qnode}`}>
-            {result.label[0]} ({result.qnode})
+            href={this.getBrowsertUrl(result)}>
+            {result.description} ({result.ref})
           </Typography>
+          { !!result.qnode ? (
           <Typography
             variant="a"
             component="a"
@@ -211,13 +222,14 @@ class Search extends React.Component {
             href={this.getWikidataUrl(result)}>
             <WikidataLogo />
           </Typography>
+          ) : null }
           <Typography
             component="p"
             variant="body1"
             className={classes.description}>
-            <b>Description:</b> {!!result.description[0] ? result.description[0] : 'No Description'}
+            <b>Description:</b> {!!result.description ? result.description : 'No Description'}
           </Typography>
-          { !!result.alias.length ? (
+          { !!result.alias && result.alias.length ? (
             <Typography
               component="p"
               variant="body1"
