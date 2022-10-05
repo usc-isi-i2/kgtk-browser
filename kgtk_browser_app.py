@@ -1370,7 +1370,7 @@ def rb_render_item_qualifiers(backend,
     current_qual_edge_id: Optional[str] = None
     current_qual_relationship: Optional[str] = None
     current_qualifiers: List[MutableMapping[str, any]] = list()
-    all_time=0
+
     for item_qual_edge in item_qualifier_edges:
         if verbose:
             print(repr(item_qual_edge), file=sys.stderr, flush=True)
@@ -1405,7 +1405,7 @@ def rb_render_item_qualifiers(backend,
                 "values": current_qual_values
             }
             current_qualifiers.append(current_qual_property_map)
-        s = time.time()
+
         current_qual_value: MutableMapping[str, any] = rb_build_current_value(backend,
                                                                               qual_node2,
                                                                               qual_value,
@@ -1413,11 +1413,8 @@ def rb_render_item_qualifiers(backend,
                                                                               qual_node2_label,
                                                                               qual_node2_description,
                                                                               lang)
-        all_time += time.time() - s
+
         current_qual_values.append(current_qual_value)
-    # if (all_time) > 1.0:
-    #     print(f'$$$$$$$$$$$$$$$$$:{all_time}')
-    #     print(item, len(item_qualifier_edges))
 
     downsample_properties(current_qualifiers, qual_proplist_max_len, qual_valuelist_max_len,
                           repr(item) + " edge " + repr(edge_id), verbose)
@@ -1621,33 +1618,25 @@ def rb_fetch_qualifiers(backend,
     verbose2: bool = verbose
 
     item_qualifier_edges: List[List[str]]
-    s = time.time()
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
-            # s = time.time()
-            # print(item, ID_SEARCH_USING_IN, len(edge_id_tuple), is_related_item)
             item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
                                                                      qual_query_limit=qual_query_limit, lang=lang,
                                                                      verbose=verbose2)
-            # print(f'1: {time.time() - s}')
+
         else:
-            # s = time.time()
             item_qualifier_edges = rb_fetch_qualifiers_using_id_queries(backend, edge_id_tuple,
                                                                         qual_query_limit=qual_query_limit, lang=lang,
                                                                         verbose=verbose2)
-            # print(f'2: {time.time() - s}')
     else:
         if verbose2:
             print("Fetching qualifier edges for item %s (lang=%s, limit=%d)" % (repr(item),
                                                                                 repr(lang),
                                                                                 qual_query_limit),
                   file=sys.stderr, flush=True)  # ***
-        # s = time.time()
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
-        # print(f'3: {time.time() - s}')
     if verbose2:
         print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True)  # ***
-    # print(f'%%%%4:{time.time() - s}')
     return item_qualifier_edges
 
 
@@ -1659,14 +1648,14 @@ def rb_fetch_and_render_qualifiers(backend,
                                    qual_query_limit: int = 0,
                                    lang: str = 'en',
                                    verbose: bool = False,
-                                   is_related_item: bool = False):
+                                   is_related_item: bool = False,
+                                   call_from=None):
     scanned_property_map: MutableMapping[str, any]
     scanned_value: MutableMapping[str, any]
     scanned_edge_id: str
-    s = time.time()
+
     edge_id_tuple = rb_build_edge_id_tuple(response_properties)
-    # print(f'2.1: {time.time() -s}')
-    s=time.time()
+
     item_qualifier_edges: List[List[str]] = rb_fetch_qualifiers(backend,
                                                                 item,
                                                                 edge_id_tuple,
@@ -1674,7 +1663,6 @@ def rb_fetch_and_render_qualifiers(backend,
                                                                 lang=lang,
                                                                 verbose=verbose,
                                                                 is_related_item=is_related_item)
-    # print(f'2.2: {time.time() - s}')
 
     # Group the qualifiers by the item they qualify, identified by the item's
     # edge_id (which should be unique):
@@ -1682,8 +1670,9 @@ def rb_fetch_and_render_qualifiers(backend,
         item_qualifier_edges)
     if verbose:
         print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True)  # ***
-    s = time.time()
+
     edges_without_qualifiers: int = 0
+
     for scanned_property_map in response_properties:
         for scanned_value in scanned_property_map["values"]:
             # Retrieve the associated edge_id
@@ -1691,7 +1680,7 @@ def rb_fetch_and_render_qualifiers(backend,
             if scanned_edge_id not in item_qual_map:
                 edges_without_qualifiers += 1
                 continue  # There are no associated qualifiers.
-
+            fff = time.time()
             scanned_value["qualifiers"] = \
                 rb_render_item_qualifiers(backend,
                                           item,
@@ -1701,7 +1690,7 @@ def rb_fetch_and_render_qualifiers(backend,
                                           qual_valuelist_max_len,
                                           lang,
                                           verbose)
-    # print(f'2.3: {time.time() - s}')
+
     if verbose:
         print("edges_without_qualifiers = %d" % edges_without_qualifiers, file=sys.stderr, flush=True)  # ***
 
@@ -1710,7 +1699,6 @@ def rb_fetch_and_render_qualifiers(backend,
             # Remove the edge_id
             if "edge_id" in scanned_value:
                 del scanned_value["edge_id"]
-
 
 
 def rb_render_kb_items_and_qualifiers(backend,
@@ -1728,7 +1716,7 @@ def rb_render_kb_items_and_qualifiers(backend,
     List[MutableMapping[str, any]]]:
     response_properties: List[MutableMapping[str, any]] = list()
     response_xrefs: List[MutableMapping[str, any]] = list()
-    # s = time.time()
+
     response_properties, response_xrefs = rb_render_kb_items(backend,
                                                              item,
                                                              item_edges,
@@ -1737,9 +1725,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                                                              lang=lang,
                                                              verbose=verbose)
 
-    # print(f'%%%1:{time.time() - s}')
     s = time.time()
-    # print(response_properties)
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_properties,
@@ -1747,9 +1733,9 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_valuelist_max_len=qual_valuelist_max_len,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
-                                   verbose=verbose)
-    # print(f'%%%2: {calling_from} - {time.time() - s}')
-    s = time.time()
+                                   verbose=verbose, call_from=calling_from)
+    print(f'%%%2: {calling_from} - {time.time() - s}')
+
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_xrefs,
@@ -1758,7 +1744,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose)
-    # print(f'%%%3: {calling_from} {time.time() - s}')
+
     return response_properties, response_xrefs
 
 
@@ -2006,6 +1992,7 @@ def ritem_helper(item: str,
     if re.match(item_regex, item):
         item = item.upper()
 
+    s = time.time()
     incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang, properties_to_hide_str)
     hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
                                                                             properties_values_limit)
@@ -2015,11 +2002,16 @@ def ritem_helper(item: str,
     # lc_properties_list_str = ", ".join(
     #     list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
     lc_properties_list_str = ' '.join([x[0] for x in normal_properties])
+    print(
+        f'{multiprocessing.current_process().pid}\tEndpoint:ritem-value-counts\tQnode:{item}\tTime taken:{time.time() - s}')
+    s = time.time()
     item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
                                                                                         lc_properties=lc_properties_list_str,
                                                                                         limit=query_limit,
                                                                                         lang=lang
                                                                                         )
+    print(
+        f'{multiprocessing.current_process().pid}\tEndpoint:ritem-get-edges\tQnode:{item}\tTime taken:{time.time() - s}')
     response: MutableMapping[dict, any] = list()
     response_properties: List[MutableMapping[str, any]]
     sorted_item_edges: List[List[str]] = list()
@@ -2319,8 +2311,7 @@ def xitem_helper(abstract_property,
     normal_property_dict = {}
     for normal_property_edge in normal_properties:
         normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
-    # high_cardinality_properties_list_str = ", ".join(
-    #     list(map(lambda x: '"{}"'.format(x), [x[0] for x in high_cardinality_properties])))
+
     low_cardinality_properties_list_str = ' '.join([x[0] for x in normal_properties])
     rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
     verbose2: bool = verbose  # ***
