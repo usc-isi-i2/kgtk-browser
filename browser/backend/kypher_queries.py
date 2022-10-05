@@ -45,7 +45,7 @@ class KypherAPIObject(object):
         self.kapi.add_input(KG_FANOUTS_GRAPH, name='fanouts', handle=True)
         self.kapi.add_input(KG_DATATYPES_GRAPH, name='datatypes', handle=True)
 
-    def NODE_LABELS_QUERY(self, node: str, lang: str):
+    def NODE_LABELS_QUERY(self):
         return self.kapi.get_query(
             doc="""
                 Create the Kypher query used by 'BrowserBackend.get_node_labels()'.
@@ -54,15 +54,14 @@ class KypherAPIObject(object):
                 Return distinct 'node1', 'node_label' pairs as the result (we include
                 'NODE' as an output to make it easier to union result frames).
                 """,
-            name=f'node_labels_query_{node}_{lang}',
             inputs='labels',
             maxcache=MAX_CACHE_SIZE * 10,
             match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
-            where=f'n="{node}" and ("{lang}"="any" or kgtk_lqstring_lang(l)="{lang}")',
+            where=f'n=$NODE and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
             ret='distinct n as node1, l as node_label',
         )
 
-    def NODE_ALIASES_QUERY(self, node: str, lang: str):
+    def NODE_ALIASES_QUERY(self):
         return self.kapi.get_query(
             doc="""
                 Create the Kypher query used by 'BrowserBackend.get_node_aliases()'.
@@ -70,14 +69,13 @@ class KypherAPIObject(object):
                 the specified language (using 'any' for 'LANG' retrieves all labels).
                 Return distinct 'node1', 'node_alias' pairs as the result.
                 """,
-            name=f'node_aliases_query_{node}_{lang}',
             inputs='aliases',
             match='$aliases: (n)-[r:`%s`]->(a)' % KG_ALIASES_LABEL,
-            where=f'n="{node}" and ("{lang}"="any" or kgtk_lqstring_lang(a)="{lang}")',
+            where=f'n=$NODE and ($LANG="any" or kgtk_lqstring_lang(a)=$LANG)',
             ret='distinct n as node1, a as node_alias',
         )
 
-    def NODE_DESCRIPTIONS_QUERY(self, node: str, lang: str):
+    def NODE_DESCRIPTIONS_QUERY(self):
         return self.kapi.get_query(
             doc="""
                 Create the Kypher query used by 'BrowserBackend.get_node_descriptions()'.
@@ -85,10 +83,9 @@ class KypherAPIObject(object):
                 the specified language (using 'any' for 'LANG' retrieves all labels).
                 Return distinct 'node1', 'node_description' pairs as the result.
                 """,
-            name=f'node_descriptions_query_{node}_{lang}',
             inputs='descriptions',
             match='$descriptions: (n)-[r:`%s`]->(d)' % KG_DESCRIPTIONS_LABEL,
-            where=f'n="{node}" and ("{lang}"="any" or kgtk_lqstring_lang(d)="{lang}")',
+            where=f'n=$NODE and ($LANG="any" or kgtk_lqstring_lang(d)=$LANG)',
             ret='distinct n as node1, d as node_description',
         )
 
@@ -290,7 +287,7 @@ class KypherAPIObject(object):
             limit=f'"{limit}"'
         )
 
-    def RB_NODE_EDGES_QUERY(self, node: str, lang: str, limit: int):
+    def RB_NODE_EDGES_QUERY(self):
         return self.kapi.get_query(
             doc="""
                 Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
@@ -303,16 +300,15 @@ class KypherAPIObject(object):
                 Limit the number of return edges to LIMIT.
 
                 """,
-            name=f'rb_node_edges_query_{node}_{lang}_{limit}',
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
-            where=f'n1="{node}"',
+            where=f'n1=$NODE',
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere=f'$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
+            owhere2=f'$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
             opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
+            owhere3=f'$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
             opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
             ret='r as id, ' +
                 'n1 as node1, ' +
@@ -324,10 +320,10 @@ class KypherAPIObject(object):
                 'n2desc as target_description, ' +
                 'rlwdt as wikidatatype',
             order='r.label, n2, r, llabel, n2label, n2desc',  # For better performance with LIMIT, sort in caller.
-            limit=f"'{limit}'"
+            limit='$LIMIT'
         )
 
-    def RB_NODE_EDGE_QUALIFIERS_QUERY(self, node: str, lang: str, limit: int):
+    def RB_NODE_EDGE_QUALIFIERS_QUERY(self):
         return self.kapi.get_query(
             doc="""
             Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
@@ -336,16 +332,15 @@ class KypherAPIObject(object):
             qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
             for base edges.
             """,
-            name=f'rb_node_edge_qualifiers_query_{node}_{lang}_{limit}',
             inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
             match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-            where=f'n1="{node}"',
+            where='n1=$NODE',
             opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(qllabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
             opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(qn2label)="{lang}"',
+            owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
             opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(qd)="{lang}"',
+            owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
             ret='r as id, ' +
                 'n1 as node1, ' +
                 'q as qual_id, ' +
@@ -355,10 +350,10 @@ class KypherAPIObject(object):
                 'qn2label as qual_node2_label, ' +
                 'qd as qual_node2_description',
             order='r, q.label, qn2, q, qllabel, qn2label, qd',  # For better performance with LIMIT, sort in caller.
-            limit=f"'{limit}'"
+            limit='$LIMIT'
         )
 
-    def RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY(self, edge_id: str, lang: str, limit: int):
+    def RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY(self):
         return self.kapi.get_query(
             doc="""
             Create the Kypher query used by 'BrowserBackend.get_node_edge_qualifiers()'.
@@ -367,16 +362,15 @@ class KypherAPIObject(object):
             qualifier edge return information similar to what 'NODE_EDGES_QUERY' returns
             for base edges.
             """,
-            name=f'rb_node_edge_qualifiers_by_edge_id_query_{edge_id}_{lang}_{limit}',
             inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
             match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-            where=f'r="{edge_id}"',
+            where='r=$EDGEID',
             opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(qllabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
             opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(qn2label)="{lang}"',
+            owhere2='$LANG="any" or kgtk_lqstring_lang(qn2label)=$LANG',
             opt3='$descriptions: (qn2)-[r:`%s`]->(qd)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(qd)="{lang}"',
+            owhere3='$LANG="any" or kgtk_lqstring_lang(qd)=$LANG',
             ret='r as id, ' +
                 'n1 as node1, ' +
                 'q as qual_id, ' +
@@ -386,7 +380,7 @@ class KypherAPIObject(object):
                 'qn2label as qual_node2_label, ' +
                 'qd as qual_node2_description',
             order='r, q.label, qn2, q, qllabel, qn2label, qd',  # For better performance with LIMIT, sort in caller.
-            limit=f"'{limit}'"
+            limit='$LIMIT'
         )
 
     def RB_NODE_INVERSE_EDGES_QUERY(self, node: str, lang: str):
@@ -484,7 +478,7 @@ class KypherAPIObject(object):
             order='n1, n1label, n1desc'
         )
 
-    def RB_IMAGE_FORMATTER_QUERY(self, node: str):
+    def RB_IMAGE_FORMATTER_QUERY(self):
         return self.kapi.get_query(
             doc="""
                    Create the Kypher query used by 'BrowserBackend.rb_get_image_formatter()'.
@@ -492,30 +486,28 @@ class KypherAPIObject(object):
                    under relationship P1630.
                    Return node2.
                    """,
-            name=f'rb_image_formatter_query_{node}',
             inputs='edges',
             match='$edges: (n1)-[:P1630]->(n2)',
-            where=f'n1="{node}"',
+            where=f'n1=$NODE',
             ret='n2 as node2 ',
             limit=1
         )
 
-    def RB_SUBPROPERTY_RELATIONSHIPS_QUERY(self, lang: str):
+    def RB_SUBPROPERTY_RELATIONSHIPS_QUERY(self):
         return self.kapi.get_query(
             doc="""
                    Create the Kypher query used by 'BrowserBackend.rb_get_subproperty_relationships()'.
                    Return node1 and node2.
                    """,
-            name=f'rb_subproperty_relationships_query_{lang}',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[:P1647]->(n2)',
             opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(n1label)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
             ret='n1 as node1, n2 as node2, n1label as node1_label',
         )
 
-    def RB_LANGUAGE_LABELS_QUERY(self, code: str, lang: str):
-        where_clause = f'n2={code} and isa in ["Q34770", "Q1288568", "Q33742"]'
+    def RB_LANGUAGE_LABELS_QUERY(self):
+        where_clause = f'n2=$CODE and isa in ["Q34770", "Q1288568", "Q33742"]'
         return self.kapi.get_query(
             doc="""
                    Create the Kypher query used by 'BrowserBackend.rb_get_language_labels()'.
@@ -542,106 +534,64 @@ class KypherAPIObject(object):
                    Parameter 'LANG' controls the language for retrieved labels.
                    Return the category `node1` and 'node1_label'.
                    """,
-            name=f'rb_language_labels_query_{code}_{lang}',
             inputs=('edges', 'labels'),
             match='$edges: (isa)<-[:P31]-(n1)-[:P424]->(n2)',
             where=where_clause,
             opt='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(n1label)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
             ret='n1 as node1, n1label as node1_label',
             order='n1, n1label'
         )
 
-    def GET_CLASS_VIZ_EDGE_QUERY(self, node):
-        match_clause = f'(class)-[{{label: property, graph: "{node}", edge_type: edge_type}}]->(superclass)'
-        query_name = f'{node}_class_viz_edge_query'
+    def GET_CLASS_VIZ_EDGE_QUERY(self):
+        match_clause = f'(class)-[{{label: property, graph: n1, edge_type: edge_type}}]->(superclass)'
         return self.kapi.get_query(
             doc="""
                         Query the 'classvizedge' table to fetch the edges for given Qnode
                         """,
-            name=query_name,
             inputs='classvizedge',
             maxcache=MAX_CACHE_SIZE * 10,
-            match=match_clause
+            match=match_clause,
+            where='n1=$NODE'
         )
 
-    def GET_CLASS_VIZ_NODE_QUERY(self, node):
-        match_clause = f'(class)-[{{graph: "{node}", instance_count: instance_count, label: label}}]->()'
-        query_name = f'{node}_class_viz_node_query'
+    def GET_CLASS_VIZ_NODE_QUERY(self):
+        match_clause = f'(class)-[{{graph: n1, instance_count: instance_count, label: label}}]->()'
         return self.kapi.get_query(
             doc="""
                              Query the 'classviznode' table to fetch the edges for given Qnode
                         """,
-            name=query_name,
             inputs='classviznode',
             maxcache=MAX_CACHE_SIZE * 10,
-            match=match_clause
+            match=match_clause,
+            where='n1=$NODE'
         )
 
-    def GET_PROPERTY_VALUES_COUNT_QUERY(self, node: str, lang) -> kapi.KypherQuery:
+    def GET_PROPERTY_VALUES_COUNT_QUERY(self) -> kapi.KypherQuery:
         """
         This function returns all the properties and their value counts for a Qnode. Helper function
         to identify high cardinatlity properties.
         :param node:
         :return: KypherQuery object
         """
-        query_name = f'{node}_property_values_count_query'
-        match_clause = f'claims: (:{node})-[eid {{label: property}}]->(), ' \
+        match_clause = f'claims: (n1)-[eid {{label: property}}]->(), ' \
                        f'datatypes: (property)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL
+        where_clause = 'n1=$NODE'
 
         return self.kapi.get_query(
             doc="""
                     Find property value counts for a Qnode
                  """,
-            name=query_name,
             inputs=('claims', 'labels', 'datatypes'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause,
+            where=where_clause,
             opt='$labels: (property)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             ret='distinct property as node1, count(eid) as node2, rlwdt as wikidatatype, llabel as property_label'
         )
 
-    def RB_NODE_EDGES_CONDITIONAL_QUERY(self, node: str, hc_properties: str, lang: str, limit: int):
-        where_clause = f'n1="{node}" AND NOT (rl IN [{hc_properties}])'
-        return self.kapi.get_query(
-            doc="""
-                    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
-                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1, for a list of
-                    properties only.
-                    Additionally retrieve descriptive information for all relationship labels.
-                    Additionally retrieve the node2 descriptions.
-                    Parameter 'LANG' controls the language for retrieved labels.
-                    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
-                    and label's 'label_label'.
-                    Limit the number of return edges to LIMIT.
-
-                    """,
-            name=f'rb_{node}_{hc_properties}edges_conditional_query',
-            inputs=('edges', 'labels', 'descriptions', 'datatypes'),
-            match='$edges: (n1)-[r {label: rl}]->(n2)',
-            where=where_clause,
-            opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
-            opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
-            opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
-            opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
-            ret='r as id, ' +
-                'n1 as node1, ' +
-                'r.label as relationship, ' +
-                'n2 as node2, ' +
-                'llabel as relationship_label, ' +
-                'n2 as target_node, ' +
-                'n2label as target_label, ' +
-                'n2desc as target_description, ' +
-                'rlwdt as wikidatatype',
-            order='r.label, n2, r, llabel, n2label, n2desc',  # For better performance with LIMIT, sort in caller.
-            limit=f"{limit}"
-        )
-
-    def RB_NODE_EDGES_CONDITIONAL_QUERY_2(self, node: str, lc_properties: str, lang: str, limit: int):
+    def RB_NODE_EDGES_CONDITIONAL_QUERY(self):
         where_clause = f'n1=$NODE AND hc_props=$PROPS'
         return self.kapi.get_query(
             doc="""
@@ -661,11 +611,11 @@ class KypherAPIObject(object):
                   '$edges: (hc_props)-[:kgtk_values]->(rl)',
             where=where_clause,
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
+            owhere2='$LANG="any" or kgtk_lqstring_lang(n2label)=$LANG',
             opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
+            owhere3='$LANG="any" or kgtk_lqstring_lang(n2desc)=$LANG',
             opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
             ret='r as id, ' +
                 'n1 as node1, ' +
@@ -677,45 +627,7 @@ class KypherAPIObject(object):
                 'n2desc as target_description, ' +
                 'rlwdt as wikidatatype',
             order='r.label, n2, r, llabel, n2label, n2desc',  # For better performance with LIMIT, sort in caller.
-            limit=f"{limit}"
-        )
-
-    def RB_NODE_EDGES_ONE_PROPERTY_QUERY(self, node: str, property: str, lang: str, skip: int, limit: int):
-        where_clause = f'n1="{node}" AND rl="{property}"'
-        return self.kapi.get_query(
-            doc="""
-                    Create the Kypher query used by 'BrowserBackend.rb_get_node_edges()'.
-                    Given parameter 'NODE' retrieve all edges that have 'NODE' as their node1 for a given property.
-                    Additionally retrieve descriptive information for all relationship labels.
-                    Additionally retrieve the node2 descriptions.
-                    Parameter 'LANG' controls the language for retrieved labels.
-                    Return edge 'id', 'label', 'node2', as well as node2's 'node2_label'
-                    and label's 'label_label'.
-                    Limit the number of return edges to LIMIT.
-
-                    """,
-            name=f'rb_{node}_{property}_{skip}_{limit}_edges_one_property_query',
-            inputs=('edges', 'labels', 'descriptions', 'datatypes'),
-            match='$edges: (n1)-[r {label: rl}]->(n2)',
-            where=where_clause,
-            opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
-            opt2='$labels: (n2)-[:`%s`]->(n2label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n2label)="{lang}"',
-            opt3='$descriptions: (n2)-[r:`%s`]->(n2desc)' % KG_DESCRIPTIONS_LABEL,
-            owhere3=f'"{lang}"="any" or kgtk_lqstring_lang(n2desc)="{lang}"',
-            opt4='$datatypes: (rl)-[:`%s`]->(rlwdt)' % KG_DATATYPES_LABEL,
-            ret='r as id, ' +
-                'n1 as node1, ' +
-                'r.label as relationship, ' +
-                'n2 as node2, ' +
-                'llabel as relationship_label, ' +
-                'n2 as target_node, ' +
-                'n2label as target_label, ' +
-                'n2desc as target_description, ' +
-                'rlwdt as wikidatatype',
-            limit=f"{limit}",
-            skip=skip
+            limit='$LIMIT'
         )
 
     def RB_NODE_EDGES_ONE_PROPERTY_WITH_QUALIFIERS_QUERY(self,
@@ -751,7 +663,6 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_{skip}_{limit}_{sort_order}_{sort_by}_{str(qualifier_property)}_edges_one_property_with_qualifiers_query',
             inputs=('edges', 'labels', 'descriptions', 'datatypes', 'qualifiers'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
@@ -823,31 +734,29 @@ class KypherAPIObject(object):
             limit="$LIMIT"
         )
 
-    def GET_INCOMING_EDGES_COUNT_QUERY(self, node: str, lang: str, properties_to_hide: str) -> kapi.KypherQuery:
+    def GET_INCOMING_EDGES_COUNT_QUERY(self, properties_to_hide: str) -> kapi.KypherQuery:
         """
         This function returns all the incoming edges counts per property for a Qnode.
         :param node: Qnode
         :return: KypherQuery object
         """
-        query_name = f'{node}_incoming_edges_count_query'
-        match_clause = f'claims: ()-[eid {{label: property}}]->(:{node})'
-        where_clause = f'NOT property IN [{properties_to_hide}]'
+        match_clause = f'claims: ()-[eid {{label: property}}]->(node)'
+        where_clause = f'node=$NODE and NOT property IN [{properties_to_hide}]'
         return self.kapi.get_query(
             doc="""
                     Find incoming properties for the qnode and their counts
                  """,
-            name=query_name,
             inputs=('claims', 'labels'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=match_clause,
             where=where_clause,
             opt='$labels: (property)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             ret='distinct property as node1, count(eid) as node2, llabel as property_label'
         )
 
-    def RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY(self, node: str, property: str, lang: str, skip: int, limit: int):
-        where_clause = f'n2="{node}" AND rl="{property}"'
+    def RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY(self):
+        where_clause = f'n2=$NODE AND rl=$PROPERTY'
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_one_property_related_edges()'.
@@ -859,24 +768,23 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            name=f'rb_{node}_{property}_{skip}_{limit}_related_edges_one_property_query',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             opt2='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n1label)="{lang}"',
+            owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
             ret='r as id, ' +
                 'n1 as node1, ' +
                 'r.label as relationship, ' +
                 'llabel as relationship_label, ' +
                 'n1label as node1_label',
-            limit=f"{limit}",
-            skip=skip
+            limit='$LIMIT',
+            skip='$SKIP'
         )
 
-    def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self, node: str, lc_properties: str, lang: str, limit: int):
+    def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self):
         where_clause = f'n2=$NODE AND rl=$PROPS'
         return self.kapi.get_query(
             doc="""
@@ -889,19 +797,18 @@ class KypherAPIObject(object):
                     Limit the number of return edges to LIMIT.
 
                     """,
-            # name=f'rb_{node}_{lc_properties}_{limit}_related_edges_multiple_properties_query',
             inputs=('edges', 'labels'),
             match='$edges: (n1)-[r {label: rl}]->(n2),'
                   '$edges: (lc_props)-[:kgtk_values]->(rl)',
             where=where_clause,
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
-            owhere=f'"{lang}"="any" or kgtk_lqstring_lang(llabel)="{lang}"',
+            owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
             opt2='$labels: (n1)-[:`%s`]->(n1label)' % KG_LABELS_LABEL,
-            owhere2=f'"{lang}"="any" or kgtk_lqstring_lang(n1label)="{lang}"',
+            owhere2='$LANG="any" or kgtk_lqstring_lang(n1label)=$LANG',
             ret='r as id, ' +
                 'n1 as node1, ' +
                 'r.label as relationship, ' +
                 'llabel as relationship_label, ' +
                 'n1label as node1_label',
-            limit=f"{limit}"
+            limit='$LIMIT'
         )
