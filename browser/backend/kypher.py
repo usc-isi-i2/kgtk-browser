@@ -76,20 +76,20 @@ class BrowserBackend(object):
     def get_node_labels(self, node, lang=None, fmt=None):
         """Retrieve all labels for 'node'.
         """
-        query = self.api.NODE_LABELS_QUERY(node, self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.NODE_LABELS_QUERY()
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_node_aliases(self, node, lang=None, fmt=None):
         """Retrieve all aliases for 'node'.
         """
-        query = self.api.NODE_ALIASES_QUERY(node, self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.NODE_ALIASES_QUERY()
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_node_descriptions(self, node, lang=None, fmt=None):
         """Retrieve all descriptions for 'node'.
         """
-        query = self.api.NODE_DESCRIPTIONS_QUERY(node, self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.NODE_DESCRIPTIONS_QUERY()
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_node_images(self, node, fmt=None):
         """Retrieve all images for 'node'.
@@ -448,20 +448,12 @@ class BrowserBackend(object):
         """Retrieve all edges that have 'node' as their node1.
         """
         if lc_properties is not None:
-            # query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY(node, hc_properties, self.get_lang(lang), limit)
-            query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY_2(node, lc_properties, self.get_lang(lang), limit)
-            return self.execute_query(query, NODE=node, PROPS=lc_properties, fmt=fmt)
+            query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY()
+            return self.execute_query(query, NODE=node, PROPS=lc_properties, LANG=self.get_lang(lang), LIMIT=limit,
+                                      fmt=fmt)
         else:
-            query = self.api.RB_NODE_EDGES_QUERY(node, self.get_lang(lang), limit)
-            return self.execute_query(query, fmt=fmt)
-
-    # def rb_get_node_one_property_edges(self, node, property: str, limit: int, skip: int, lang=None, images=False,
-    #                                    fanouts=False, fmt=None):
-    #     """Retrieve all edges that have 'node' as their node1 for property=property
-    #     """
-    #
-    #     query = self.api.RB_NODE_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
-    #     return self.execute_query(query, fmt=fmt)
+            query = self.api.RB_NODE_EDGES_QUERY()
+            return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_one_property_with_qualifiers_edges(self,
                                                        node,
@@ -492,29 +484,29 @@ class BrowserBackend(object):
         """Retrieve all edges that have 'node' as their node1 for property=property
         """
 
-        query = self.api.RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY(node, property, self.get_lang(lang), skip, limit)
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_NODE_RELATED_EDGES_ONE_PROPERTY_QUERY()
+        return self.execute_query(query, NODE=node, PROPERTY=property, LANG=self.get_lang(lang), LIMIT=limit, SKIP=skip,
+                                  fmt=fmt)
 
     def rb_get_node_multiple_properties_related_edges(self, node, lc_properties: str, limit: int, lang=None, fmt=None):
         """Retrieve all edges that have 'node' as their node1 for property in lc_properties
         """
 
-        query = self.api.RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(node, lc_properties, self.get_lang(lang),
-                                                                         limit)
-        return self.execute_query(query, NODE=node,PROPS=lc_properties, fmt=fmt)
+        query = self.api.RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY()
+        return self.execute_query(query, NODE=node, PROPS=lc_properties, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have 'node' as their node1.
         """
-        query = self.api.RB_NODE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang), limit)
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_NODE_EDGE_QUALIFIERS_QUERY()
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edge_qualifiers_by_edge_id(self, edge_id, lang=None, images=False, fanouts=False, fmt=None,
                                                limit: int = 10000):
         """Retrieve all edge qualifiers for the edge with edge ID edge_id..
         """
-        query = self.api.RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY(edge_id, self.get_lang(lang), limit)
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_NODE_EDGE_QUALIFIERS_BY_EDGE_ID_QUERY()
+        return self.execute_query(query, EDGEID=edge_id, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edge_qualifiers_in(self, id_list, lang=None, images=False, fanouts=False, fmt=None,
                                        limit: int = 10000):
@@ -525,60 +517,42 @@ class BrowserBackend(object):
         query.clear()  # Since we don't plan to re-issue this query, release its resources.
         return results
 
-    # def rb_get_node_inverse_edges(self, node, lang=None, images=False, fanouts=False, fmt=None):
-    #     """Retrieve all edges that have 'node' as their node2.
-    #     """
-    #     query = self.api.RB_NODE_INVERSE_EDGES_QUERY(node, self.get_lang(lang))
-    #     return self.execute_query(query, fmt=fmt)
-
-    # def rb_get_node_inverse_edge_qualifiers(self, node, lang=None, images=False, fanouts=False, fmt=None):
-    #     """Retrieve all edge qualifiers for edges that have 'node' as their node2.
-    #     """
-    #     query = self.api.RB_NODE_INVERSE_EDGE_QUALIFIERS_QUERY(node, self.get_lang(lang))
-    #     return self.execute_query(query, fmt=fmt)
-
-    # def rb_get_node_categories(self, node, lang=None, images=False, fanouts=False, fmt=None):
-    #     """Retrieve all categories that have 'node' as their node2.
-    #     """
-    #     query = self.api.RB_NODE_CATEGORIES_QUERY(node, self.get_lang(lang))
-    #     return self.execute_query(query, fmt=fmt)
-
     def rb_get_image_formatter(self, node, lang=None, fmt=None):
         """Retrieve the first matching image formatter.
         """
-        query = self.api.RB_IMAGE_FORMATTER_QUERY(node)
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_IMAGE_FORMATTER_QUERY()
+        return self.execute_query(query, NODE=node, fmt=fmt)
 
     def rb_get_subproperty_relationships(self, lang=None, fmt=None):
         """Retrieve all subproperty relationships.
         """
-        query = self.api.RB_SUBPROPERTY_RELATIONSHIPS_QUERY(self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_SUBPROPERTY_RELATIONSHIPS_QUERY()
+        return self.execute_query(query, LANG=self.get_lang(lang), fmt=fmt)
 
     def rb_get_language_labels(self, code, lang=None, images=False, fanouts=False, fmt=None):
         """Retrieve language names for language code 'code'.
         """
-        query = self.api.RB_LANGUAGE_LABELS_QUERY(code, self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.RB_LANGUAGE_LABELS_QUERY()
+        return self.execute_query(query, CODE=code, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_classviz_edge_results(self, node, fmt=FORMAT_FAST_DF):
 
         node = node.upper()
-        query = self.api.GET_CLASS_VIZ_EDGE_QUERY(node)
+        query = self.api.GET_CLASS_VIZ_EDGE_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, NODE=node, fmt=fmt)
 
     def get_classviz_node_results(self, node, fmt=FORMAT_FAST_DF):
 
         node = node.upper()
-        query = self.api.GET_CLASS_VIZ_NODE_QUERY(node)
+        query = self.api.GET_CLASS_VIZ_NODE_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, NODE=node, fmt=fmt)
 
     def get_property_values_count_results(self, node, lang, fmt=None):
-        query = self.api.GET_PROPERTY_VALUES_COUNT_QUERY(node, self.get_lang(lang))
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.GET_PROPERTY_VALUES_COUNT_QUERY()
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
 
     def get_incoming_edges_count_results(self, node, lang, properties_to_hide_str, fmt=None):
-        query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(node, self.get_lang(lang), properties_to_hide_str)
-        return self.execute_query(query, fmt=fmt)
+        query = self.api.GET_INCOMING_EDGES_COUNT_QUERY(properties_to_hide_str)
+        return self.execute_query(query, NODE=node, LANG=self.get_lang(lang), fmt=fmt)
