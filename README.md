@@ -84,7 +84,16 @@ Build the frontend files ,
 cd app
 export REACT_APP_FRONTEND_URL='/browser'
 export REACT_APP_BACKEND_URL=''
+```
+To use the SQLite text instead of Elasticsearch API, set the following environment variable.
 
+```
+export REACT_APP_USE_KGTK_KYPHER_BACKEND='1'
+```
+
+Continue ,
+
+```
 npm run build
 npm start
 ```
@@ -121,7 +130,16 @@ Open a terminal and type in the following commands
 cd kgtk-browser
 export REACT_APP_FRONTEND_URL='/browser'
 export REACT_APP_BACKEND_URL='/browser'
+```
 
+To use the SQLite text instead of Elasticsearch API, set the following environment variable.
+
+```
+export REACT_APP_USE_KGTK_KYPHER_BACKEND='1'
+```
+
+continue ,
+```
 cd app
 npm run build
 
