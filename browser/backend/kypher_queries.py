@@ -785,7 +785,7 @@ class KypherAPIObject(object):
         )
 
     def RB_NODE_RELATED_EDGES_MULTIPLE_PROPERTIES_QUERY(self):
-        where_clause = f'n2=$NODE AND rl=$PROPS'
+        where_clause = f'n2=$NODE AND lc_props=$PROPS'
         return self.kapi.get_query(
             doc="""
                     Create the Kypher query used by 'BrowserBackend.rb_get_node_one_property_related_edges()'.
