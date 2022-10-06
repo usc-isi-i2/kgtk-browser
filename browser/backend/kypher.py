@@ -346,9 +346,9 @@ class BrowserBackend(object):
 
         # Raise the case of the label to implement a case-insensitive search.
         node = node.upper()
-        query = self.api.MATCH_ITEMS_EXACTLY_QUERY(node)
+        query = self.api.MATCH_ITEMS_EXACTLY_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, NODE=node, fmt=fmt)
 
     # def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
     #     """Retrieve all nodes with label 'label'.
@@ -408,9 +408,9 @@ class BrowserBackend(object):
 
         search_label = f"'{safe_label}'@{_lang}".upper()
 
-        query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY(search_label, limit)
+        query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, LABEL=search_label, LIMIT=limit, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def search_labels_textlike(self, label, limit: int = 20, lang=None, fmt=None):
@@ -423,9 +423,9 @@ class BrowserBackend(object):
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        query = self.api.MATCH_LABELS_TEXTLIKE_QUERY(safe_label, self.get_lang(lang), limit)
+        query = self.api.MATCH_LABELS_TEXTLIKE_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
     def search_labels(self, label, limit: int = 20, lang=None, fmt=None):
@@ -439,9 +439,9 @@ class BrowserBackend(object):
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY(safe_label, self.get_lang(lang), limit)
+        query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY()
 
-        return self.execute_query(query, fmt=fmt)
+        return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000,
                           lc_properties: str = None):
