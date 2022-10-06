@@ -221,7 +221,6 @@ def get_class_graph_data(qnode=None):
         }]
     }
     """
-    s = time.time()
     args = flask.request.args
     refresh: bool = args.get("refresh", type=rb_is_true,
                              default=False)
@@ -338,8 +337,6 @@ def get_class_graph_data(qnode=None):
         # write visualization graph to the output file
         open(output_file_name, 'w').write(json.dumps(visualization_graph))
         shutil.rmtree(temp_dir)
-        logger.error(
-            f'{multiprocessing.Process().pid}\tEndpoint:classviz\tQnode:{qnode}\tTime taken:{time.time() - s}')
         return flask.jsonify(visualization_graph), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -509,7 +506,6 @@ def rb_get_kb_query():
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
     try:
-        s = time.time()
         response_data = p.apply(query_helper, args=(q,
                                                     lang,
                                                     match_item_exactly,
@@ -519,7 +515,6 @@ def rb_get_kb_query():
                                                     match_label_prefixes_limit,
                                                     match_label_text_like,
                                                     verbose,))
-        logger.error(f'{multiprocessing.Process().pid}\tEndpoint:query\tQnode:{q}\tTime taken:{time.time() - s}')
         return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
@@ -1475,7 +1470,6 @@ def rb_render_kb_items(backend,
                        lang: str = 'en',
                        verbose: bool = False) -> Tuple[List[MutableMapping[str, any]],
                                                        List[MutableMapping[str, any]]]:
-    s = time.time()
     response_properties: List[MutableMapping[str, any]] = list()
     response_xrefs: List[MutableMapping[str, any]] = list()
 
@@ -1620,8 +1614,10 @@ def rb_fetch_qualifiers(backend,
     item_qualifier_edges: List[List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
-            item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
-                                                                     qual_query_limit=qual_query_limit, lang=lang,
+            item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend,
+                                                                     edge_id_tuple,
+                                                                     qual_query_limit=qual_query_limit,
+                                                                     lang=lang,
                                                                      verbose=verbose2)
 
         else:
@@ -1725,7 +1721,6 @@ def rb_render_kb_items_and_qualifiers(backend,
                                                              lang=lang,
                                                              verbose=verbose)
 
-    s = time.time()
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_properties,
@@ -1734,7 +1729,6 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose, call_from=calling_from)
-    print(f'%%%2: {calling_from} - {time.time() - s}')
 
     rb_fetch_and_render_qualifiers(backend,
                                    item,
@@ -1999,8 +1993,7 @@ def ritem_helper(item: str,
     normal_property_dict = {}
     for normal_property_edge in normal_properties:
         normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
-    # lc_properties_list_str = ", ".join(
-    #     list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+
     lc_properties_list_str = ' '.join([x[0] for x in normal_properties])
     print(
         f'{multiprocessing.current_process().pid}\tEndpoint:ritem-value-counts\tQnode:{item}\tTime taken:{time.time() - s}')
@@ -2211,7 +2204,6 @@ def property_helper(item: str,
 
 @app.route('/kb/xitem', methods=['GET'])
 def rb_get_kb_xitem():
-    s = time.time()
     args = flask.request.args
     item: str = args.get('id')
     lang: str = args.get("lang", default=app.config['DEFAULT_LANGUAGE'])
