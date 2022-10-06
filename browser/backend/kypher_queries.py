@@ -201,7 +201,7 @@ class KypherAPIObject(object):
             order='r, qn2 desc',
         )
 
-    def MATCH_ITEMS_EXACTLY_QUERY(self, node: str):
+    def MATCH_ITEMS_EXACTLY_QUERY(self):
         return self.kapi.get_query(
             doc="""
             Create the Kypher query used by 'BrowserBackend.get_node_labels()'
@@ -210,15 +210,14 @@ class KypherAPIObject(object):
             Return distinct 'node1', 'node_label' pairs as the result (we include
             'NODE' as an output to make it easier to union result frames).
             """,
-            name=f'rb_upper_node_labels_query_v2_{node}',
             inputs='l_d_pgr_ud',
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
-            where=f'n="{node}"',
+            where=f'n=$NODE',
             ret='distinct n as node1, l as node_label, r.`node1;description` as description',
         )
 
-    def RB_NODES_WITH_LABEL_QUERY(self, label: str, lang: str):
+    def RB_NODES_WITH_LABEL_QUERY(self):
         return self.kapi.get_query(
             doc="""
             Create the Kypher query used by 'BrowserBackend.rb_get_nodes_with_label()'.
@@ -231,60 +230,56 @@ class KypherAPIObject(object):
             CREATE INDEX "graph_2_node2_idx" ON graph_2 ("node2");
             ANALYZE "graph_2_node2_idx";
             """,
-            name=f'rb_nodes_with_label_query_{label}_{lang}',
             inputs='labels',
             maxcache=MAX_CACHE_SIZE * 10,
             match='$labels: (n)-[r:`%s`]->(l)' % KG_LABELS_LABEL,
-            where=f'l="{label}" and ("{lang}"="any" or kgtk_lqstring_lang(l)="{lang}")',
+            where=f'l=$LABEL and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
             ret='distinct n as node1, l as node_label',
         )
 
-    def MATCH_UPPER_LABELS_EXACTLY_QUERY(self, label: str, limit: int):
+    def MATCH_UPPER_LABELS_EXACTLY_QUERY(self):
         return self.kapi.get_query(
             doc="""
              Exact Match case insensitive query
             """,
-            name=f'match_upper_labels_exactly_query_{label}_{limit}',
             inputs='l_d_pgr_ud',
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
-            where=f'r.`node2;upper`="{label}"',
+            where='r.`node2;upper`=$LABEL',
             ret='distinct n as node1, l as node_label, cast("-1.0", float) as score, cast(r.`node1;pagerank`, '
                 'float) as prank, r.`node1;description` as description',
             order='score*prank',
-            limit=f'"{limit}"'
+            limit='$LIMIT'
         )
 
-    def MATCH_LABELS_TEXTSEARCH_QUERY(self, label: str, lang: str, limit: int):
+    def MATCH_LABELS_TEXTSEARCH_QUERY(self):
         return self.kapi.get_query(
             doc="""
              Text Search query
             """,
-            name=f'match_labels_textsearch_query_{label}_{lang}_{limit}',
             inputs='l_d_pgr_ud',
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
-            where=f'textmatch(l, "{label}") and ("{lang}"="any" or kgtk_lqstring_lang(l)="{lang}")',
+            where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
             ret='distinct n as node1, l as node_label, matchscore(l) as score,'
                 ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
             order='score*prank',
-            limit=f'"{limit}"'
+            limit='$LIMIT'
         )
 
-    def MATCH_LABELS_TEXTLIKE_QUERY(self, label: str, lang: str, limit: int):
+    def MATCH_LABELS_TEXTLIKE_QUERY(self):
         return self.kapi.get_query(
             doc="""
              Text Like Query
             """,
-            name=f'match_labels_textlike_query_{label}_{lang}_{limit}',
             inputs='l_d_pgr_ud',
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
-            where=f'textlike(l, "{label}") and ("{lang}"="any" or kgtk_lqstring_lang(l)="{lang}")',
+            where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
             ret='distinct n as node1, l as node_label, matchscore(l) as score,'
                 ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
             order='score*prank',
-            limit=f'"{limit}"'
+            limit='$LIMIT'
         )
 
     def RB_NODE_EDGES_QUERY(self):
