@@ -602,8 +602,8 @@ class KypherAPIObject(object):
 
                     """,
             inputs=('edges', 'labels', 'descriptions', 'datatypes'),
-            match='$edges: (n1)-[r {label: rl}]->(n2), '
-                  '$edges: (hc_props)-[:kgtk_values]->(rl)',
+            match='$edges: (hc_props)-[:kgtk_values]->(rl),'
+                  '$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
             owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
@@ -688,7 +688,7 @@ class KypherAPIObject(object):
             order=order_clause
         )
 
-    def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self, id_list):
+    def GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(self):
         """This code generates a new name for each query, thus
         rendering the query cache ineffective and filled with junk.
 
@@ -709,8 +709,11 @@ class KypherAPIObject(object):
             Do not supply a name for these queries.
             """,
             inputs=('edges', 'qualifiers', 'labels', 'descriptions'),
-            match='$edges: (n1)-[r]->(n2), $qualifiers: (r)-[q {label: ql}]->(qn2)',
-            where='r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
+            match='$edges: (props)-[:kgtk_values]->(r),'
+                  '$edges: (n1)-[r]->(n2), '
+                  '$qualifiers: (r)-[q {label: ql}]->(qn2)',
+            # where='r in [' + ", ".join([repr(id_value) for id_value in id_list]) + ']',
+            where='props=$PROPS',
             opt='$labels: (ql)-[:`%s`]->(qllabel)' % KG_LABELS_LABEL,
             owhere='$LANG="any" or kgtk_lqstring_lang(qllabel)=$LANG',
             opt2='$labels: (qn2)-[:`%s`]->(qn2label)' % KG_LABELS_LABEL,
@@ -793,8 +796,8 @@ class KypherAPIObject(object):
 
                     """,
             inputs=('edges', 'labels'),
-            match='$edges: (n1)-[r {label: rl}]->(n2),'
-                  '$edges: (lc_props)-[:kgtk_values]->(rl)',
+            match='$edges: (lc_props)-[:kgtk_values]->(rl),'
+                  '$edges: (n1)-[r {label: rl}]->(n2)',
             where=where_clause,
             opt='$labels: (rl)-[:`%s`]->(llabel)' % KG_LABELS_LABEL,
             owhere='$LANG="any" or kgtk_lqstring_lang(llabel)=$LANG',
