@@ -512,9 +512,10 @@ class BrowserBackend(object):
                                        limit: int = 10000):
         """Retrieve all edge qualifiers for edges that have their id in ID_LIST.
         """
-        query = self.api.GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY(id_list)
-        results = self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
-        query.clear()  # Since we don't plan to re-issue this query, release its resources.
+        query = self.api.GET_RB_NODE_EDGE_QUALIFIERS_IN_QUERY()
+        props = ' '.join([x for x in id_list])
+        results = self.execute_query(query, LIMIT=limit, LANG=self.get_lang(lang), PROPS=props, fmt=fmt)
+        # query.clear()  # Since we don't plan to re-issue this query, release its resources.
         return results
 
     def rb_get_image_formatter(self, node, lang=None, fmt=None):
