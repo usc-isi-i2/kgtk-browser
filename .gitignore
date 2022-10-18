@@ -134,3 +134,4 @@ dmypy.json
 /graphs
 /temp
 wikidata.sqlite3.db
+./idea/*
