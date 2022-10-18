@@ -32,12 +32,12 @@ The file `metadata.pagerank.undirected.tsv.gz` can be created by running this [n
 KGTK Browser can be setup with either a SQLITE DB Cache file or a [KGTK Search api](https://github.com/usc-isi-i2/kgtk-search). We'll describe both options.
 
 ### Building a SQLITE Cache DB file
-- Execute [this](https://github.com/usc-isi-i2/kgtk-browser/blob/dev/KGTK-Query-Text-Search-Setup.ipynb) notebook.
+- Execute [this](https://github.com/usc-isi-i2/kgtk-notebooks/blob/main/use-cases/create_wikidata/KGTK-Query-Text-Search-Setup.ipynb) notebook.
 - Set parameters: `create_db = 'yes'` and `create_es = 'no'` to create only the SQLITE DB Cache file.
 - Setup other parameters as described in the notebook.
 
 ### Setting up ElasticSearch Index and KGTK Search API
-- Execute [this](https://github.com/usc-isi-i2/kgtk-browser/blob/dev/KGTK-Query-Text-Search-Setup.ipynb) notebook.
+- Execute [this](https://github.com/usc-isi-i2/kgtk-notebooks/blob/main/use-cases/create_wikidata/KGTK-Query-Text-Search-Setup.ipynb) notebook.
 - Set parameters: `create_db = 'no'` and `create_es = 'yes'` to create and load the ElasticSearch index.
 - Setup other parameters as described in the notebook.
 - This will result in a ElasticSearch index which can now be used to setup the [KGTK Search api](https://github.com/usc-isi-i2/kgtk-search).
