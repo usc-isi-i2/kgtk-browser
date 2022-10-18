@@ -176,6 +176,7 @@ def get_info():
     """
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
+        'graph_cache': app.config.get('GRAPH_CACHE'),
         'version': app.config.get('VERSION'),
         'hasClassGraphVisualization': True,
         'hasIdentifiers': True,

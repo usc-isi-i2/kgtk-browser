@@ -1,38 +1,97 @@
-import React, { useEffect, useRef, useState }from 'react'
-import TextField from '@material-ui/core/TextField'
+import React from 'react'
+import Grid from '@material-ui/core/Grid'
+import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
-import Autocomplete from '@material-ui/lab/Autocomplete'
-import ListItemText from '@material-ui/core/ListItemText'
 import CircularProgress from '@material-ui/core/CircularProgress'
-import { makeStyles } from '@material-ui/core/styles'
+import { withStyles } from '@material-ui/core/styles'
+
+import Input from './Input'
+import WikidataLogo from './WikidataLogo'
 
 import fetchSearchResults from '../utils/fetchSearchResults'
 import fetchESSearchResults from '../utils/fetchESSearchResults'
 
 
-const useStyles = makeStyles(theme => ({
-  root: {
-    marginRight: theme.spacing(2),
-    marginLeft: 0,
-    width: '100%',
-    maxHeight: '100%',
+const styles = theme => ({
+  paper: {
+    marginTop: theme.spacing(3),
+    paddingTop: theme.spacing(3),
+    paddingLeft: theme.spacing(4),
+    paddingRight: theme.spacing(4),
+    paddingBottom: theme.spacing(5),
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  form: {
+    width: '100%', // Fix IE 11 issue.
+    marginTop: theme.spacing(3),
+  },
+  resultWrapper: {
+    position: 'relative',
+    marginTop: theme.spacing(3),
+  },
+  index: {
+    color: '#333',
+    position: 'absolute',
+    top: theme.spacing(1),
+    left: theme.spacing(1),
+  },
+  result: {
+    color: '#333',
+    width: '97%',
+    display: 'inline-block',
     padding: theme.spacing(1),
-    [theme.breakpoints.up('sm')]: {
-      marginLeft: theme.spacing(3),
-      minWidth: '350px',
-      width: 'auto',
+    marginLeft: theme.spacing(5),
+    transition: '0.2s background ease',
+    '&:hover': {
+      color: '#111',
+      background: 'rgba(253, 214, 0, 0.25)',
+      textDecoration: 'none',
     },
   },
-  paper: {
-    backgroundColor: '#fefefe',
-    borderRadius: 0,
-    '& > div': {
+  label: {
+    color: '#0077ea',
+    fontSize: '1.5rem',
+    lineHeight: '2rem',
+    textDecoration: 'underline',
+  },
+  description: {
+    color: '#333',
+    textDecoration: 'none',
+  },
+  settingsToggle: {
+    position: 'relative',
+    cursor: 'pointer',
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    color: '#333',
+    width: '100%',
+    userSelect: 'none',
+    '@media (min-width:600px)': {
+      marginTop: theme.spacing(3),
+    },
+  },
+  settingsLabel: {
+    color: '#333',
+    userSelect: 'none',
+    '&.Mui-focused': {
       color: '#333',
     },
-    '& > ul': {
-      color: '#333',
-      padding: 0,
-    },
+  },
+  settingsRadioGroup: {
+    color: '#333',
+    userSelect: 'none',
+  },
+  languageSetting: {
+    color: '#333',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: theme.spacing(2),
+  },
+  alignedIcon: {
+    verticalAlign: 'bottom',
   },
   listItem: {
     cursor: 'pointer',
@@ -43,44 +102,67 @@ const useStyles = makeStyles(theme => ({
       textOverflow: 'ellipsis',
     },
   },
-}))
+  loading: {
+    position: 'absolute',
+    top: 'calc(50% - 25px)',
+    left: 'calc(50% - 25px)',
+    color: '#de6720',
+    zIndex: 99999,
+  },
+})
 
 
-const Search = () => {
+class Search extends React.Component {
 
-  const classes = useStyles()
+  constructor (props) {
+    super(props)
 
-  const timeoutID = useRef(null)
+    this.state = {
+      query: '',
+      results: [],
+      loading: false,
+    }
+  }
 
-  const [open, setOpen] = useState(false)
-  const [options, setOptions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [inputValue, setInputValue] = useState('')
-
-  useEffect(() => {
-    if ( !inputValue || inputValue.length < 2 ) { return }
-
-    clearTimeout(timeoutID.current)
-    timeoutID.current = setTimeout(() => {
-      setLoading(true)
-      if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
-        fetchSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
+  handleOnChange(query) {
+    this.setState({ loading: true, query }, () => {
+      if ( !query ) {
+        this.setState({ loading: false, results: []})
       } else {
-        fetchESSearchResults(inputValue).then((results) => {
-          setLoading(false)
-          setOptions(results)
-          setOpen(true)
-        })
+        clearTimeout(this.timeoutID)
+        this.timeoutID = setTimeout(() => {
+          this.submitQuery()
+        }, 500)
       }
-    }, 500)
+    })
+  }
 
-  }, [inputValue])
+  submitQuery() {
+    const { query } = this.state
 
-  const onSelect = node => {
+    if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
+      fetchSearchResults(query).then((results) => {
+        this.setState({
+          results: results,
+          loading: false,
+        })
+      })
+    } else {
+      fetchESSearchResults(query).then((results) => {
+        this.setState({
+          results: results,
+          loading: false,
+        })
+      })
+    }
+  }
+
+  submit(event) {
+    event.preventDefault()
+    this.submitQuery()
+  }
+
+  getBrowsertUrl(node) {
     let url = `/${node.ref}`
 
     // prefix the url with the location of where the app is hosted
@@ -88,69 +170,126 @@ const Search = () => {
       url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
     }
 
-    window.location = url
+    return url
   }
 
-  return (
-    <Autocomplete
-      id="search"
-      open={open}
-      onOpen={() => {
-        setOpen(!!options.length)
-      }}
-      onClose={() => {
-        setOptions([])
-        setOpen(false)
-      }}
-      onChange={(event, value) => onSelect(value)}
-      getOptionLabel={option => option.description + ' ' + option.ref}
-      filterOptions={options => options}
-      onInputChange={(event, newInputValue) => {
-        setInputValue(newInputValue)
-      }}
-      classes={{
-        root: classes.root,
-        paper: classes.paper,
-      }}
-      renderOption={(option, { selected }) => (
-        <ListItemText className={classes.listItem}>
-          <Typography variant="body1">
-            <b>{option.ref}</b>
+  getWikidataUrl(result) {
+    // check if result is a qnode or a property
+    if ( result.qnode[0] === 'Q' ) {
+      return `https://www.wikidata.org/wiki/${result.qnode}`
+    } else {
+      return `https://www.wikidata.org/wiki/Property:${result.qnode}`
+    }
+  }
+
+  renderResults() {
+    const { classes } = this.props
+    const { loading, query, results } = this.state
+    if ( !loading && !!query && !results.length ) {
+      return (
+        <Grid item xs={12} className={classes.resultWrapper}>
+          <Typography
+            component="h5"
+            variant="h5"
+            className={classes.index}>
+            There are no results for this query
           </Typography>
-          <Typography variant="body1">
-            {option.description}
+        </Grid>
+      )
+    }
+    return results.map((result, i) => (
+      <Grid item xs={12} key={i} className={classes.resultWrapper}>
+        <Typography
+          component="h5"
+          variant="h5"
+          className={classes.index}>
+          {i + 1}.
+        </Typography>
+        <div className={classes.result}>
+          <Typography
+            variant="a"
+            component="a"
+            className={classes.label}
+            href={this.getBrowsertUrl(result)}>
+            {result.description} ({result.ref})
           </Typography>
-          <Typography variant="body1">
-            {option.ref_description}
+          { !!result.qnode ? (
+          <Typography
+            variant="a"
+            component="a"
+            target="_blank"
+            className={classes.label}
+            href={this.getWikidataUrl(result)}>
+            <WikidataLogo />
           </Typography>
-        </ListItemText>
-      )}
-      options={options}
-      loading={loading}
-      renderInput={(params) => (
-        <TextField
-          fullWidth
-          {...params}
-          label="Search..."
-          autoCorrect="off"
-          autoComplete="off"
-          autoCapitalize="off"
-          spellCheck="false"
-          variant="outlined"
-          size="small"
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <React.Fragment>
-                {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                {params.InputProps.endAdornment}
-              </React.Fragment>
-            ),
-          }}
-        />
-      )}
-    />
-  )
+          ) : null }
+          <Typography
+            component="p"
+            variant="body1"
+            className={classes.description}>
+            <b>Description:</b> {!!result.description ? result.description : 'No Description'}
+          </Typography>
+          { !!result.alias && result.alias.length ? (
+            <Typography
+              component="p"
+              variant="body1"
+              className={classes.description}>
+              <b>Alias:</b> {result.alias.join(', ')}
+            </Typography>
+          ) : null }
+          { !!result.data_type ? (
+            <Typography
+              component="p"
+              variant="body1"
+              className={classes.description}>
+              <b>Data type:</b> {result.data_type}
+            </Typography>
+          ) : null }
+        </div>
+      </Grid>
+    ))
+  }
+
+  renderSearchBar() {
+    return (
+      <Grid item xs={12}>
+        <Input autoFocus={ true } label={'Search'}
+          onChange={ this.handleOnChange.bind(this) }/>
+      </Grid>
+    )
+  }
+
+  renderLoading() {
+    if ( !this.state.loading ) { return }
+    const { classes } = this.props
+    return (
+      <CircularProgress
+        size={50}
+        color="inherit"
+        className={classes.loading} />
+    )
+  }
+
+  render() {
+    const { classes } = this.props
+    return (
+      <form className={classes.form} noValidate
+        onSubmit={this.submit.bind(this)}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Paper component="div" className={classes.paper} square>
+              <Grid container spacing={3}>
+                {this.renderSearchBar()}
+              </Grid>
+            </Paper>
+            {this.renderResults()}
+            {this.renderLoading()}
+          </Grid>
+        </Grid>
+      </form>
+    )
+  }
 }
 
-export default Search
+
+export default withStyles(styles)(Search)

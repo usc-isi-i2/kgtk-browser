@@ -56,7 +56,13 @@ npm --version
 ```
 node --version
 v16.6.2
-````
+```
+
+**NOTE: `node` version 18 (and above) gives the following error after `npm start`. Please use node version `v16.6.2`**
+```
+Proxy error: Could not proxy request /kb/info from localhost:3000 to http://localhost:3233.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+```
 
 ### Terminal-1: Run kgtk_browser_app.py
 
