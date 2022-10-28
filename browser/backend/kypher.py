@@ -447,7 +447,7 @@ class BrowserBackend(object):
                           lc_properties: str = None):
         """Retrieve all edges that have 'node' as their node1.
         """
-        if lc_properties is not None:
+        if lc_properties is not None and lc_properties != "":
             query = self.api.RB_NODE_EDGES_CONDITIONAL_QUERY()
             return self.execute_query(query, NODE=node, PROPS=lc_properties, LANG=self.get_lang(lang), LIMIT=limit,
                                       fmt=fmt)
