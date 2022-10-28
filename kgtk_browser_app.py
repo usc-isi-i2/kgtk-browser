@@ -1999,11 +1999,14 @@ def ritem_helper(item: str,
     print(
         f'{multiprocessing.current_process().pid}\tEndpoint:ritem-value-counts\tQnode:{item}\tTime taken:{time.time() - s}')
     s = time.time()
-    item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
-                                                                                        lc_properties=lc_properties_list_str,
-                                                                                        limit=query_limit,
-                                                                                        lang=lang
-                                                                                        )
+
+    item_edges = list()
+    if lc_properties_list_str != "":
+        item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
+                                                                                            lc_properties=lc_properties_list_str,
+                                                                                            limit=query_limit,
+                                                                                            lang=lang
+                                                                                            )
     print(
         f'{multiprocessing.current_process().pid}\tEndpoint:ritem-get-edges\tQnode:{item}\tTime taken:{time.time() - s}')
     response: MutableMapping[dict, any] = list()
@@ -2014,14 +2017,16 @@ def ritem_helper(item: str,
     for item_edge_key in sorted(keyed_item_edges.keys()):
         sorted_item_edges.append(keyed_item_edges[item_edge_key])
     response_properties = rb_render_related_kb_items(sorted_item_edges)
-    rb_fetch_and_render_qualifiers(backend,
-                                   item,
-                                   response_properties,
-                                   qual_proplist_max_len=qual_proplist_max_len,
-                                   qual_valuelist_max_len=qual_valuelist_max_len,
-                                   qual_query_limit=qual_query_limit,
-                                   lang=lang,
-                                   is_related_item=True)
+
+    if len(response_properties) > 0:
+        rb_fetch_and_render_qualifiers(backend,
+                                       item,
+                                       response_properties,
+                                       qual_proplist_max_len=qual_proplist_max_len,
+                                       qual_valuelist_max_len=qual_valuelist_max_len,
+                                       qual_query_limit=qual_query_limit,
+                                       lang=lang,
+                                       is_related_item=True)
     for response_property in response_properties:
         response_property['count'] = normal_property_dict[response_property['ref']]
         response_property['mode'] = 'sync'
