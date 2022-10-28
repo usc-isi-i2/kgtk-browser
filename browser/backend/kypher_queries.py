@@ -34,7 +34,7 @@ class KypherAPIObject(object):
                                    index=INDEX_MODE,
                                    maxresults=MAX_RESULTS,
                                    maxcache=MAX_CACHE_SIZE,
-                                   readonly=True)
+                                   readonly=False)
 
         self.kapi.add_input(KG_EDGES_GRAPH, name='edges', handle=True)
         self.kapi.add_input(KG_QUALIFIERS_GRAPH, name='qualifiers', handle=True)
