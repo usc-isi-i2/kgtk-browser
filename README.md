@@ -14,6 +14,7 @@ pip install -r requirements.txt
 ## Build the Graph Cache required for KGTK Browser Backend
 
 **If you are bringing your own data (in contrast to Wikidata), please refer to [BYOD](BYOD.md). Successful run of steps in the document will produce the files required to proceed from here on.**
+Only exception being `metadata.pagerank.undirected.tsv.gz`. Please read on.
 
 The following files are required ,
 
@@ -27,7 +28,22 @@ The following files are required ,
 - class-visualization.edge.tsv.gz  **optional**
 - class-visualization.node.tsv.gz  **optional**
 
-The file `metadata.pagerank.undirected.tsv.gz` can be created by running this [notebook](https://github.com/usc-isi-i2/kgtk-notebooks/blob/main/use-cases/create_wikidata/Wikidata-Useful-Files.ipynb)
+The file `metadata.pagerank.undirected.tsv.gz` can be created by running this command ,
+
+```
+ kgtk --debug graph-statistics \
+ -i claims.tsv.gz \
+ -o metadata.pagerank.undirected.tsv.gz  \
+ --compute-pagerank True  \
+ --compute-hits False  \
+ --page-rank-property Pundirected_pagerank \
+ --output-degrees False  \
+ --output-pagerank True  \
+ --output-hits False  \
+ --output-statistics-only \
+ --undirected True \
+ --log-file metadata.pagerank.undirected.summary.txt
+ ```
 
 ### SQLITE or ElasticSearch
 
