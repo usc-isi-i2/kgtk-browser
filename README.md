@@ -13,6 +13,8 @@ pip install -r requirements.txt
 
 ## Build the Graph Cache required for KGTK Browser Backend
 
+**If you are bringing your own data (in contrast to Wikidata), please refer to [BYOD](BYOD.md). Successful run of steps in the document will produce the files required to proceed from here on.**
+
 The following files are required ,
 
 - labels.en.tsv.gz
