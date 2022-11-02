@@ -44,6 +44,8 @@ The file `metadata.pagerank.undirected.tsv.gz` can be created by running this co
  --undirected True \
  --log-file metadata.pagerank.undirected.summary.txt
  ```
+ 
+ **Move the file `metadata.pagerank.undirected.tsv.gz`  to the folder containing the other files required for the browser cache.**
 
 ### SQLITE or ElasticSearch
 
