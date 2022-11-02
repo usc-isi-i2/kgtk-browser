@@ -3,7 +3,7 @@
 This document describes the steps required for importing any file in [KGTK Edge File format](https://kgtk.readthedocs.io/en/latest/data_model/#file-format) to the Sqlite db file for KGTK Browser backend.
 
 The input tsv file should **fulfill all the following requirements** ,
-- it should have an `id` column containing ids for all the rows. See [kgtk add-id](https://kgtk.readthedocs.io/en/latest/transform/add_id/) to add the `id` column if there is none.
+- it should have an `id` column containing ids for all the rows. See [kgtk add-id](https://kgtk.readthedocs.io/en/latest/transform/add_id/) to add the `id` column if there is none or to add ids for the rows which do not have ids.
 - it should contain data type for all the properties in the column `label`. 
   -  for new properties, please create a file similar to https://github.com/usc-isi-i2/kgtk/blob/master/kgtk-properties/kgtk.properties.tsv
   -  for existing wikidata properties, make sure the input file has data types.
@@ -15,7 +15,7 @@ Next, setup and run this [notebook](https://github.com/usc-isi-i2/kgtk-notebooks
 wikidata_input_path = <path to the input KGTK Edge file>
 wikidata_parts_path = <output folder path>
 temp_folder_path =    wikidata_parts_path + '/temp' # leave as is
-gzip_command =        'pigz' # if you have pigz, leave as it, other wise update this to 'gzip'
+gzip_command =        'pigz' # if you have pigz, leave as is, other wise update this to 'gzip'
 kgtk_command =        'time kgtk' # leave as is
 kgtk_options =        '--debug --timing' # leave as is
 kgtk_extension =      'tsv.gz' # leave as is
