@@ -11,6 +11,12 @@ conda activate kgtk-env
 pip install -r requirements.txt
 ```
 
+Install `graph-tools` and `jupyterlab`
+```
+conda install -c conda-forge graph-tool
+pip install jupyterlab
+```
+
 ## Build the Graph Cache required for KGTK Browser Backend
 
 **If you are bringing your own data (in contrast to Wikidata), please refer to [BYOD](BYOD.md). Successful run of steps in the document will produce the files required to proceed from here on.**
@@ -90,7 +96,14 @@ Set the following ENV variables in the terminal.
 
 - KGTK_BROWSER_GRAPH_ID: Sets the title of the KGTK Browser. For example: `DWD Knowledge Graph`
 - KGTK_BROWSER_GRAPH_CACHE: absolute path to the sqlite db graph cache file
-- KGTK_BROWSER_CLASS_VIZ_DIR: path to folder where graph visualizations will be stored.
+- KGTK_BROWSER_CLASS_VIZ_DIR: path to folder where graph visualizations will be stored. This is optional and requried only in the case where you have
+class visualization files.
+
+```
+export KGTK_BROWSER_GRAPH_ID=My Dataset Browser
+export KGTK_BROWSER_GRAPH_CACHE=<path to the SQLITE DB Cache created>
+export KGTK_BROWSER_CLASS_VIZ_DIR=/tmp # or to some folder
+```
 
 The following commands will start the backend flask server,
 
