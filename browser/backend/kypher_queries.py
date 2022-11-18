@@ -217,6 +217,38 @@ class KypherAPIObject(object):
             ret='distinct n as node1, l as node_label, r.`node1;description` as description',
         )
 
+    def MATCH_ITEMS_EXACTLY_SUBCLASS_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+            Create the Kypher query used by 'BrowserBackend.get_node_labels()'
+            for case_independent searches.
+            Given parameters 'NODE' retrieve labels for 'NODE' which are a subclass.
+            Return distinct 'node1', 'node_label' pairs as the result (we include
+            'NODE' as an output to make it easier to union result frames).
+            """,
+            inputs='l_d_pgr_ud, claims',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
+            where=f'n=$NODE',
+            ret='distinct n as node1, l as node_label, r.`node1;description` as description',
+        )
+
+    def MATCH_ITEMS_EXACTLY_SUBCLASSSTAR_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+            Create the Kypher query used by 'BrowserBackend.get_node_labels()'
+            for case_independent searches.
+            Given parameters 'NODE' retrieve labels for 'NODE' which is a subclass of 'CLASS'.
+            Return distinct 'node1', 'node_label' pairs as the result (we include
+            'NODE' as an output to make it easier to union result frames).
+            """,
+            inputs='l_d_pgr_ud, p279star',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            where=f'n=$NODE and class=$CLASS and n!=class',
+            ret='distinct n as node1, l as node_label, r.`node1;description` as description',
+        )
+
     def RB_NODES_WITH_LABEL_QUERY(self):
         return self.kapi.get_query(
             doc="""
@@ -252,6 +284,36 @@ class KypherAPIObject(object):
             limit='$LIMIT'
         )
 
+    def MATCH_UPPER_LABELS_EXACTLY_SUBCLASS_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Exact Match case insensitive query for qnodes which are also subclasses
+            """,
+            inputs='l_d_pgr_ud, claims',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
+            where='r.`node2;upper`=$LABEL',
+            ret='distinct n as node1, l as node_label, cast("-1.0", float) as score, cast(r.`node1;pagerank`, '
+                'float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
+    def MATCH_UPPER_LABELS_EXACTLY_SUBCLASSSTAR_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Exact Match case insensitive query for qnodes which are subclasses of parameter CLASS
+            """,
+            inputs='l_d_pgr_ud, p279star',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            where='r.`node2;upper`=$LABEL and class=$CLASS and n!=class',
+            ret='distinct n as node1, l as node_label, cast("-1.0", float) as score, cast(r.`node1;pagerank`, '
+                'float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
     def MATCH_LABELS_TEXTSEARCH_QUERY(self):
         return self.kapi.get_query(
             doc="""
@@ -267,6 +329,36 @@ class KypherAPIObject(object):
             limit='$LIMIT'
         )
 
+    def MATCH_LABELS_TEXTSEARCH_SUBCLASS_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Text Search subclass query, search for qnodes which are also subclasses
+            """,
+            inputs='l_d_pgr_ud, claims',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
+            where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+            ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+                ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
+    def MATCH_LABELS_TEXTSEARCH_SUBCLASSSTAR_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Text Search subclass query, search for qnodes which are subclasses of parameter CLASS
+            """,
+            inputs='l_d_pgr_ud, p279star',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
+            ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+                ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
     def MATCH_LABELS_TEXTLIKE_QUERY(self):
         return self.kapi.get_query(
             doc="""
@@ -276,6 +368,36 @@ class KypherAPIObject(object):
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l)',
             where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+            ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+                ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
+    def MATCH_LABELS_TEXTLIKE_SUBCLASS_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Text Like Query for qnodes which are also subclasses
+            """,
+            inputs='l_d_pgr_ud, claims',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
+            where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
+            ret='distinct n as node1, l as node_label, matchscore(l) as score,'
+                ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
+            order='score*prank',
+            limit='$LIMIT'
+        )
+
+    def MATCH_LABELS_TEXTLIKE_SUBCLASSSTAR_QUERY(self):
+        return self.kapi.get_query(
+            doc="""
+             Text Like Query for qnodes which are also subclasses of parameter CLASS
+            """,
+            inputs='l_d_pgr_ud, p279star',
+            maxcache=MAX_CACHE_SIZE * 10,
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
             ret='distinct n as node1, l as node_label, matchscore(l) as score,'
                 ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
             order='score*prank',
