@@ -137,6 +137,8 @@ KG_INSTANCE_COUNT_STAR = 'Pinstance_count_star'
 KG_SUBCLASS_COUNT_STAR = 'Psubclass_count_star'
 KG_HIDE_PROPERTIES_RELATED_ITEMS = ["Pproperty_domain"]
 KG_WIKIPEDIA_URL_LABEL = 'wikipedia_sitelink'
+KG_SUBCLASS_LABEL = "P279"
+KG_SUBCLASSSTAR_LABEL = "P279star"
 
 # number of parallel kypher api objects
 KYPHER_OBJECTS_NUM = 5
