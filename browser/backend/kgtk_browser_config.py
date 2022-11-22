@@ -140,6 +140,9 @@ KG_WIKIPEDIA_URL_LABEL = 'wikipedia_sitelink'
 KG_SUBCLASS_LABEL = "P279"
 KG_SUBCLASSSTAR_LABEL = "P279star"
 
+MATCH_LABEL_IS_CLASS = False
+MATCH_LABEL_INSTANCE_OF = None
+
 # number of parallel kypher api objects
 KYPHER_OBJECTS_NUM = 5
 
