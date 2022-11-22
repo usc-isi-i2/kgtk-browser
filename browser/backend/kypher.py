@@ -333,7 +333,7 @@ class BrowserBackend(object):
             return formatter.format_node_data(node_data)
 
     # Support for the revised browser:
-    def rb_get_node_labels(self, node, fmt=None):
+    def rb_get_node_labels(self, node, is_class: bool = False, instance_of: str = None, fmt=None):
         """Retrieve all labels for 'node'.
 
         Node names are assumed to always be in upper case in the database and
@@ -346,52 +346,25 @@ class BrowserBackend(object):
 
         # Raise the case of the label to implement a case-insensitive search.
         node = node.upper()
-        query = self.api.MATCH_ITEMS_EXACTLY_QUERY()
 
-        return self.execute_query(query, NODE=node, fmt=fmt)
-
-    # def rb_get_nodes_with_label(self, label, lang=None, fmt=None, ignore_case: bool = False):
-    #     """Retrieve all nodes with label 'label'.
-    #
-    #     This search method supports rb_get_kb_query(), which generates a list
-    #     of candidate nodes.  The label is searched for a complete match, which
-    #     may or may not be case-insensitive.  The search must be fast.
-    #     """
-    #
-    #     if ignore_case:
-    #         # Raise the case of the label to implement a case-insensitive search.
-    #         label = label.upper()
-    #         query = self.api.RB_NODES_WITH_UPPER_LABEL_QUERY
-    #
-    #     else:
-    #         # This query relies on making an exact match for the label.
-    #         query = self.api.RB_NODES_WITH_LABEL_QUERY(label, self.get_lang(lang))
-    #
-    #     return self.execute_query(query, fmt=fmt)
-
-    # @lru_cache(maxsize=LRU_CACHE_SIZE)
-    # def rb_get_nodes_starting_with(self, node, limit: int = 20, lang=None, fmt=None):
-    #     """Retrieve nodes and labels for all nodes starting with 'node'.
-    #
-    #     Node names are assumed to always be in upper case in the database and
-    #     the search is always assumed to be case-insensitive.  We don't have
-    #     seperate exact case/case-insensitive queries for this retreival.
-    #
-    #     This search method supports rb_get_kb_query(), which generates a list of
-    #     candidate nodes.  The search must be fast.
-    #     """
-    #
-    #     # Raise the case of the label to implement a case-insensitive search.
-    #     node = node.upper()
-    #     query = self.api.MATCH_ITEM_TEXTSEARCH_QUERY
-    #
-    #     # Protect against glob metacharacters in `node` (`*`, `[...]`, `?`]
-    #     safe_node: str = node.translate({ord(i): None for i in '*[?'})
-    #
-    #     return self.execute_query(query, NODE=safe_node, LIMIT=limit, LANG=self.get_lang(lang), fmt=fmt)
+        if instance_of is not None:
+            query = self.api.MATCH_ITEMS_EXACTLY_SUBCLASSSTAR_QUERY()
+            return self.execute_query(query, NODE=node, CLASS=instance_of, fmt=fmt)
+        else:
+            if is_class:
+                query = self.api.MATCH_ITEMS_EXACTLY_SUBCLASS_QUERY()
+            else:
+                query = self.api.MATCH_ITEMS_EXACTLY_QUERY()
+            return self.execute_query(query, NODE=node, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def search_labels_exactly(self, label, limit: int = 20, lang=None, fmt=None):
+    def search_labels_exactly(self,
+                              label,
+                              limit: int = 20,
+                              lang=None,
+                              is_class: bool = False,
+                              instance_of: str = None,
+                              fmt=None):
         """Retrieve nodes and labels for all nodes with labels starting with 'label'.
 
         This search method supports rb_get_kb_query(), which generates a list of
@@ -408,12 +381,24 @@ class BrowserBackend(object):
 
         search_label = f"'{safe_label}'@{_lang}".upper()
 
-        query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY()
-
-        return self.execute_query(query, LABEL=search_label, LIMIT=limit, fmt=fmt)
+        if instance_of is not None:
+            query = self.api.MATCH_UPPER_LABELS_EXACTLY_SUBCLASSSTAR_QUERY()
+            return self.execute_query(query, LABEL=search_label, LIMIT=limit, CLASS=instance_of, fmt=fmt)
+        else:
+            if is_class:
+                query = self.api.MATCH_UPPER_LABELS_EXACTLY_SUBCLASS_QUERY()
+            else:
+                query = self.api.MATCH_UPPER_LABELS_EXACTLY_QUERY()
+            return self.execute_query(query, LABEL=search_label, LIMIT=limit, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def search_labels_textlike(self, label, limit: int = 20, lang=None, fmt=None):
+    def search_labels_textlike(self,
+                               label,
+                               limit: int = 20,
+                               lang=None,
+                               is_class: bool = False,
+                               instance_of: str = None,
+                               fmt=None):
         """Retrieve nodes and labels for all nodes with labels like 'label'.
 
          The label is searched for a like match, which is case-insensitive.
@@ -423,12 +408,29 @@ class BrowserBackend(object):
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        query = self.api.MATCH_LABELS_TEXTLIKE_QUERY()
-
-        return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
+        if instance_of is not None:
+            query = self.api.MATCH_LABELS_TEXTLIKE_SUBCLASSSTAR_QUERY()
+            return self.execute_query(query,
+                                      LABEL=safe_label,
+                                      LANG=self.get_lang(lang),
+                                      LIMIT=limit,
+                                      fmt=fmt,
+                                      CLASS=instance_of)
+        else:
+            if is_class:
+                query = self.api.MATCH_LABELS_TEXTLIKE_SUBCLASS_QUERY()
+            else:
+                query = self.api.MATCH_LABELS_TEXTLIKE_QUERY()
+            return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     @lru_cache(maxsize=LRU_CACHE_SIZE)
-    def search_labels(self, label, limit: int = 20, lang=None, fmt=None):
+    def search_labels(self,
+                      label: str,
+                      limit: int = 20,
+                      lang=None,
+                      is_class: bool = False,
+                      instance_of: str = None,
+                      fmt=None):
         """Retrieve nodes and labels for all nodes with labels starting with 'label'.
 
         This search method supports rb_get_kb_query(), which generates a list of
@@ -439,9 +441,20 @@ class BrowserBackend(object):
         # Protect against glob metacharacters in `label` (`*`, `[...]`, `?`]
         safe_label: str = label.translate({ord(i): None for i in '*[?'})
 
-        query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY()
-
-        return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
+        if instance_of is not None:
+            query = self.api.MATCH_LABELS_TEXTSEARCH_SUBCLASSSTAR_QUERY()
+            return self.execute_query(query,
+                                      LABEL=safe_label,
+                                      LANG=self.get_lang(lang),
+                                      CLASS=instance_of,
+                                      LIMIT=limit,
+                                      fmt=fmt)
+        else:
+            if is_class:
+                query = self.api.MATCH_LABELS_TEXTSEARCH_SUBCLASS_QUERY()
+            else:
+                query = self.api.MATCH_LABELS_TEXTSEARCH_QUERY()
+            return self.execute_query(query, LABEL=safe_label, LANG=self.get_lang(lang), LIMIT=limit, fmt=fmt)
 
     def rb_get_node_edges(self, node, lang=None, images=False, fanouts=False, fmt=None, limit: int = 10000,
                           lc_properties: str = None):
