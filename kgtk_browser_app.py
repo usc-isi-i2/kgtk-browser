@@ -114,6 +114,8 @@ app.config['MATCH_LABEL_PREFIXES_LIMIT'] = app.config.get('MATCH_LABEL_PREFIXES_
                                                           DEFAULT_MATCH_LABEL_PREFIXES_LIMIT)
 app.config['MATCH_LABEL_IGNORE_CASE'] = app.config.get('MATCH_LABEL_IGNORE_CASE', DEFAULT_MATCH_LABEL_IGNORE_CASE)
 app.config['MATCH_LABEL_TEXT_LIKE'] = app.config.get('MATCH_LABEL_TEXT_LIKE', DEFAULT_MATCH_LABEL_TEXT_LIKE)
+app.config['MATCH_LABEL_IS_CLASS'] = app.config.get('MATCH_LABEL_IS_CLASS')
+app.config['MATCH_LABEL_INSTANCE_OF'] = app.config.get('MATCH_LABEL_INSTANCE_OF')
 
 app.config['PROPLIST_MAX_LEN'] = app.config.get('PROPLIST_MAX_LEN', DEFAULT_PROPLIST_MAX_LEN)
 app.config['VALUELIST_MAX_LEN'] = app.config.get('VALUELIST_MAX_LEN', DEFAULT_VALUELIST_MAX_LEN)
@@ -506,6 +508,9 @@ def rb_get_kb_query():
     match_label_text_like: bool = args.get("match_label_text_like", type=rb_is_true,
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
+    is_class: bool = args.get("is_class", type=rb_is_true, default=app.config['MATCH_LABEL_IS_CLASS'])
+    instance_of: str = args.get("instance_of", type=str, default=app.config['MATCH_LABEL_INSTANCE_OF'])
+
     try:
         response_data = p.apply(query_helper, args=(q,
                                                     lang,
@@ -515,6 +520,8 @@ def rb_get_kb_query():
                                                     match_label_prefixes,
                                                     match_label_prefixes_limit,
                                                     match_label_text_like,
+                                                    is_class,
+                                                    instance_of,
                                                     verbose,))
         return flask.jsonify(response_data), 200
     except Exception as e:
@@ -530,6 +537,8 @@ def query_helper(q: str,
                  match_label_prefixes: bool,
                  match_label_prefixes_limit: int,
                  match_label_text_like: bool,
+                 is_class: bool,
+                 instance_of: str,
                  verbose: bool):
     matches = []
     # We keep track of the matches we've seen and produce only one match per node.
@@ -557,7 +566,7 @@ def query_helper(q: str,
             print("Searching for item %s" % repr(q), file=sys.stderr, flush=True)
         # Look for an exact match for the node name:
 
-        results = backend.rb_get_node_labels(q)
+        results = backend.rb_get_node_labels(q, is_class=is_class, instance_of=instance_of)
 
         if verbose:
             print("Got %d matches" % len(results), file=sys.stderr, flush=True)
@@ -594,7 +603,9 @@ def query_helper(q: str,
 
         results = backend.search_labels(q,
                                         lang=lang,
-                                        limit=match_label_prefixes_limit)
+                                        limit=match_label_prefixes_limit,
+                                        is_class=is_class,
+                                        instance_of=instance_of)
 
         if verbose:
             print("Got %d matches" % len(results), file=sys.stderr, flush=True)
@@ -626,7 +637,9 @@ def query_helper(q: str,
 
         results = backend.search_labels_textlike(search_label,
                                                  lang=lang,
-                                                 limit=match_label_prefixes_limit)
+                                                 limit=match_label_prefixes_limit,
+                                                 is_class=is_class,
+                                                 instance_of=instance_of)
         if verbose:
             print("Got %d matches" % len(results), file=sys.stderr, flush=True)
         for result in results:
@@ -667,7 +680,9 @@ def query_helper(q: str,
 
         results = backend.search_labels_exactly(q,
                                                 lang=lang,
-                                                limit=match_label_prefixes_limit)
+                                                limit=match_label_prefixes_limit,
+                                                is_class=is_class,
+                                                instance_of=instance_of)
 
         if verbose:
             print("Got %d matches" % len(results), file=sys.stderr, flush=True)
