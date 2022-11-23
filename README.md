@@ -177,6 +177,13 @@ To use the SQLite text instead of Elasticsearch API, set the following environme
 export REACT_APP_USE_KGTK_KYPHER_BACKEND='1'
 ```
 
+Set the following environment variable to `0` or `1` if you have have the file `derived.P31279star.tsv.gz` loaded into the cache.
+```
+export REACT_APP_P31279STAR_NA='0' # if the file is available, otherwise
+
+export REACT_APP_P31279STAR_NA='1'
+```
+
 continue ,
 ```
 cd app
