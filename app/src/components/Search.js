@@ -296,7 +296,7 @@ class Search extends React.Component {
   }
 
   renderInstanceOfSearchBar() {
-    if ( process.env.REACT_APP_P279STAR_NA === '1') { return }
+    if ( process.env.REACT_APP_P31279STAR_NA === '1') { return }
     return (
       <Grid item xs={4}>
         <InstanceOfSearch onSelect={result => this.selectInstanceOfType(result)} />
