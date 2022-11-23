@@ -123,7 +123,8 @@ class Search extends React.Component {
       results: [],
       loading: false,
       is_class: false,
-      instance_of: ''
+      instanceOfTypeQuery: '',
+      instanceOfType: ''
     }
   }
 
@@ -140,9 +141,9 @@ class Search extends React.Component {
     })
   }
 
-  handleInstanceOfOnChange(query) {
-    this.setState({ loading: true, query, is_class: true }, () => {
-      if ( !query ) {
+  handleInstanceOfOnChange(instanceOfTypeQuery) {
+    this.setState({ loading: true, instanceOfTypeQuery, is_class: true }, () => {
+      if ( !instanceOfTypeQuery ) {
         this.setState({ loading: false, is_class: false, results: []})
       } else {
         clearTimeout(this.timeoutID)
@@ -154,17 +155,18 @@ class Search extends React.Component {
   }
 
   submitQuery() {
-    const { query, is_class, instance_of } = this.state
-
+    const { query, is_class, instanceOfType } = this.state
+    if ( !query) { return }
+    
     if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
-      fetchSearchResults(query, is_class, instance_of).then((results) => {
+      fetchSearchResults(query, is_class, instanceOfType).then((results) => {
         this.setState({
           results: results,
           loading: false,
         })
       })
     } else {
-      fetchESSearchResults(query, is_class, instance_of).then((results) => {
+      fetchESSearchResults(query, is_class, instanceOfType).then((results) => {
         this.setState({
           results: results,
           loading: false,
