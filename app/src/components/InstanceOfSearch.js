@@ -121,8 +121,7 @@ const InstanceOfSearch = ({ onSelect }) => {
           console.log(results)
         })
       }
-    }
-    )
+    }, 500)
   }, [inputValue])
 
   useEffect(() => {
