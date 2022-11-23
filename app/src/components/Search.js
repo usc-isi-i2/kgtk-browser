@@ -157,7 +157,7 @@ class Search extends React.Component {
   submitQuery() {
     const { query, is_class, instanceOfType } = this.state
     if ( !query) { return }
-    
+
     if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
       fetchSearchResults(query, is_class, instanceOfType).then((results) => {
         this.setState({
@@ -296,6 +296,7 @@ class Search extends React.Component {
   }
 
   renderInstanceOfSearchBar() {
+    if ( process.env.REACT_APP_P279STAR_NA === '1') { return }
     return (
       <Grid item xs={4}>
         <InstanceOfSearch onSelect={result => this.selectInstanceOfType(result)} />
