@@ -226,7 +226,7 @@ class KypherAPIObject(object):
             Return distinct 'node1', 'node_label' pairs as the result (we include
             'NODE' as an output to make it easier to union result frames).
             """,
-            inputs='l_d_pgr_ud, claims',
+            inputs=('l_d_pgr_ud', 'claims'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
             where=f'n=$NODE',
@@ -242,7 +242,7 @@ class KypherAPIObject(object):
             Return distinct 'node1', 'node_label' pairs as the result (we include
             'NODE' as an output to make it easier to union result frames).
             """,
-            inputs='l_d_pgr_ud, p279star',
+            inputs=('l_d_pgr_ud', 'p279star'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
             where=f'n=$NODE and class=$CLASS and n!=class',
@@ -289,7 +289,7 @@ class KypherAPIObject(object):
             doc="""
              Exact Match case insensitive query for qnodes which are also subclasses
             """,
-            inputs='l_d_pgr_ud, claims',
+            inputs=('l_d_pgr_ud', 'claims'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
             where='r.`node2;upper`=$LABEL',
@@ -304,7 +304,7 @@ class KypherAPIObject(object):
             doc="""
              Exact Match case insensitive query for qnodes which are subclasses of parameter CLASS
             """,
-            inputs='l_d_pgr_ud, p279star',
+            inputs=('l_d_pgr_ud', 'p279star'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
             where='r.`node2;upper`=$LABEL and class=$CLASS and n!=class',
@@ -334,7 +334,7 @@ class KypherAPIObject(object):
             doc="""
              Text Search subclass query, search for qnodes which are also subclasses
             """,
-            inputs='l_d_pgr_ud, claims',
+            inputs=('l_d_pgr_ud', 'claims'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASS_LABEL}]->()',
             where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG)',
@@ -349,7 +349,7 @@ class KypherAPIObject(object):
             doc="""
              Text Search subclass query, search for qnodes which are subclasses of parameter CLASS
             """,
-            inputs='l_d_pgr_ud, p279star',
+            inputs=('l_d_pgr_ud', 'p279star'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
             where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
@@ -394,7 +394,7 @@ class KypherAPIObject(object):
             doc="""
              Text Like Query for qnodes which are also subclasses of parameter CLASS
             """,
-            inputs='l_d_pgr_ud, p279star',
+            inputs=('l_d_pgr_ud', 'p279star'),
             maxcache=MAX_CACHE_SIZE * 10,
             match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
             where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
