@@ -275,12 +275,28 @@ class Search extends React.Component {
     )
   }
 
+  selectInstanceOfType(result) {
+    if ( !result ) {
+      this.setState({
+        instanceOfTypeQuery: '',
+        instanceOfType: '',
+      }, () => {
+        this.submitQuery()
+      })
+    } else {
+      this.setState({
+        instanceOfType: result.ref,
+        instanceOfTypeQuery: result.description + ` (${result.ref})`
+      }, () => {
+        this.submitQuery()
+      })
+    }
+  }
+
   renderInstanceOfSearchBar() {
     return (
       <Grid item xs={4}>
-        <InstanceOfSearch onchange={ this.handleInstanceOfOnChange.bind(this) }>
-
-        </InstanceOfSearch>
+        <InstanceOfSearch onSelect={result => this.selectInstanceOfType(result)} />
       </Grid>
     )
   }
