@@ -242,9 +242,9 @@ class KypherAPIObject(object):
             Return distinct 'node1', 'node_label' pairs as the result (we include
             'NODE' as an output to make it easier to union result frames).
             """,
-            inputs=('l_d_pgr_ud', 'p279star'),
+            inputs=('l_d_pgr_ud', 'p31279star'),
             maxcache=MAX_CACHE_SIZE * 10,
-            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), claims: (n)-[:{KG_P31P279STAR_LABEL}]->(class)',
             where=f'n=$NODE and class=$CLASS and n!=class',
             ret='distinct n as node1, l as node_label, r.`node1;description` as description',
         )
@@ -304,9 +304,9 @@ class KypherAPIObject(object):
             doc="""
              Exact Match case insensitive query for qnodes which are subclasses of parameter CLASS
             """,
-            inputs=('l_d_pgr_ud', 'p279star'),
+            inputs=('l_d_pgr_ud', 'p31279star'),
             maxcache=MAX_CACHE_SIZE * 10,
-            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p31279star: (n)-[:{KG_P31P279STAR_LABEL}]->(class)',
             where='r.`node2;upper`=$LABEL and class=$CLASS and n!=class',
             ret='distinct n as node1, l as node_label, cast("-1.0", float) as score, cast(r.`node1;pagerank`, '
                 'float) as prank, r.`node1;description` as description',
@@ -349,9 +349,9 @@ class KypherAPIObject(object):
             doc="""
              Text Search subclass query, search for qnodes which are subclasses of parameter CLASS
             """,
-            inputs=('l_d_pgr_ud', 'p279star'),
+            inputs=('l_d_pgr_ud', 'p31279star'),
             maxcache=MAX_CACHE_SIZE * 10,
-            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p31279star: (n)-[:{KG_P31P279STAR_LABEL}]->(class)',
             where='textmatch(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
             ret='distinct n as node1, l as node_label, matchscore(l) as score,'
                 ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
@@ -394,9 +394,9 @@ class KypherAPIObject(object):
             doc="""
              Text Like Query for qnodes which are also subclasses of parameter CLASS
             """,
-            inputs=('l_d_pgr_ud', 'p279star'),
+            inputs=('l_d_pgr_ud', 'p31279star'),
             maxcache=MAX_CACHE_SIZE * 10,
-            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p279star: (n)-[:{KG_SUBCLASSSTAR_LABEL}]->(class)',
+            match=f'l_d_pgr_ud: (n)-[r:{KG_LABELS_LABEL}]->(l), p31279star: (n)-[:{KG_P31P279STAR_LABEL}]->(class)',
             where='textlike(l, $LABEL) and ($LANG="any" or kgtk_lqstring_lang(l)=$LANG) and class=$CLASS and n!=class',
             ret='distinct n as node1, l as node_label, matchscore(l) as score,'
                 ' cast(r.`node1;pagerank`, float) as prank, r.`node1;description` as description',
