@@ -7,6 +7,7 @@ import { withStyles } from '@material-ui/core/styles'
 
 import Input from './Input'
 import WikidataLogo from './WikidataLogo'
+import InstanceOfSearch from "./InstanceOfSearch"
 
 import fetchSearchResults from '../utils/fetchSearchResults'
 import fetchESSearchResults from '../utils/fetchESSearchResults'
@@ -121,6 +122,9 @@ class Search extends React.Component {
       query: '',
       results: [],
       loading: false,
+      is_class: false,
+      instanceOfTypeQuery: '',
+      instanceOfType: ''
     }
   }
 
@@ -137,18 +141,32 @@ class Search extends React.Component {
     })
   }
 
-  submitQuery() {
-    const { query } = this.state
+  handleInstanceOfOnChange(instanceOfTypeQuery) {
+    this.setState({ loading: true, instanceOfTypeQuery, is_class: true }, () => {
+      if ( !instanceOfTypeQuery ) {
+        this.setState({ loading: false, is_class: false, results: []})
+      } else {
+        clearTimeout(this.timeoutID)
+        this.timeoutID = setTimeout(() => {
+          this.submitQuery()
+        }, 500)
+      }
+    })
+  }
 
+  submitQuery() {
+    const { query, is_class, instanceOfType } = this.state
+    if ( !query) { return }
+    
     if ( process.env.REACT_APP_USE_KGTK_KYPHER_BACKEND === '1' ) {
-      fetchSearchResults(query).then((results) => {
+      fetchSearchResults(query, is_class, instanceOfType).then((results) => {
         this.setState({
           results: results,
           loading: false,
         })
       })
     } else {
-      fetchESSearchResults(query).then((results) => {
+      fetchESSearchResults(query, is_class, instanceOfType).then((results) => {
         this.setState({
           results: results,
           loading: false,
@@ -252,9 +270,35 @@ class Search extends React.Component {
 
   renderSearchBar() {
     return (
-      <Grid item xs={12}>
+      <Grid item xs={8}>
         <Input autoFocus={ true } label={'Search'}
           onChange={ this.handleOnChange.bind(this) }/>
+      </Grid>
+    )
+  }
+
+  selectInstanceOfType(result) {
+    if ( !result ) {
+      this.setState({
+        instanceOfTypeQuery: '',
+        instanceOfType: '',
+      }, () => {
+        this.submitQuery()
+      })
+    } else {
+      this.setState({
+        instanceOfType: result.ref,
+        instanceOfTypeQuery: result.description + ` (${result.ref})`
+      }, () => {
+        this.submitQuery()
+      })
+    }
+  }
+
+  renderInstanceOfSearchBar() {
+    return (
+      <Grid item xs={4}>
+        <InstanceOfSearch onSelect={result => this.selectInstanceOfType(result)} />
       </Grid>
     )
   }
@@ -280,6 +324,7 @@ class Search extends React.Component {
             <Paper component="div" className={classes.paper} square>
               <Grid container spacing={3}>
                 {this.renderSearchBar()}
+                {this.renderInstanceOfSearchBar()}
               </Grid>
             </Paper>
             {this.renderResults()}

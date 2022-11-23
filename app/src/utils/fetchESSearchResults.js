@@ -1,6 +1,14 @@
-const fetchESSearchResults = q => {
+const fetchESSearchResults = (q, is_class, instance_of) => {
 
   let url = `/api?&q=${ q }&type=ngram&extra_info=true&language=en&item=qnode`
+
+  if (is_class === 'true') {
+    url += `&is_class=true`
+  }
+
+  if ( instance_of ) {
+    url += `&instance_of=${instance_of}`
+  }
 
   if (process.env.REACT_APP_KGTK_SEARCH_ES_URL) {
     url = `${process.env.REACT_APP_KGTK_SEARCH_ES_URL}${ url }`
