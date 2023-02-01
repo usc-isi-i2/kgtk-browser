@@ -1,6 +1,7 @@
 """
 Kypher backend support for the KGTK browser.
 """
+import multiprocessing
 from pathlib import Path
 import shutil
 
@@ -28,8 +29,8 @@ from kgtk.value.kgtkvalue import KgtkValue, KgtkValueFields
 from kgtk.visualize.visualize_api import KgtkVisualize
 
 from browser.backend.kypher_queries import KypherAPIObject
-
 import re
+import logging
 import time
 
 # How to run for local-system access:
@@ -54,28 +55,10 @@ import time
 # http://ckg07.isi.edu:1234/kgtk/browser/backend/get_all_node_data?node=Q5
 # http://ckg07.isi.edu:1234/kb
 # http://ckg07.isi.edu:1234/kb/Q42
-
-STATIC_URL_PATH = '/'
-if 'KGTK_BROWSER_STATIC_URL' in os.environ:
-    STATIC_URL_PATH = os.environ['KGTK_BROWSER_STATIC_URL']
-
-# Flask application
-app = flask.Flask(__name__,
-                  static_url_path=STATIC_URL_PATH,
-                  static_folder='app/build',
-                  template_folder='web/templates')
-
-if 'KGTK_BROWSER_CONFIG' not in os.environ:
-    os.environ['KGTK_BROWSER_CONFIG'] = 'browser/backend/kgtk_browser_config.py'
-app.config.from_envvar('KGTK_BROWSER_CONFIG')
-
-# Allow urls with trailing slashes
-app.url_map.strict_slashes = False
-
 DEFAULT_SERVICE_PREFIX = '/kgtk/browser/backend/'
 DEFAULT_LANGUAGE = 'en'
-ID_SEARCH_THRESHOLD: int = 40
-ID_SEARCH_USING_IN: bool = False
+ID_SEARCH_THRESHOLD: int = -1  # force the code to not use IN queries for fetching qualifiers
+ID_SEARCH_USING_IN: bool = True
 
 DEFAULT_MATCH_ITEM_EXACTLY: bool = True
 DEFAULT_MATCH_ITEM_PREFIXES: bool = True
@@ -100,6 +83,61 @@ DEFAULT_PROPERTY_VALUES_COUNT_LIMIT: int = 25
 DEFAULT_PROPERTY_SKIP_NUM: int = 0
 DEFAULT_PROPERTY_LIMIT_NUM: int = 50
 
+STATIC_URL_PATH = '/'
+if 'KGTK_BROWSER_STATIC_URL' in os.environ:
+    STATIC_URL_PATH = os.environ['KGTK_BROWSER_STATIC_URL']
+
+# Flask application
+app = flask.Flask(__name__,
+                  static_url_path=STATIC_URL_PATH,
+                  static_folder='app/build',
+                  template_folder='web/templates')
+
+if 'KGTK_BROWSER_CONFIG' not in os.environ:
+    os.environ['KGTK_BROWSER_CONFIG'] = 'browser/backend/kgtk_browser_config.py'
+app.config.from_envvar('KGTK_BROWSER_CONFIG')
+
+# Allow urls with trailing slashes
+app.url_map.strict_slashes = False
+app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
+app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
+
+app.config['MATCH_ITEM_EXACTLY'] = app.config.get('MATCH_ITEM_EXACTLY', DEFAULT_MATCH_ITEM_EXACTLY)
+app.config['MATCH_ITEM_PREFIXES'] = app.config.get('MATCH_ITEM_PREFIXES', DEFAULT_MATCH_ITEM_PREFIXES)
+app.config['MATCH_ITEM_PREFIXES_LIMIT'] = app.config.get('MATCH_ITEM_PREFIXES_LIMIT',
+                                                         DEFAULT_MATCH_ITEM_PREFIXES_LIMIT)
+app.config['MATCH_ITEM_IGNORE_CASE'] = app.config.get('MATCH_ITEM_IGNORE_CSE', DEFAULT_MATCH_ITEM_IGNORE_CASE)
+
+app.config['MATCH_LABEL_EXACTLY'] = app.config.get('MATCH_LABEL_EXACTLY', DEFAULT_MATCH_LABEL_EXACTLY)
+app.config['MATCH_LABEL_PREFIXES'] = app.config.get('MATCH_LABEL_PREFIXES', DEFAULT_MATCH_LABEL_PREFIXES)
+app.config['MATCH_LABEL_PREFIXES_LIMIT'] = app.config.get('MATCH_LABEL_PREFIXES_LIMIT',
+                                                          DEFAULT_MATCH_LABEL_PREFIXES_LIMIT)
+app.config['MATCH_LABEL_IGNORE_CASE'] = app.config.get('MATCH_LABEL_IGNORE_CASE', DEFAULT_MATCH_LABEL_IGNORE_CASE)
+app.config['MATCH_LABEL_TEXT_LIKE'] = app.config.get('MATCH_LABEL_TEXT_LIKE', DEFAULT_MATCH_LABEL_TEXT_LIKE)
+app.config['MATCH_LABEL_IS_CLASS'] = app.config.get('MATCH_LABEL_IS_CLASS')
+app.config['MATCH_LABEL_INSTANCE_OF'] = app.config.get('MATCH_LABEL_INSTANCE_OF')
+
+app.config['PROPLIST_MAX_LEN'] = app.config.get('PROPLIST_MAX_LEN', DEFAULT_PROPLIST_MAX_LEN)
+app.config['VALUELIST_MAX_LEN'] = app.config.get('VALUELIST_MAX_LEN', DEFAULT_VALUELIST_MAX_LEN)
+app.config['QUAL_PROPLIST_MAX_LEN'] = app.config.get('QUAL_PROPLIST_MAX_LEN', DEFAULT_QUAL_PROPLIST_MAX_LEN)
+app.config['QUAL_VALUELIST_MAX_LEN'] = app.config.get('QUAL_VALUELIST_MAX_LEN', DEFAULT_QUAL_VALUELIST_MAX_LEN)
+app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
+app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
+app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
+app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
+app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUNT_LIMIT',
+                                                           DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
+app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
+app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
+
+sync_properties_sort_metadata = app.config['SYNC_PROPERTIES_SORT_METADATA']
+ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
+profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
+
+WIKIDATA_URL_LABEL = app.config['KG_WIKIPEDIA_URL_LABEL']
+wikidata_languages = app.config['WIKIDATA_LANGUAGES']
+url_formatter_templates = app.config['KGTK_URL_FORMATTER_TEMPLATES']
+
 # List the properties in the order that you want them to appear.  All unlisted
 # properties will appear after these.
 rb_property_priority_list: List[str] = [
@@ -123,51 +161,14 @@ rb_qualifier_priority_list: List[str] = [
     "P582",  # end time
 ]
 
-app.config['SERVICE_PREFIX'] = app.config.get('SERVICE_PREFIX', DEFAULT_SERVICE_PREFIX)
-app.config['DEFAULT_LANGUAGE'] = app.config.get('DEFAULT_LANGUAGE', DEFAULT_LANGUAGE)
-
-app.config['MATCH_ITEM_EXACTLY'] = app.config.get('MATCH_ITEM_EXACTLY', DEFAULT_MATCH_ITEM_EXACTLY)
-app.config['MATCH_ITEM_PREFIXES'] = app.config.get('MATCH_ITEM_PREFIXES', DEFAULT_MATCH_ITEM_PREFIXES)
-app.config['MATCH_ITEM_PREFIXES_LIMIT'] = app.config.get('MATCH_ITEM_PREFIXES_LIMIT', DEFAULT_MATCH_ITEM_PREFIXES_LIMIT)
-app.config['MATCH_ITEM_IGNORE_CASE'] = app.config.get('MATCH_ITEM_IGNORE_CSE', DEFAULT_MATCH_ITEM_IGNORE_CASE)
-
-app.config['MATCH_LABEL_EXACTLY'] = app.config.get('MATCH_LABEL_EXACTLY', DEFAULT_MATCH_LABEL_EXACTLY)
-app.config['MATCH_LABEL_PREFIXES'] = app.config.get('MATCH_LABEL_PREFIXES', DEFAULT_MATCH_LABEL_PREFIXES)
-app.config['MATCH_LABEL_PREFIXES_LIMIT'] = app.config.get('MATCH_LABEL_PREFIXES_LIMIT',
-                                                          DEFAULT_MATCH_LABEL_PREFIXES_LIMIT)
-app.config['MATCH_LABEL_IGNORE_CASE'] = app.config.get('MATCH_LABEL_IGNORE_CASE', DEFAULT_MATCH_LABEL_IGNORE_CASE)
-app.config['MATCH_LABEL_TEXT_LIKE'] = app.config.get('MATCH_LABEL_TEXT_LIKE', DEFAULT_MATCH_LABEL_TEXT_LIKE)
-
-app.config['PROPLIST_MAX_LEN'] = app.config.get('PROPLIST_MAX_LEN', DEFAULT_PROPLIST_MAX_LEN)
-app.config['VALUELIST_MAX_LEN'] = app.config.get('VALUELIST_MAX_LEN', DEFAULT_VALUELIST_MAX_LEN)
-app.config['QUAL_PROPLIST_MAX_LEN'] = app.config.get('QUAL_PROPLIST_MAX_LEN', DEFAULT_QUAL_PROPLIST_MAX_LEN)
-app.config['QUAL_VALUELIST_MAX_LEN'] = app.config.get('QUAL_VALUELIST_MAX_LEN', DEFAULT_QUAL_VALUELIST_MAX_LEN)
-app.config['QUERY_LIMIT'] = app.config.get('QUERY_LIMIT', DEFAULT_QUERY_LIMIT)
-app.config['QUAL_QUERY_LIMIT'] = app.config.get('QUAL_QUERY_LIMIT', DEFAULT_QUAL_QUERY_LIMIT)
-app.config['VERBOSE'] = app.config.get('VERBOSE', DEFAULT_VERBOSE)
-app.config['KYPHER_OBJECTS_NUM'] = app.config.get('KYPHER_OBJECTS_NUM', DEFAULT_KYPHER_OBJECTS_NUM)
-app.config['PROPERTY_VALUES_COUNT_LIMIT'] = app.config.get('PROPERTY_VALUES_COUNT_LIMIT',
-                                                           DEFAULT_PROPERTY_VALUES_COUNT_LIMIT)
-app.config['PROPERTY_SKIP_NUM'] = DEFAULT_PROPERTY_SKIP_NUM
-app.config['PROPERTY_LIMIT_NUM'] = DEFAULT_PROPERTY_LIMIT_NUM
-sync_properties_sort_metadata = app.config['SYNC_PROPERTIES_SORT_METADATA']
-ajax_properties_sort_metadata = app.config['AJAX_PROPERTIES_SORT_METADATA']
-profiled_property_metadata = app.config['PROFILED_PROPERTY_METADATA']
-
-kgtk_backends = {}
-for i in range(app.config['KYPHER_OBJECTS_NUM']):
-    k_api = KypherAPIObject()
-    _api = kybe.BrowserBackend(api=k_api)
-    _api.set_app_config(app)
-    kgtk_backends[i] = _api
+rb_qualifier_priority_map: Mapping[str, int] = {val: idx for idx, val in enumerate(rb_qualifier_priority_list)}
 
 item_regex = re.compile(r"^[q|Q|p|P]\d+$")
+wikipedia_url_regex = re.compile(r'https:\/\/(.*)\.wikipedia\.org\/wiki\/(.*)')
 
-
-def get_backend():
-    epoch = int(time.time())
-    key = epoch % 5
-    return kgtk_backends[key]
+k_api = KypherAPIObject()
+backend = kybe.BrowserBackend(api=k_api)
+backend.set_app_config(app)
 
 
 @app.route('/kb/info', methods=['GET'])
@@ -177,6 +178,7 @@ def get_info():
     """
     info = {
         'graph_id': app.config.get('GRAPH_ID'),
+        'graph_cache': app.config.get('GRAPH_CACHE'),
         'version': app.config.get('VERSION'),
         'hasClassGraphVisualization': True,
         'hasIdentifiers': True,
@@ -245,102 +247,100 @@ def get_class_graph_data(qnode=None):
         return flask.jsonify(json.load(open(empty_output_file_name)))
 
     try:
-        with get_backend() as backend:
-            edge_results = backend.get_classviz_edge_results(qnode).to_records_dict()
-            if len(edge_results) == 0:
-                open(empty_output_file_name, 'w').write(json.dumps({}))
-                return flask.jsonify({}), 200
-            node_results = backend.get_classviz_node_results(qnode).to_records_dict()
-            if len(node_results) == 0:
-                open(empty_output_file_name, 'w').write(json.dumps({}))
-                return flask.jsonify({}), 200
+        edge_results = backend.get_classviz_edge_results(qnode).to_records_dict()
+        if len(edge_results) == 0:
+            open(empty_output_file_name, 'w').write(json.dumps({}))
+            return flask.jsonify({}), 200
+        node_results = backend.get_classviz_node_results(qnode).to_records_dict()
+        if len(node_results) == 0:
+            open(empty_output_file_name, 'w').write(json.dumps({}))
+            return flask.jsonify({}), 200
 
-            for edge_result in edge_results:
-                if edge_result['edge_type'] == 'subclass':
-                    edge_result['color'] = app.config['RED_EDGE_HEX']
-                elif edge_result['edge_type'] == 'superclass':
-                    edge_result['color'] = app.config['BLUE_EDGE_HEX']
+        for edge_result in edge_results:
+            if edge_result['edge_type'] == 'subclass':
+                edge_result['color'] = app.config['RED_EDGE_HEX']
+            elif edge_result['edge_type'] == 'superclass':
+                edge_result['color'] = app.config['BLUE_EDGE_HEX']
 
-            for node_result in node_results:
-                if node_result['node_type'] == 'few_subclasses':
-                    node_result['color'] = app.config['BLUE_NODE_HEX']
-                elif node_result['node_type'] == 'many_subclasses':
-                    node_result['color'] = app.config['ORANGE_NODE_HEX']
+        for node_result in node_results:
+            if node_result['node_type'] == 'few_subclasses':
+                node_result['color'] = app.config['BLUE_NODE_HEX']
+            elif node_result['node_type'] == 'many_subclasses':
+                node_result['color'] = app.config['ORANGE_NODE_HEX']
 
-            edge_df = pd.DataFrame(edge_results)
-            node_df = pd.DataFrame(node_results)
-            edge_df.to_csv(edge_file_name, sep='\t', index=False)
-            node_df.to_csv(node_file_name, sep='\t', index=False)
+        edge_df = pd.DataFrame(edge_results)
+        node_df = pd.DataFrame(node_results)
+        edge_df.to_csv(edge_file_name, sep='\t', index=False)
+        node_df.to_csv(node_file_name, sep='\t', index=False)
 
-            kv = KgtkVisualize(input_file=edge_file_name,
-                               output_file=html_file_name,
-                               node_file=node_file_name,
-                               direction='arrow',
-                               edge_color_column='color',
-                               edge_color_hex=True,
-                               node_color_column='color',
-                               node_color_hex=True,
-                               node_size_column='instance_count',
-                               node_size_default=5.0,
-                               node_size_minimum=2.0,
-                               node_size_maximum=8.0,
-                               node_size_scale='log',
-                               tooltip_column='tooltip',
-                               show_text='above',
-                               node_file_id='node1')
-            visualization_graph = kv.compute_visualization_graph()
+        kv = KgtkVisualize(input_file=edge_file_name,
+                           output_file=html_file_name,
+                           node_file=node_file_name,
+                           direction='arrow',
+                           edge_color_column='color',
+                           edge_color_hex=True,
+                           node_color_column='color',
+                           node_color_hex=True,
+                           node_size_column='instance_count',
+                           node_size_default=5.0,
+                           node_size_minimum=2.0,
+                           node_size_maximum=8.0,
+                           node_size_scale='log',
+                           tooltip_column='tooltip',
+                           show_text='above',
+                           node_file_id='node1')
+        visualization_graph = kv.compute_visualization_graph()
 
-            # check nodes for incoming edges and set showLabel prop
-            # count all incoming edges and save that number as a node property
-            for node in visualization_graph['nodes']:
-                incoming_edges = [
-                    link
-                    for link
-                    in visualization_graph['links']
-                    if link['target'] == node['id']
-                ]
-                node['incoming_edges'] = len(incoming_edges)
+        # check nodes for incoming edges and set showLabel prop
+        # count all incoming edges and save that number as a node property
+        for node in visualization_graph['nodes']:
+            incoming_edges = [
+                link
+                for link
+                in visualization_graph['links']
+                if link['target'] == node['id']
+            ]
+            node['incoming_edges'] = len(incoming_edges)
 
-            # check nodes for incoming edges and set showLabel prop
-            for node in visualization_graph['nodes']:
+        # check nodes for incoming edges and set showLabel prop
+        for node in visualization_graph['nodes']:
 
-                # always show the label for the original node
-                if node['id'] == qnode:
+            # always show the label for the original node
+            if node['id'] == qnode:
+                node['showLabel'] = True
+                continue
+
+            # show the label if the node has any incoming edges
+            if node['incoming_edges']:
+                node['showLabel'] = True
+                continue
+
+            # show the label if the node has no incoming edges
+            if not node['incoming_edges']:
+                node['showLabel'] = True
+
+                # gather all neighboring nodes
+                neighboring_nodes = []
+                for link in visualization_graph['links']:
+                    if link['source'] == node['id']:
+                        for other_node in visualization_graph['nodes']:
+                            if other_node['id'] == link['target']:
+                                neighboring_nodes.append(other_node)
+
+                # show the label if there are more than 1 neighbors
+                if len(neighboring_nodes) > 1:
                     node['showLabel'] = True
-                    continue
+                else:
+                    # don't show the label when there's only one neighbor and
+                    # that neighbor has a cluster with more than 5 incoming edges
+                    for neighbor_node in neighboring_nodes:
+                        if neighbor_node['incoming_edges'] >= 5:
+                            node['showLabel'] = False
 
-                # show the label if the node has any incoming edges
-                if node['incoming_edges']:
-                    node['showLabel'] = True
-                    continue
-
-                # show the label if the node has no incoming edges
-                if not node['incoming_edges']:
-                    node['showLabel'] = True
-
-                    # gather all neighboring nodes
-                    neighboring_nodes = []
-                    for link in visualization_graph['links']:
-                        if link['source'] == node['id']:
-                            for other_node in visualization_graph['nodes']:
-                                if other_node['id'] == link['target']:
-                                    neighboring_nodes.append(other_node)
-
-                    # show the label if there are more than 1 neighbors
-                    if len(neighboring_nodes) > 1:
-                        node['showLabel'] = True
-                    else:
-                        # don't show the label when there's only one neighbor and
-                        # that neighbor has a cluster with more than 5 incoming edges
-                        for neighbor_node in neighboring_nodes:
-                            if neighbor_node['incoming_edges'] >= 5:
-                                node['showLabel'] = False
-
-            # write visualization graph to the output file
-            open(output_file_name, 'w').write(json.dumps(visualization_graph))
-            shutil.rmtree(temp_dir)
-
-            return flask.jsonify(visualization_graph), 200
+        # write visualization graph to the output file
+        open(output_file_name, 'w').write(json.dumps(visualization_graph))
+        shutil.rmtree(temp_dir)
+        return flask.jsonify(visualization_graph), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
@@ -508,182 +508,208 @@ def rb_get_kb_query():
     match_label_text_like: bool = args.get("match_label_text_like", type=rb_is_true,
                                            default=app.config["MATCH_LABEL_TEXT_LIKE"])
 
+    is_class: bool = args.get("is_class", type=rb_is_true, default=app.config['MATCH_LABEL_IS_CLASS'])
+    instance_of: str = args.get("instance_of", type=str, default=app.config['MATCH_LABEL_INSTANCE_OF'])
+
     try:
-        with get_backend() as backend:
-            matches = []
-
-            # We keep track of the matches we've seen and produce only one match per node.
-            items_seen: Set[str] = set()
-
-            # We will look for matches in the following order.  Each
-            # match category may be disabled by a parameter.
-            #
-            # 1) exact length match on the node name
-            # 2) exact length match on the label
-            # 3) prefix match (startswith) on the node name
-            # 4) prefix match on the label
-            #
-            # node name matches are always case-insensitive, because we know that
-            # node names in the database are upper-case, and we raise the case
-            # of the q parameter in the search routine.
-            #
-            # Label matches may be case-sensitive or case-insensitive,
-            # according to "match_label_ignore_case".
-
-            if re.match(item_regex, q) and match_item_exactly:
-
-                # We don't explicitly limit the number of results from this
-                # query.  Should we?  The underlying code imposes a default
-                # limit, currently 1000.
-                if verbose:
-                    print("Searching for item %s" % repr(q), file=sys.stderr, flush=True)
-                # Look for an exact match for the node name:
-
-                results = backend.rb_get_node_labels(q)
-
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in results:
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[2]) if result[2].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
-            query_text_like = True
-            if match_label_prefixes and len(q) >= 3:
-                # Query the labels, looking for a prefix match. The search may
-                # be case-sensitive or case-insensitive, according to
-                # "match_label_ignore_case".
-                #
-                # Labels are assumed to be encoded as language-qualified
-                # strings in the database.  We want to do a prefix match, so
-                # we stringify to a plain string, replace the leading '"' with
-                # "'", and remove the trailing '"'
-                #
-
-                if verbose:
-                    print("Searching for label prefix, textmatch %s (ignore_case=%s)" % (
-                        repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels(q,
-                                                lang=lang,
-                                                limit=match_label_prefixes_limit)
-
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                if len(results) > 0:
-
-                    query_text_like = False
-                    for result in results:
-                        item = result[0]
-                        if item in items_seen:
-                            continue
-                        items_seen.add(item)
-                        label = KgtkFormat.unstringify(result[1])
-                        description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                        matches.append(
-                            {
-                                "ref": item,
-                                "text": item,
-                                "description": label,
-                                "ref_description": description
-                            }
-                        )
-
-            if match_label_text_like and query_text_like and len(q) >= 3:
-                # Query the labels, using the %like% match in sqlite FTS5.
-                # split the input string at space and insert % between every token
-
-                search_label = f"%{'%'.join(q.split(' '))}%"
-                if verbose:
-                    print("Searching for label, textlike %s " % (repr(q)), file=sys.stderr, flush=True)
-
-                results = backend.search_labels_textlike(search_label,
-                                                         lang=lang,
-                                                         limit=match_label_prefixes_limit)
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-                for result in results:
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-
-            if match_label_exactly:
-                # Query the labels, looking for an exact length match. The
-                # search may be case-sensitive or case-insensitive, according
-                # to "match_label_ignore_case".
-                #
-                # We don't explicitly limit the number of results from this
-                # query.  Should we?  The underlying code imposes a default
-                # limit, currently 1000.
-
-                # The simple approach, using stringify, will not work when
-                # "lang" is "any"!  We will have to do a prefix match
-                # including the initial and final "'" delimiters, but
-                # excluding the "@lang" suffix.
-
-                # We will use kgtk_lqstring_text() function to get the text part of the language qualified string,
-                # and kgtk_lqstring_lang() to get the language.
-                if verbose:
-                    print("Searching for label, exact match %s (ignore_case=%s)" %
-                          (repr(q), repr(match_label_ignore_case)),
-                          file=sys.stderr, flush=True)
-
-                results = backend.search_labels_exactly(q,
-                                                        lang=lang,
-                                                        limit=match_label_prefixes_limit)
-
-                if verbose:
-                    print("Got %d matches" % len(results), file=sys.stderr, flush=True)
-
-                for result in results:
-                    item = result[0]
-                    if item in items_seen:
-                        continue
-                    items_seen.add(item)
-                    label = KgtkFormat.unstringify(result[1])
-                    description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
-                    matches.append(
-                        {
-                            "ref": item,
-                            "text": item,
-                            "description": label,
-                            "ref_description": description
-                        }
-                    )
-            if verbose:
-                print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
-
-            # Build the final response:
-            response_data = {
-                "matches": matches
-            }
-
-            return flask.jsonify(response_data), 200
+        response_data = p.apply(query_helper, args=(q,
+                                                    lang,
+                                                    match_item_exactly,
+                                                    match_label_exactly,
+                                                    match_label_ignore_case,
+                                                    match_label_prefixes,
+                                                    match_label_prefixes_limit,
+                                                    match_label_text_like,
+                                                    is_class,
+                                                    instance_of,
+                                                    verbose,))
+        return flask.jsonify(response_data), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def query_helper(q: str,
+                 lang: str,
+                 match_item_exactly: bool,
+                 match_label_exactly: bool,
+                 match_label_ignore_case: bool,
+                 match_label_prefixes: bool,
+                 match_label_prefixes_limit: int,
+                 match_label_text_like: bool,
+                 is_class: bool,
+                 instance_of: str,
+                 verbose: bool):
+    matches = []
+    # We keep track of the matches we've seen and produce only one match per node.
+    items_seen: Set[str] = set()
+    # We will look for matches in the following order.  Each
+    # match category may be disabled by a parameter.
+    #
+    # 1) exact length match on the node name
+    # 2) exact length match on the label
+    # 3) prefix match (startswith) on the node name
+    # 4) prefix match on the label
+    #
+    # node name matches are always case-insensitive, because we know that
+    # node names in the database are upper-case, and we raise the case
+    # of the q parameter in the search routine.
+    #
+    # Label matches may be case-sensitive or case-insensitive,
+    # according to "match_label_ignore_case".
+    if re.match(item_regex, q) and match_item_exactly:
+
+        # We don't explicitly limit the number of results from this
+        # query.  Should we?  The underlying code imposes a default
+        # limit, currently 1000.
+        if verbose:
+            print("Searching for item %s" % repr(q), file=sys.stderr, flush=True)
+        # Look for an exact match for the node name:
+
+        results = backend.rb_get_node_labels(q, is_class=is_class, instance_of=instance_of)
+
+        if verbose:
+            print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+        for result in results:
+            item = result[0]
+            if item in items_seen:
+                continue
+            items_seen.add(item)
+            label = KgtkFormat.unstringify(result[1])
+            description = KgtkFormat.unstringify(result[2]) if result[2].strip() != "" else ""
+            matches.append(
+                {
+                    "ref": item,
+                    "text": item,
+                    "description": label,
+                    "ref_description": description
+                }
+            )
+    query_text_like = True
+    if match_label_prefixes and len(q) >= 3:
+        # Query the labels, looking for a prefix match. The search may
+        # be case-sensitive or case-insensitive, according to
+        # "match_label_ignore_case".
+        #
+        # Labels are assumed to be encoded as language-qualified
+        # strings in the database.  We want to do a prefix match, so
+        # we stringify to a plain string, replace the leading '"' with
+        # "'", and remove the trailing '"'
+        #
+
+        if verbose:
+            print("Searching for label prefix, textmatch %s (ignore_case=%s)" % (
+                repr(q), repr(match_label_ignore_case)), file=sys.stderr, flush=True)
+
+        results = backend.search_labels(q,
+                                        lang=lang,
+                                        limit=match_label_prefixes_limit,
+                                        is_class=is_class,
+                                        instance_of=instance_of)
+
+        if verbose:
+            print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+        if len(results) > 0:
+
+            query_text_like = False
+            for result in results:
+                item = result[0]
+                if item in items_seen:
+                    continue
+                items_seen.add(item)
+                label = KgtkFormat.unstringify(result[1])
+                description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
+                matches.append(
+                    {
+                        "ref": item,
+                        "text": item,
+                        "description": label,
+                        "ref_description": description
+                    }
+                )
+    if match_label_text_like and query_text_like and len(q) >= 3:
+        # Query the labels, using the %like% match in sqlite FTS5.
+        # split the input string at space and insert % between every token
+
+        search_label = f"%{'%'.join(q.split(' '))}%"
+        if verbose:
+            print("Searching for label, textlike %s " % (repr(q)), file=sys.stderr, flush=True)
+
+        results = backend.search_labels_textlike(search_label,
+                                                 lang=lang,
+                                                 limit=match_label_prefixes_limit,
+                                                 is_class=is_class,
+                                                 instance_of=instance_of)
+        if verbose:
+            print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+        for result in results:
+            item = result[0]
+            if item in items_seen:
+                continue
+            items_seen.add(item)
+            label = KgtkFormat.unstringify(result[1])
+            description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
+            matches.append(
+                {
+                    "ref": item,
+                    "text": item,
+                    "description": label,
+                    "ref_description": description
+                }
+            )
+    if match_label_exactly:
+        # Query the labels, looking for an exact length match. The
+        # search may be case-sensitive or case-insensitive, according
+        # to "match_label_ignore_case".
+        #
+        # We don't explicitly limit the number of results from this
+        # query.  Should we?  The underlying code imposes a default
+        # limit, currently 1000.
+
+        # The simple approach, using stringify, will not work when
+        # "lang" is "any"!  We will have to do a prefix match
+        # including the initial and final "'" delimiters, but
+        # excluding the "@lang" suffix.
+
+        # We will use kgtk_lqstring_text() function to get the text part of the language qualified string,
+        # and kgtk_lqstring_lang() to get the language.
+        if verbose:
+            print("Searching for label, exact match %s (ignore_case=%s)" %
+                  (repr(q), repr(match_label_ignore_case)),
+                  file=sys.stderr, flush=True)
+
+        results = backend.search_labels_exactly(q,
+                                                lang=lang,
+                                                limit=match_label_prefixes_limit,
+                                                is_class=is_class,
+                                                instance_of=instance_of)
+
+        if verbose:
+            print("Got %d matches" % len(results), file=sys.stderr, flush=True)
+
+        for result in results:
+            item = result[0]
+            if item in items_seen:
+                continue
+            items_seen.add(item)
+            label = KgtkFormat.unstringify(result[1])
+            description = KgtkFormat.unstringify(result[4]) if result[4].strip() != "" else ""
+            matches.append(
+                {
+                    "ref": item,
+                    "text": item,
+                    "description": label,
+                    "ref_description": description
+                }
+            )
+    if verbose:
+        print("Got %d matches total" % len(matches), file=sys.stderr, flush=True)
+    # Build the final response:
+    response_data = {
+        "matches": matches
+    }
+
+    return response_data
 
 
 def rb_link_to_url(text_value, current_value, lang: str = "en", prop: Optional[str] = None) -> bool:
@@ -712,13 +738,18 @@ rb_image_formatter_cache: MutableMapping[str, Optional[str]] = dict()
 
 
 def get_image_formatter(backend, relationship: str) -> Optional[str]:
-    if relationship not in rb_image_formatter_cache:
-        result: List[List[str]] = backend.rb_get_image_formatter(relationship)
-        if len(result) == 0:
-            rb_image_formatter_cache[relationship] = None
-        else:
-            rb_image_formatter_cache[relationship] = rb_unstringify(result[0][0])
-    return rb_image_formatter_cache[relationship]
+    # if relationship not in rb_image_formatter_cache:
+    #     result: List[List[str]] = backend.rb_get_image_formatter(relationship)
+    #     if len(result) == 0:
+    #         rb_image_formatter_cache[relationship] = None
+    #     else:
+    #         rb_image_formatter_cache[relationship] = rb_unstringify(result[0][0])
+    #
+    # return rb_image_formatter_cache[relationship]
+    url_formatter = url_formatter_templates.get(relationship, None)
+    if url_formatter is not None:
+        url_formatter = rb_unstringify(url_formatter[0])
+    return url_formatter
 
 
 rb_units_node_cache: MutableMapping[str, Optional[str]] = dict()
@@ -1025,7 +1056,6 @@ def rb_build_current_value(
         current_value["text"] = text_value
         formatter: Optional[str] = get_image_formatter(backend, relationship)
         if formatter is not None:
-            # print("formatter: %s" % formatter, file=sys.stderr, flush=True) # ***
             current_value["url"] = formatter.replace("$1", text_value)
         else:
             rb_link_to_url(text_value, current_value)
@@ -1140,10 +1170,7 @@ def rb_build_gallery(item_edges: List[List[str]],
                     "url": rb_get_wc_thumb(rb_unstringify(node2)),
                     "text": rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
                 }
-                # print("new image: %s" % repr(new_image), file=sys.stderr, flush=True)
                 gallery.append(new_image)
-
-    # print("gallery: %s" % repr(gallery), file=sys.stderr, flush=True)
 
     return gallery
 
@@ -1295,9 +1322,6 @@ def rb_build_sorted_item_edges(item_edges: List[List[str]], is_related_items=Fal
     return sorted_item_edges
 
 
-rb_qualifier_priority_map: Mapping[str, int] = {val: idx for idx, val in enumerate(rb_qualifier_priority_list)}
-
-
 def rb_build_item_qualifier_map(item_qualifier_edges: List[List[str]]) -> Mapping[
     str, List[List[str]]]:
     item_qual_map: MutableMapping[str, List[List[str]]] = dict()
@@ -1400,6 +1424,7 @@ def rb_render_item_qualifiers(backend,
                                                                               qual_node2_label,
                                                                               qual_node2_description,
                                                                               lang)
+
         current_qual_values.append(current_qual_value)
 
     downsample_properties(current_qualifiers, qual_proplist_max_len, qual_valuelist_max_len,
@@ -1485,7 +1510,6 @@ def rb_render_kb_items(backend,
         target_description: Optional[str]
         wikidatatype: Optional[str]
         edge_id, node1, relationship, node2, relationship_label, target_node, target_label, target_description, wikidatatype = item_edge
-
         value: KgtkValue = KgtkValue(target_node)
         rb_type: str = rb_find_type(target_node, value)
 
@@ -1519,7 +1543,6 @@ def rb_render_kb_items(backend,
                                                                          lang,
                                                                          relationship,
                                                                          wikidatatype)
-
         current_value["edge_id"] = edge_id  # temporarily save the current edge ID.
         current_values.append(current_value)
 
@@ -1607,9 +1630,12 @@ def rb_fetch_qualifiers(backend,
     item_qualifier_edges: List[List[str]]
     if len(edge_id_tuple) <= ID_SEARCH_THRESHOLD or is_related_item:
         if ID_SEARCH_USING_IN:
-            item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend, edge_id_tuple,
-                                                                     qual_query_limit=qual_query_limit, lang=lang,
+            item_qualifier_edges = rb_fetch_qualifiers_using_id_list(backend,
+                                                                     edge_id_tuple,
+                                                                     qual_query_limit=qual_query_limit,
+                                                                     lang=lang,
                                                                      verbose=verbose2)
+
         else:
             item_qualifier_edges = rb_fetch_qualifiers_using_id_queries(backend, edge_id_tuple,
                                                                         qual_query_limit=qual_query_limit, lang=lang,
@@ -1623,7 +1649,6 @@ def rb_fetch_qualifiers(backend,
         item_qualifier_edges = backend.rb_get_node_edge_qualifiers(item, lang=lang, limit=qual_query_limit)
     if verbose2:
         print("Fetched %d qualifier edges" % len(item_qualifier_edges), file=sys.stderr, flush=True)  # ***
-
     return item_qualifier_edges
 
 
@@ -1635,12 +1660,14 @@ def rb_fetch_and_render_qualifiers(backend,
                                    qual_query_limit: int = 0,
                                    lang: str = 'en',
                                    verbose: bool = False,
-                                   is_related_item: bool = False):
+                                   is_related_item: bool = False,
+                                   call_from=None):
     scanned_property_map: MutableMapping[str, any]
     scanned_value: MutableMapping[str, any]
     scanned_edge_id: str
 
     edge_id_tuple = rb_build_edge_id_tuple(response_properties)
+
     item_qualifier_edges: List[List[str]] = rb_fetch_qualifiers(backend,
                                                                 item,
                                                                 edge_id_tuple,
@@ -1657,6 +1684,7 @@ def rb_fetch_and_render_qualifiers(backend,
         print("len(item_qual_map) = %d" % len(item_qual_map), file=sys.stderr, flush=True)  # ***
 
     edges_without_qualifiers: int = 0
+
     for scanned_property_map in response_properties:
         for scanned_value in scanned_property_map["values"]:
             # Retrieve the associated edge_id
@@ -1664,7 +1692,7 @@ def rb_fetch_and_render_qualifiers(backend,
             if scanned_edge_id not in item_qual_map:
                 edges_without_qualifiers += 1
                 continue  # There are no associated qualifiers.
-
+            fff = time.time()
             scanned_value["qualifiers"] = \
                 rb_render_item_qualifiers(backend,
                                           item,
@@ -1694,11 +1722,13 @@ def rb_render_kb_items_and_qualifiers(backend,
                                       qual_valuelist_max_len: int = 0,
                                       qual_query_limit: int = 0,
                                       lang: str = 'en',
-                                      verbose: bool = False) -> Tuple[
+                                      verbose: bool = False,
+                                      calling_from='') -> Tuple[
     List[MutableMapping[str, any]],
     List[MutableMapping[str, any]]]:
     response_properties: List[MutableMapping[str, any]] = list()
     response_xrefs: List[MutableMapping[str, any]] = list()
+
     response_properties, response_xrefs = rb_render_kb_items(backend,
                                                              item,
                                                              item_edges,
@@ -1714,7 +1744,8 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_valuelist_max_len=qual_valuelist_max_len,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
-                                   verbose=verbose)
+                                   verbose=verbose, call_from=calling_from)
+
     rb_fetch_and_render_qualifiers(backend,
                                    item,
                                    response_xrefs,
@@ -1723,6 +1754,7 @@ def rb_render_kb_items_and_qualifiers(backend,
                                    qual_query_limit=qual_query_limit,
                                    lang=lang,
                                    verbose=verbose)
+
     return response_properties, response_xrefs
 
 
@@ -1786,12 +1818,12 @@ def rb_send_kb_items_and_qualifiers(backend,
                                     lang: str = 'en',
                                     verbose: bool = False,
                                     is_related_item=False,
-                                    sort_edges: bool = True) -> Tuple[
+                                    sort_edges: bool = True,
+                                    calling_from='') -> Tuple[
     List[MutableMapping[str, any]],
     List[
         MutableMapping[str, any]]]:
     if sort_edges:
-        # Sort the item edges:
         sorted_item_edges: List[List[str]] = rb_build_sorted_item_edges(item_edges)
     else:
         sorted_item_edges = item_edges
@@ -1807,7 +1839,8 @@ def rb_send_kb_items_and_qualifiers(backend,
                                              qual_valuelist_max_len=qual_valuelist_max_len,
                                              qual_query_limit=qual_query_limit,
                                              lang=lang,
-                                             verbose=verbose)
+                                             verbose=verbose,
+                                             calling_from=calling_from)
 
 
 def rb_send_kb_categories(backend,
@@ -1855,13 +1888,14 @@ def rb_send_kb_categories(backend,
         response_categories.append(response)
 
 
-def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]], prop_values_limit: int,
+def separate_high_cardinality_properties(property_value_counts: Tuple[Tuple[str, int]],
+                                         prop_values_limit: int,
                                          count_index: int = 1) -> (Tuple[Tuple[str, int]], Tuple[Tuple[str, int]]):
     high_cardinality_properties = list()
     normal_properties = list()
     for prop_edge in property_value_counts:
         high_cardinality_properties.append(prop_edge) \
-            if prop_edge[count_index] >= prop_values_limit \
+            if prop_edge[count_index] >= prop_values_limit and prop_edge[0] != WIKIDATA_URL_LABEL \
             else normal_properties.append(prop_edge)
     return high_cardinality_properties, normal_properties
 
@@ -1934,66 +1968,87 @@ def rb_get_related_items():
     qual_query_limit: int = args.get('qual_query_limit', type=int,
                                      default=app.config['QUAL_QUERY_LIMIT'])
 
+    if id is None:
+        return flask.make_response({'error': 'parameter `id` required.'}, 400)
+    try:
+        s = time.time()
+        response = p.apply(ritem_helper, args=(item,
+                                               lang,
+                                               properties_values_limit,
+                                               qual_proplist_max_len,
+                                               qual_query_limit,
+                                               qual_valuelist_max_len,
+                                               query_limit,))
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:ritem\tQnode:{item}\tTime taken:{time.time() - s}')
+        print(f'ritem time: {time.time() - s}')
+        return flask.jsonify(response), 200
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def ritem_helper(item: str,
+                 lang: str,
+                 properties_values_limit: int,
+                 qual_proplist_max_len: int,
+                 qual_query_limit: int,
+                 qual_valuelist_max_len: int,
+                 query_limit: int):
     properties_to_hide = app.config['KG_HIDE_PROPERTIES_RELATED_ITEMS']
     properties_to_hide_str = ", ".join(list(map(lambda x: '"{}"'.format(x), [x for x in properties_to_hide])))
 
     if re.match(item_regex, item):
         item = item.upper()
 
-    if id is None:
-        return flask.make_response({'error': 'parameter `id` required.'}, 400)
-    try:
-        with get_backend() as backend:
-            incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang, properties_to_hide_str)
-            hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
-                                                                                    properties_values_limit)
-            normal_property_dict = {}
-            for normal_property_edge in normal_properties:
-                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+    s = time.time()
+    incoming_edge_counts = backend.get_incoming_edges_count_results(item, lang, properties_to_hide_str)
+    hc_properties, normal_properties = separate_high_cardinality_properties(incoming_edge_counts,
+                                                                            properties_values_limit)
+    normal_property_dict = {}
+    for normal_property_edge in normal_properties:
+        normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
 
-            low_cardinality_properties_list_str = ", ".join(
-                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
+    lc_properties_list_str = ' '.join([x[0] for x in normal_properties])
+    print(
+        f'{multiprocessing.current_process().pid}\tEndpoint:ritem-value-counts\tQnode:{item}\tTime taken:{time.time() - s}')
+    s = time.time()
 
-            item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
-                                                                                                lc_properties=low_cardinality_properties_list_str,
-                                                                                                limit=query_limit,
-                                                                                                lang=lang
-                                                                                                )
+    item_edges = list()
+    if lc_properties_list_str != "":
+        item_edges: List[List[str]] = backend.rb_get_node_multiple_properties_related_edges(item,
+                                                                                            lc_properties=lc_properties_list_str,
+                                                                                            limit=query_limit,
+                                                                                            lang=lang
+                                                                                            )
+    print(
+        f'{multiprocessing.current_process().pid}\tEndpoint:ritem-get-edges\tQnode:{item}\tTime taken:{time.time() - s}')
+    response: MutableMapping[dict, any] = list()
+    response_properties: List[MutableMapping[str, any]]
+    sorted_item_edges: List[List[str]] = list()
+    keyed_item_edges: MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_edges)
+    item_edge_key: str
+    for item_edge_key in sorted(keyed_item_edges.keys()):
+        sorted_item_edges.append(keyed_item_edges[item_edge_key])
+    response_properties = rb_render_related_kb_items(sorted_item_edges)
 
-            response: MutableMapping[dict, any] = list()
-            response_properties: List[MutableMapping[str, any]]
-            sorted_item_edges: List[List[str]] = list()
-
-            keyed_item_edges: MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_edges)
-
-            item_edge_key: str
-            for item_edge_key in sorted(keyed_item_edges.keys()):
-                sorted_item_edges.append(keyed_item_edges[item_edge_key])
-
-            response_properties = rb_render_related_kb_items(sorted_item_edges)
-
-            rb_fetch_and_render_qualifiers(backend,
-                                           item,
-                                           response_properties,
-                                           qual_proplist_max_len=qual_proplist_max_len,
-                                           qual_valuelist_max_len=qual_valuelist_max_len,
-                                           qual_query_limit=qual_query_limit,
-                                           lang=lang,
-                                           is_related_item=True)
-
-            for response_property in response_properties:
-                response_property['count'] = normal_property_dict[response_property['ref']]
-                response_property['mode'] = 'sync'
-
-            hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
-            response_properties.extend(hcp_response)
-            response = sort_related_item_properties(response_properties)
-
-            return flask.jsonify(response), 200
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        traceback.print_exc()
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+    if len(response_properties) > 0:
+        rb_fetch_and_render_qualifiers(backend,
+                                       item,
+                                       response_properties,
+                                       qual_proplist_max_len=qual_proplist_max_len,
+                                       qual_valuelist_max_len=qual_valuelist_max_len,
+                                       qual_query_limit=qual_query_limit,
+                                       lang=lang,
+                                       is_related_item=True)
+    for response_property in response_properties:
+        response_property['count'] = normal_property_dict[response_property['ref']]
+        response_property['mode'] = 'sync'
+    hcp_response = create_initial_response_high_cardinality_related_items(hc_properties)
+    response_properties.extend(hcp_response)
+    response = sort_related_item_properties(response_properties)
+    return response
 
 
 @app.route('/kb/rproperty', methods=['GET'])
@@ -2016,41 +2071,55 @@ def rb_get_related_items_property():
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
     try:
-        with get_backend() as backend:
-            item_rp_edges = backend.rb_get_node_one_property_related_edges(item, property, limit, skip, lang=lang)
-
-            response: MutableMapping[str, any] = dict()
-            response_properties: List[MutableMapping[str, any]]
-            sorted_item_edges: List[List[str]] = list()
-
-            keyed_item_edges: MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_rp_edges)
-
-            item_edge_key: str
-            for item_edge_key in sorted(keyed_item_edges.keys()):
-                sorted_item_edges.append(keyed_item_edges[item_edge_key])
-
-            response_properties = rb_render_related_kb_items(sorted_item_edges)
-
-            rb_fetch_and_render_qualifiers(backend,
-                                           item,
-                                           response_properties,
-                                           qual_proplist_max_len=qual_proplist_max_len,
-                                           qual_valuelist_max_len=qual_valuelist_max_len,
-                                           qual_query_limit=qual_query_limit,
-                                           lang=lang,
-                                           is_related_item=True)
-
-            assert len(response_properties) == 1
-            response = response_properties[0]
-            response['limit'] = limit
-            response['skip'] = skip
-            response['mode'] = 'ajax'
-
-            return flask.jsonify(response), 200
+        s = time.time()
+        response = p.apply(rproperty_helper, args=(item,
+                                                   lang,
+                                                   limit,
+                                                   property,
+                                                   qual_proplist_max_len,
+                                                   qual_query_limit,
+                                                   qual_valuelist_max_len,
+                                                   skip,))
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:rproperty\tQnode/Property:{item}/{property}\tTime taken:{time.time() - s}')
+        return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         traceback.print_exc()
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def rproperty_helper(item: str,
+                     lang: str,
+                     limit: int,
+                     property: str,
+                     qual_proplist_max_len: int,
+                     qual_query_limit: int,
+                     qual_valuelist_max_len: int,
+                     skip: int):
+    item_rp_edges = backend.rb_get_node_one_property_related_edges(item, property, limit, skip, lang=lang)
+    response: MutableMapping[str, any] = dict()
+    response_properties: List[MutableMapping[str, any]]
+    sorted_item_edges: List[List[str]] = list()
+    keyed_item_edges: MutableMapping[str, List[str]] = rb_build_keyed_related_item_edges(item_rp_edges)
+    item_edge_key: str
+    for item_edge_key in sorted(keyed_item_edges.keys()):
+        sorted_item_edges.append(keyed_item_edges[item_edge_key])
+    response_properties = rb_render_related_kb_items(sorted_item_edges)
+    rb_fetch_and_render_qualifiers(backend,
+                                   item,
+                                   response_properties,
+                                   qual_proplist_max_len=qual_proplist_max_len,
+                                   qual_valuelist_max_len=qual_valuelist_max_len,
+                                   qual_query_limit=qual_query_limit,
+                                   lang=lang,
+                                   is_related_item=True)
+    assert len(response_properties) == 1
+    response = response_properties[0]
+    response['limit'] = limit
+    response['skip'] = skip
+    response['mode'] = 'ajax'
+    return response
 
 
 @app.route('/kb/property', methods=['GET'])
@@ -2076,13 +2145,46 @@ def rb_get_kb_property():
     if id is None or property is None:
         return flask.make_response({'error': '`id` and `property` parameters required.'}, 400)
 
+    try:
+        s = time.time()
+        response = p.apply(property_helper, args=(item,
+                                                  lang,
+                                                  limit,
+                                                  property,
+                                                  proplist_max_len,
+                                                  qual_proplist_max_len,
+                                                  qual_query_limit,
+                                                  qual_valuelist_max_len,
+                                                  skip,
+                                                  valuelist_max_len,))
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:property\tQnode/Property:{item}/{property}\tTime taken:{time.time() - s}')
+        return flask.jsonify(response), 200
+
+    except Exception as e:
+        print('ERROR: ' + str(e))
+        traceback.print_exc()
+        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def property_helper(item: str,
+                    lang: str,
+                    limit: int,
+                    property: str,
+                    proplist_max_len: int,
+                    qual_proplist_max_len: int,
+                    qual_query_limit: int,
+                    qual_valuelist_max_len: int,
+                    skip: int,
+                    valuelist_max_len: int):
     if re.match(item_regex, property):
         property = property.upper()
+
     sort_metadata = ajax_properties_sort_metadata.get(property, {})
     sort_order = sort_metadata.get('Psort_order', 'asc')
     qualifier_property = sort_metadata.get('Psort_qualifier', None)
-
     is_sort_by_quantity = False
+
     if qualifier_property is not None:
         sort_by = 'qn2label' if sort_metadata['qualifier_datatype'] == 'wikibase-item' else 'qn2'
         if sort_metadata['qualifier_datatype'] == 'quantity':
@@ -2090,46 +2192,35 @@ def rb_get_kb_property():
     else:
         sort_by = 'n2label' if sort_metadata.get('datatype', 'wikibase-item') == 'wikibase-item' else 'n2'
 
-    try:
-        with get_backend() as backend:
-            item_p_edges = backend.rb_get_node_one_property_with_qualifiers_edges(item,
-                                                                                  property,
-                                                                                  limit,
-                                                                                  skip,
-                                                                                  qualifier_property=qualifier_property,
-                                                                                  sort_by=sort_by,
-                                                                                  lang=lang,
-                                                                                  sort_order=sort_order,
-                                                                                  is_sort_by_quantity=is_sort_by_quantity)
-
-            response: MutableMapping[str, any] = dict()
-
-            response_properties: List[MutableMapping[str, any]]
-
-            response_properties, _ = rb_send_kb_items_and_qualifiers(backend,
-                                                                     item,
-                                                                     item_p_edges,
-                                                                     proplist_max_len=proplist_max_len,
-                                                                     valuelist_max_len=valuelist_max_len,
-                                                                     qual_proplist_max_len=qual_proplist_max_len,
-                                                                     qual_valuelist_max_len=qual_valuelist_max_len,
-                                                                     qual_query_limit=qual_query_limit,
-                                                                     lang=lang,
-                                                                     sort_edges=False)
-
-            # return the first property in the response object
-            if response_properties:
-                response = response_properties[0]
-                response['mode'] = 'ajax'
-                response['limit'] = limit
-                response['skip'] = skip
-
-            return flask.jsonify(response), 200
-
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        traceback.print_exc()
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+    item_p_edges = backend.rb_get_node_one_property_with_qualifiers_edges(item,
+                                                                          property,
+                                                                          limit,
+                                                                          skip,
+                                                                          qualifier_property=qualifier_property,
+                                                                          sort_by=sort_by,
+                                                                          lang=lang,
+                                                                          sort_order=sort_order,
+                                                                          is_sort_by_quantity=is_sort_by_quantity)
+    response: MutableMapping[str, any] = dict()
+    response_properties: List[MutableMapping[str, any]]
+    response_properties, _ = rb_send_kb_items_and_qualifiers(backend,
+                                                             item,
+                                                             item_p_edges,
+                                                             proplist_max_len=proplist_max_len,
+                                                             valuelist_max_len=valuelist_max_len,
+                                                             qual_proplist_max_len=qual_proplist_max_len,
+                                                             qual_valuelist_max_len=qual_valuelist_max_len,
+                                                             qual_query_limit=qual_query_limit,
+                                                             lang=lang,
+                                                             sort_edges=False,
+                                                             calling_from='property')
+    # return the first property in the response object
+    if response_properties:
+        response = response_properties[0]
+        response['mode'] = 'ajax'
+        response['limit'] = limit
+        response['skip'] = skip
+    return response
 
 
 @app.route('/kb/xitem', methods=['GET'])
@@ -2159,6 +2250,8 @@ def rb_get_kb_xitem():
     instance_count_star_property = app.config['KG_INSTANCE_COUNT_STAR']
     subclass_count_star_property = app.config['KG_SUBCLASS_COUNT_STAR']
 
+    wikipedia_urls = []
+
     if verbose:
         print("rb_get_kb_item: %s" % repr(item))
         print("lang: %s" % repr(lang))
@@ -2173,111 +2266,165 @@ def rb_get_kb_xitem():
         item = item.upper()
 
     try:
-        with get_backend() as backend:
-            property_values_count: List[List[str]] = backend.get_property_values_count_results(item, lang)
-            high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
-                                                                                                  properties_values_limit)
+        s = time.time()
+        response = p.apply(xitem_helper, args=(abstract_property,
+                                               instance_count_property,
+                                               instance_count_star_property,
+                                               item,
+                                               lang,
+                                               properties_values_limit,
+                                               proplist_max_len,
+                                               qual_proplist_max_len,
+                                               qual_query_limit,
+                                               qual_valuelist_max_len,
+                                               query_limit,
+                                               subclass_count_star_property,
+                                               valuelist_max_len,
+                                               verbose, logger,))
 
-            normal_property_dict = {}
-            for normal_property_edge in normal_properties:
-                normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
-
-            low_cardinality_properties_list_str = ", ".join(
-                list(map(lambda x: '"{}"'.format(x), [x[0] for x in normal_properties])))
-
-            rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
-
-            verbose2: bool = verbose  # ***
-
-            if verbose2:
-                print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
-                      file=sys.stderr, flush=True)  # ***
-            item_edges: List[List[str]] = []
-            _item_edges: List[List[str]] = backend.rb_get_node_edges(item,
-                                                                     lang=lang,
-                                                                     limit=query_limit,
-                                                                     lc_properties=low_cardinality_properties_list_str)
-
-            p = set()
-            for i in _item_edges:
-                p.add(i[2])
-
-            for hcp in high_cardinality_properties:
-                assert hcp[0] not in p
-
-            if verbose2:
-                print("Fetched %d item edges" % len(_item_edges), file=sys.stderr, flush=True)  # ***
-
-            if verbose2:
-                print("Done fetching edges", file=sys.stderr, flush=True)  # ***
-
-            response: MutableMapping[str, any] = dict()
-            response["ref"] = item
-
-            item_labels: List[List[str]] = backend.get_node_labels(item, lang=lang)
-            response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
-
-            item_aliases: List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
-            response["aliases"] = [rb_unstringify(x) for x in item_aliases]
-
-            item_descriptions: List[List[str]] = backend.get_node_descriptions(item, lang=lang)
-            response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
-
-            # get the wikipedia abstract from the tuple
-            response['abstract'] = ''
-            response['instance_count'] = ''
-            response['instance_count_star'] = ''
-            response['subclass_count_star'] = ''
-
-            for item_edge in _item_edges:
-                if item_edge[2] == abstract_property:
-                    abstract = item_edge[3]
-                    if abstract.endswith('@en'):
-                        abstract = abstract[:-3].replace("'", "").replace('"', '')
-                    response['abstract'] = abstract
-                elif item_edge[2] == instance_count_property:
-                    response['instance_count'] = item_edge[3]
-                elif item_edge[2] == instance_count_star_property:
-                    response['instance_count_star'] = item_edge[3]
-                elif item_edge[2] == subclass_count_star_property:
-                    response['subclass_count_star'] = item_edge[3]
-                else:
-                    item_edges.append(item_edge)
-
-            response_properties: List[MutableMapping[str, any]]
-            response_xrefs: List[MutableMapping[str, any]]
-            response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
-                                                                                  item,
-                                                                                  item_edges,
-                                                                                  proplist_max_len=proplist_max_len,
-                                                                                  valuelist_max_len=valuelist_max_len,
-                                                                                  qual_proplist_max_len=qual_proplist_max_len,
-                                                                                  qual_valuelist_max_len=qual_valuelist_max_len,
-                                                                                  qual_query_limit=qual_query_limit,
-                                                                                  lang=lang,
-                                                                                  verbose=verbose)
-            for response_property in response_properties:
-                response_property['count'] = normal_property_dict[response_property['ref']]
-                response_property['mode'] = 'sync'
-                if response_property['ref'] in profiled_property_metadata:
-                    response_property['profiled'] = True
-                else:
-                    response_property['profiled'] = False
-
-            sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
-            hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
-            sorted_response_properties.extend(hcp_response)
-
-            response["properties"] = sort_related_item_properties(sorted_response_properties)
-            response["xrefs"] = response_xrefs
-
-            response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
-
-            return flask.jsonify(response), 200
+        logger.error(
+            f'{multiprocessing.current_process().pid}\tEndpoint:xitem\tQnode:{item}\tTime taken:{time.time() - s}')
+        print(f'xitem time: {time.time() - s}')
+        return flask.jsonify(response), 200
     except Exception as e:
         print('ERROR: ' + str(e))
         traceback.print_exc()
         flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
+
+
+def xitem_helper(abstract_property,
+                 instance_count_property,
+                 instance_count_star_property,
+                 item,
+                 lang,
+                 properties_values_limit,
+                 proplist_max_len,
+                 qual_proplist_max_len,
+                 qual_query_limit,
+                 qual_valuelist_max_len,
+                 query_limit,
+                 subclass_count_star_property,
+                 valuelist_max_len,
+                 verbose, logger):
+    s = time.time()
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-create-kypher-api\tQnode:{item}\tTime taken:{time.time() - s}')
+
+    s = time.time()
+    wikipedia_urls = []
+    property_values_count: List[List[str]] = backend.get_property_values_count_results(item, lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-prop-values\tQnode:{item}\tTime taken:{time.time() - s}')
+    s = time.time()
+    high_cardinality_properties, normal_properties = separate_high_cardinality_properties(property_values_count,
+                                                                                          properties_values_limit)
+
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-sep-hc-props\tQnode:{item}\tTime taken:{time.time() - s}')
+    normal_property_dict = {}
+    for normal_property_edge in normal_properties:
+        normal_property_dict[normal_property_edge[0]] = normal_property_edge[1]
+
+    low_cardinality_properties_list_str = ' '.join([x[0] for x in normal_properties])
+    rb_build_property_priority_map(backend, verbose=verbose)  # Endure this has been initialized.
+    verbose2: bool = verbose  # ***
+    if verbose2:
+        print("Fetching item edges for %s (lang=%s, limit=%d)" % (repr(item), repr(lang), query_limit),
+              file=sys.stderr, flush=True)  # ***
+    item_edges: List[List[str]] = []
+    s = time.time()
+    _item_edges: List[List[str]] = backend.rb_get_node_edges(item,
+                                                             lang=lang,
+                                                             limit=query_limit,
+                                                             lc_properties=low_cardinality_properties_list_str)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-edges\tQnode:{item}\tTime taken:{time.time() - s}')
+
+    p = set()
+    for i in _item_edges:
+        p.add(i[2])
+    for hcp in high_cardinality_properties:
+        assert hcp[0] not in p
+    if verbose2:
+        print("Fetched %d item edges" % len(_item_edges), file=sys.stderr, flush=True)  # ***
+    if verbose2:
+        print("Done fetching edges", file=sys.stderr, flush=True)  # ***
+    response: MutableMapping[str, any] = dict()
+    response["ref"] = item
+    s = time.time()
+    item_labels: List[List[str]] = backend.get_node_labels(item, lang=lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-egt-node-labels\tQnode:{item}\tTime taken:{time.time() - s}')
+    response["text"] = rb_unstringify(item_labels[0][1]) if len(item_labels) > 0 else item
+    s = time.time()
+    item_aliases: List[str] = [x[1] for x in backend.get_node_aliases(item, lang=lang)]
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-aliases\tQnode:{item}\tTime taken:{time.time() - s}')
+    response["aliases"] = [rb_unstringify(x) for x in item_aliases]
+    s = time.time()
+    item_descriptions: List[List[str]] = backend.get_node_descriptions(item, lang=lang)
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-node-descriptions\tQnode:{item}\tTime taken:{time.time() - s}')
+    response["description"] = rb_unstringify(item_descriptions[0][1]) if len(item_descriptions) > 0 else ""
+    # get the wikipedia abstract from the tuple
+    response['abstract'] = ''
+    response['instance_count'] = ''
+    response['instance_count_star'] = ''
+    response['subclass_count_star'] = ''
+    for item_edge in _item_edges:
+        if item_edge[2] == abstract_property:
+            abstract = item_edge[3]
+            if abstract.endswith('@en'):
+                abstract = abstract[:-3].replace("'", "").replace('"', '')
+            response['abstract'] = abstract
+        elif item_edge[2] == instance_count_property:
+            response['instance_count'] = item_edge[3]
+        elif item_edge[2] == instance_count_star_property:
+            response['instance_count_star'] = item_edge[3]
+        elif item_edge[2] == subclass_count_star_property:
+            response['subclass_count_star'] = item_edge[3]
+        elif item_edge[2] == WIKIDATA_URL_LABEL:
+            wiki_lang, wiki_url_part = parse_wikipedia_url(item_edge[3])
+            wikipedia_urls.append({
+                'lang': wiki_lang,
+                'text': wiki_url_part,
+                'url': f'https://{wiki_lang}.wikipedia.org/wiki/{wiki_url_part}',
+                'label': wikidata_languages.get(wiki_lang, wiki_lang)
+            })
+        else:
+            item_edges.append(item_edge)
+    response_properties: List[MutableMapping[str, any]]
+    response_xrefs: List[MutableMapping[str, any]]
+    s = time.time()
+    response_properties, response_xrefs = rb_send_kb_items_and_qualifiers(backend,
+                                                                          item,
+                                                                          item_edges,
+                                                                          proplist_max_len=proplist_max_len,
+                                                                          valuelist_max_len=valuelist_max_len,
+                                                                          qual_proplist_max_len=qual_proplist_max_len,
+                                                                          qual_valuelist_max_len=qual_valuelist_max_len,
+                                                                          qual_query_limit=qual_query_limit,
+                                                                          lang=lang,
+                                                                          verbose=verbose,
+                                                                          calling_from='xitem')
+    logger.error(
+        f'{multiprocessing.current_process().pid}\tEndpoint:xitem-get-qualifiers\tQnode:{item}\tTime taken:{time.time() - s}')
+    for response_property in response_properties:
+        response_property['count'] = normal_property_dict[response_property['ref']]
+        response_property['mode'] = 'sync'
+        if response_property['ref'] in profiled_property_metadata:
+            response_property['profiled'] = True
+        else:
+            response_property['profiled'] = False
+    sorted_response_properties = sort_property_values_by_qualifiers(response_properties)
+    hcp_response = create_intial_hc_properties_response(high_cardinality_properties)
+    sorted_response_properties.extend(hcp_response)
+    response["properties"] = sort_related_item_properties(sorted_response_properties)
+    response["xrefs"] = response_xrefs
+    response['sitelinks'] = wikipedia_urls
+    response["gallery"] = rb_build_gallery(item_edges, item, item_labels)
+    # queue.put(response)
+    return response
 
 
 @app.route('/kb/item/<string:item>', methods=['GET'])
@@ -2384,162 +2531,6 @@ def get_request_args():
     }
 
 
-# @app.route(os.path.join(app.config['SERVICE_PREFIX'], 'test_get_edges'), methods=['GET'])
-# def test_get_edges():
-#     node = flask.request.args.get('node')
-#     if node is None:
-#         flask.abort(HTTPStatus.BAD_REQUEST.value)
-#     return 'get_edges %s ' % node
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_labels'), methods=['GET'])
-def get_node_labels():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            labels = backend.get_node_labels(args['node'], lang=args['lang'], fmt=args['fmt'])
-            return backend.query_result_to_string(labels)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_aliases'), methods=['GET'])
-def get_node_aliases():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            aliases = backend.get_node_aliases(args['node'], lang=args['lang'], fmt=args['fmt'])
-            return backend.query_result_to_string(aliases)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_descriptions'), methods=['GET'])
-def get_node_descriptions():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            descriptions = backend.get_node_descriptions(args['node'], lang=args['lang'], fmt=args['fmt'])
-            return backend.query_result_to_string(descriptions)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_images'), methods=['GET'])
-def get_node_images():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            images = backend.get_node_images(args['node'], fmt=args['fmt'])
-            return backend.query_result_to_string(images)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edges'), methods=['GET'])
-def get_node_edges():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            edges = backend.get_node_edges(
-                args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], fmt=args['fmt'])
-            return backend.query_result_to_string(edges)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_inverse_edges'), methods=['GET'])
-def get_node_inverse_edges():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            edges = backend.get_node_inverse_edges(
-                args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], fmt=args['fmt'])
-            return backend.query_result_to_string(edges)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_edge_qualifiers'), methods=['GET'])
-def get_node_edge_qualifiers():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            qualifiers = backend.get_node_edge_qualifiers(
-                args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], fmt=args['fmt'])
-            return backend.query_result_to_string(qualifiers)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_node_inverse_edge_qualifiers'), methods=['GET'])
-def get_node_inverse_edge_qualifiers():
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            qualifiers = backend.get_node_inverse_edge_qualifiers(
-                args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'], fmt=args['fmt'])
-            return backend.query_result_to_string(qualifiers)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_configuration'), methods=['GET'])
-def get_configuration():
-    """Show the currently loaded configuration values."""
-    try:
-        with get_backend(app) as backend:
-            return backend.query_result_to_string(backend.api.config)
-    except Exception as e:
-        print('ERROR: ' + str(e))
-
-
-# Top-level entry points:
-
-@app.route(os.path.join(app.config['SERVICE_PREFIX'], 'get_all_node_data'), methods=['GET'])
-def get_all_node_data():
-    """Top-level method that collects all of a node's edge data,
-    label strings dictionary, and whatever else we might need, and
-    returns it all in a single 'kgtk_object_collection' JSON structure.
-    """
-    args = get_request_args()
-    if args['node'] is None:
-        flask.abort(HTTPStatus.BAD_REQUEST.value)
-    try:
-        with get_backend(app) as backend:
-            data = backend.get_all_node_data(
-                args['node'], lang=args['lang'], images=args['images'], fanouts=args['fanouts'],
-                inverse=args['inverse'])
-            return data or {}
-    except Exception as e:
-        print('ERROR: ' + str(e))
-        flask.abort(HTTPStatus.INTERNAL_SERVER_ERROR.value)
-
-
 def sort_property_values_by_qualifiers(properties_values_list: List[dict]) -> List[dict]:
     sorted_properties_values_list = list()
     for prop_val_dict in properties_values_list:
@@ -2609,9 +2600,21 @@ def find_sort_qualifier(property_value_dict: dict) -> str:
         _ = qualifiers_type_dict['/w/quantity']
         return max(_.items(), key=itemgetter(1))[0]
     else:
-        # return min(qualifiers_type_dict[list(qualifiers_type_dict)[0]])
         return None
 
 
+def parse_wikipedia_url(wiki_url: str) -> Tuple[str, str]:
+    if wiki_url.startswith('http:'):  # hack until we import a new wikidata dump
+        wiki_url = wiki_url.replace('http:', 'https:')
+
+    wiki_match = re.search(wikipedia_url_regex, wiki_url)
+    return wiki_match.group(1), wiki_match.group(2)
+
+
 if __name__ == '__main__':
+    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 4))
+    logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
+
+    logger = logging.getLogger('perf')
+
     app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)

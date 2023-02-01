@@ -28,7 +28,6 @@ import fetchRelatedValues from '../utils/fetchRelatedValues'
 import classNames from '../utils/classNames'
 import formatNumber from '../utils/numbers'
 
-
 const Data = ({ info }) => {
 
   const { id } = useParams()
@@ -47,6 +46,12 @@ const Data = ({ info }) => {
 
   const [classGraphViz, setClassGraphViz] = useState(false)
   const [showProfiledProperties, setShowProfiledProperties] = useState(false)
+  const [showSiteLinks, setShowSiteLinks] = useState(true)
+
+  const profiledProperties = [
+    'P1963computed',
+    'P1963subclass_star',
+    'P1963computed_star']
 
   useEffect(() => {
 
@@ -56,6 +61,7 @@ const Data = ({ info }) => {
     setClassGraphData(null)
     setClassGraphViz(false)
     setShowProfiledProperties(false)
+    setShowSiteLinks(true)
 
     // fetch item data
     setLoading(true)
@@ -64,14 +70,12 @@ const Data = ({ info }) => {
       setData(data)
 
       // fetch all high cardinality properties
-      if ( !!data.properties.length ) {
-        data.properties
-          .filter(property => property.mode === 'ajax')
-          .forEach(property => {
+      if (!!data.properties.length) {
+        data.properties.filter(property => property.mode === 'ajax').forEach(property => {
             const numPages = Math.ceil(property.count / 10)
             fetchProperty(id, property.ref).then(data => {
               setPropertyData(prevData => {
-                const propertyData = {...prevData}
+                const propertyData = { ...prevData }
                 propertyData[property.ref] = {
                   count: property.count,
                   ...data,
@@ -88,33 +92,33 @@ const Data = ({ info }) => {
   useEffect(() => {
     // fetch class graph data
     // (but only if the API supports that)
-    if ( !!info && info.hasClassGraphVisualization ) {
+    if (!!info && info.hasClassGraphVisualization) {
       setLoadingClassGraphData(true)
       fetchClassGraphData(id).then(data => {
         setLoadingClassGraphData(false)
-        if ( !!Object.keys(data).length ) {
+        if (!!Object.keys(data).length) {
 
           // add links and neighbors to the node data
           data.links.forEach(link => {
             const a = data.nodes.find(node => node.id === link.source)
             const b = data.nodes.find(node => node.id === link.target)
 
-            if ( !a.neighbors ) {
+            if (!a.neighbors) {
               a.neighbors = []
             }
 
-            if ( !b.neighbors ) {
+            if (!b.neighbors) {
               b.neighbors = []
             }
 
             a.neighbors.push(b)
             b.neighbors.push(a)
 
-            if ( !a.links ) {
+            if (!a.links) {
               a.links = []
             }
 
-            if ( !b.links ) {
+            if (!b.links) {
               b.links = []
             }
 
@@ -135,23 +139,23 @@ const Data = ({ info }) => {
       setRelatedProperties(
         data.map(property => ({
           ...property,
-          numPages: Math.ceil(property.count / 10)
-        }))
+          numPages: Math.ceil(property.count / 10),
+        })),
       )
     })
 
   }, [id])
 
   const handleOnRelatedItemsExpand = useCallback(expanded => {
-    if ( !expanded || !relatedProperties.length ) { return }
+    if (!expanded || !relatedProperties.length) { return }
 
     // get the first page for all related property values
     relatedProperties.forEach(property => {
 
       // in `sync` mode use the values that came with the original request
-      if ( property.mode === 'sync' ) {
+      if (property.mode === 'sync') {
         setRelatedPropertyValues(prevPropertyValues => {
-          const propertyValues = {...prevPropertyValues}
+          const propertyValues = { ...prevPropertyValues }
           propertyValues[property.ref] = {
             ...propertyValues[property.ref],
             values: property.values,
@@ -161,10 +165,10 @@ const Data = ({ info }) => {
       }
 
       // in `ajax` mode fetch the first page from the server
-      if ( property.mode === 'ajax' ) {
+      if (property.mode === 'ajax') {
         fetchRelatedValues(id, property.ref).then(data => {
           setRelatedPropertyValues(prevPropertyValues => {
-            const propertyValues = {...prevPropertyValues}
+            const propertyValues = { ...prevPropertyValues }
             propertyValues[property.ref] = {
               ...propertyValues[property.ref],
               ...data,
@@ -181,7 +185,7 @@ const Data = ({ info }) => {
     const skip = (page - 1) * 10
     fetchProperty(id, property.ref, skip).then(data => {
       setPropertyData(prevData => {
-        const propertyData = {...prevData}
+        const propertyData = { ...prevData }
         propertyData[property.ref] = {
           ...propertyData[property.ref],
           ...data,
@@ -195,7 +199,7 @@ const Data = ({ info }) => {
     const skip = (page - 1) * 10
     fetchRelatedValues(id, property.ref, skip).then(data => {
       setRelatedPropertyValues(prevPropertyValues => {
-        const propertyValues = {...prevPropertyValues}
+        const propertyValues = { ...prevPropertyValues }
         propertyValues[property.ref] = {
           ...propertyValues[property.ref],
           ...data,
@@ -208,16 +212,16 @@ const Data = ({ info }) => {
   const getURL = item => {
 
     // if there is an external url, return url that right away
-    if ( item.url ) {
+    if (item.url) {
       return item.url
     }
 
     // if there is no external url, link internally to `/kb/item/<node_id>`
-    let url = `/${item.ref}`
+    let url = `/${ item.ref }`
 
     // prefix the url with the location of where the app is hosted
-    if ( process.env.REACT_APP_FRONTEND_URL ) {
-      url = `${process.env.REACT_APP_FRONTEND_URL}${url}`
+    if (process.env.REACT_APP_FRONTEND_URL) {
+      url = `${ process.env.REACT_APP_FRONTEND_URL }${ url }`
     }
 
     return url
@@ -231,7 +235,14 @@ const Data = ({ info }) => {
       return `https://www.wikidata.org/wiki/Property:${ node }`
     }
   }
-  
+
+  const convertProportionToPercentage = (property, qualifier, value) => {
+    if (profiledProperties.includes(property) && qualifier === 'P1107') {
+      return `${ (parseFloat(value) * 100).toFixed(2) } %`
+    }
+    return value
+  }
+
   const showClassGraphViz = () => {
     setClassGraphViz(true)
   }
@@ -241,75 +252,80 @@ const Data = ({ info }) => {
   }
 
   const renderLoading = () => {
-    if ( !loading ) { return }
+    if (!loading) { return }
     return (
       <CircularProgress
-        size={50}
+        size={ 50 }
         color="inherit"
-        className={classes.loading} />
+        className={ classes.loading }/>
     )
   }
 
   const renderDescription = () => {
     return (
-      <Grid item xs={12}>
-        <Paper className={classes.paper}>
-          <Typography variant="h4" className={classes.title}>
-            {data.text}
+      <Grid item xs={ 12 }>
+        <Paper className={ classes.paper }>
+          <Typography variant="h4" className={ classes.title }>
+            { data.text }
             { !!classGraphData && (
               <Tooltip arrow placement="right"
-                title="View Class Graph Visualization">
+                       title="View Class Graph Visualization">
                 <IconButton
                   color="inherit"
                   title="View Class Graph Visualization"
-                  onClick={showClassGraphViz}>
-                  <div className={classes.graphIcon}>
-                    <GraphIcon />
+                  onClick={ showClassGraphViz }>
+                  <div className={ classes.graphIcon }>
+                    <GraphIcon/>
                   </div>
                 </IconButton>
               </Tooltip>
-            )}
-          { data.instance_count &&
-              <Tooltip title="number of instances">
-                <Chip label={ formatNumber(data.instance_count) } className={classes.instance} variant='outlined'></Chip>
-              </Tooltip>
-          }
-          { data.instance_count_star &&
-             <Tooltip title="number of instances including subclasses">
-              <Chip label={ formatNumber(data.instance_count_star) } className={classes.instanceStar} variant='outlined'></Chip>
-              </Tooltip>
-          }
-          { data.subclass_count_star &&
-             <Tooltip title="number of subclasses">
-              <Chip label={ formatNumber(data.subclass_count_star) } className={classes.subclassStar} variant='outlined'></Chip>
-              </Tooltip>
-          }
+            ) }
+            { data.instance_count &&
+            <Tooltip title="number of instances">
+              <Chip label={ formatNumber(data.instance_count) }
+                    className={ classes.instance } variant="outlined"></Chip>
+            </Tooltip>
+            }
+            { data.instance_count_star &&
+            <Tooltip title="number of instances including subclasses">
+              <Chip label={ formatNumber(data.instance_count_star) }
+                    className={ classes.instanceStar }
+                    variant="outlined"></Chip>
+            </Tooltip>
+            }
+            { data.subclass_count_star &&
+            <Tooltip title="number of subclasses">
+              <Chip label={ formatNumber(data.subclass_count_star) }
+                    className={ classes.subclassStar }
+                    variant="outlined"></Chip>
+            </Tooltip>
+            }
 
 
           </Typography>
-          <Typography variant="subtitle1" className={classes.nodeId}>
+          <Typography variant="subtitle1" className={ classes.nodeId }>
             { !!data.ref ? <Link
-                              className={
-                                classNames(classes.link, {
-                                  wikidata: true
-                                })
-                              }
-                              to={{ pathname: getWikidataURL(`${data.ref}`)}}
-                              target='_blank'
-                              >
-                              {data.ref}
-                    </Link> : '' }
+              className={
+                classNames(classes.link, {
+                  wikidata: true,
+                })
+              }
+              to={ { pathname: getWikidataURL(`${ data.ref }`) } }
+              target="_blank"
+            >
+              { data.ref }
+            </Link> : '' }
           </Typography>
-          {data.aliases && (
-            <Typography variant="subtitle2" className={classes.aliases}>
-              {data.aliases.join(' | ')}
+          { data.aliases && (
+            <Typography variant="subtitle2" className={ classes.aliases }>
+              { data.aliases.join(' | ') }
             </Typography>
-          )}
-          <Typography variant="subtitle1" className={classes.description}>
-            {data.description}
+          ) }
+          <Typography variant="subtitle1" className={ classes.description }>
+            { data.description }
           </Typography>
-          <Typography variant="subtitle2" className={classes.abstract}>
-            {data.abstract}
+          <Typography variant="subtitle2" className={ classes.abstract }>
+            { data.abstract }
           </Typography>
         </Paper>
       </Grid>
@@ -318,45 +334,48 @@ const Data = ({ info }) => {
 
   const renderProperties = () => {
     return (
-      <Grid item xs={12}>
+      <Grid item xs={ 12 }>
         <ExpansionPanel
-          square={true}
-          defaultExpanded={true}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" className={classes.heading}>
+          square={ true }
+          defaultExpanded={ true }
+          TransitionProps={ { timeout: 0 } }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }>
+            <Typography variant="h6" className={ classes.heading }>
               Properties
             </Typography>
           </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            {data.properties && data.properties.filter(property => property.profiled === false).map((property, index) => (
-              <Grid container key={index} className={classes.row} spacing={0}>
-                <Grid item xs={3}>
-                  {property.url || property.ref ? (
-                    <Link
-                      className={
-                        classNames(classes.link, {
-                          property: true,
-                          externalLink: !!property.url,
-                        })
-                      }
-                      to={{ pathname: getURL(property) }}
-                      target={!!property.url ? '_blank' : ''}
-                      title={property.url ? property.url : property.property}>
-                      {property.property}
-                    </Link>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      title={property.property}
-                      className={classes.text}>
-                      {property.property}
-                    </Typography>
-                  )}
+          <ExpansionPanelDetails className={ classes.paper }>
+            { data.properties && data.properties.filter(property => property.profiled === false).map((property, index) => (
+                <Grid container key={ index } className={ classes.row }
+                      spacing={ 0 }>
+                  <Grid item xs={ 3 }>
+                    { property.url || property.ref ? (
+                      <Link
+                        className={
+                          classNames(classes.link, {
+                            property: true,
+                            externalLink: !!property.url,
+                          })
+                        }
+                        to={ { pathname: getURL(property) } }
+                        target={ !!property.url ? '_blank' : '' }
+                        title={ property.url
+                          ? property.url
+                          : property.property }>
+                        { property.property }
+                      </Link>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        title={ property.property }
+                        className={ classes.text }>
+                        { property.property }
+                      </Typography>
+                    ) }
+                  </Grid>
+                  { renderPropertyValues(property) }
                 </Grid>
-                {renderPropertyValues(property)}
-              </Grid>
-            ))}
+              )) }
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
@@ -364,48 +383,54 @@ const Data = ({ info }) => {
   }
 
   const renderProfiledProperties = () => {
-    if (data.properties && !data.properties.filter(property => property.profiled === true).length ) { return }
+    if (data.properties && !data.properties.filter(
+      property => property.profiled === true).length) { return }
     return (
-      <Grid item xs={12}>
+      <Grid item xs={ 12 }>
         <ExpansionPanel
-          square={true}
-          defaultExpanded={false}
-          expanded={showProfiledProperties}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} onClick={() => setShowProfiledProperties(!showProfiledProperties)}>
-            <Typography variant="h6" className={classes.heading}>
+          square={ true }
+          defaultExpanded={ false }
+          expanded={ showProfiledProperties }
+          TransitionProps={ { timeout: 0 } }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }
+                                 onClick={ () => setShowProfiledProperties(
+                                   !showProfiledProperties) }>
+            <Typography variant="h6" className={ classes.heading }>
               Profiling Data
             </Typography>
           </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            {data.properties && data.properties.filter(property => property.profiled === true).map((property, index) => (
-              <Grid container key={index} className={classes.row} spacing={0}>
-                <Grid item xs={3}>
-                  {property.url || property.ref ? (
-                    <Link
-                      className={
-                        classNames(classes.link, {
-                          property: true,
-                          externalLink: !!property.url,
-                        })
-                      }
-                      to={{ pathname: getURL(property) }}
-                      target={!!property.url ? '_blank' : ''}
-                      title={property.url ? property.url : property.property}>
-                      {property.property}
-                    </Link>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      title={property.property}
-                      className={classes.text}>
-                      {property.property}
-                    </Typography>
-                  )}
+          <ExpansionPanelDetails className={ classes.paper }>
+            { data.properties && data.properties.filter(property => property.profiled === true).map((property, index) => (
+                <Grid container key={ index } className={ classes.row }
+                      spacing={ 0 }>
+                  <Grid item xs={ 3 }>
+                    { property.url || property.ref ? (
+                      <Link
+                        className={
+                          classNames(classes.link, {
+                            property: true,
+                            externalLink: !!property.url,
+                          })
+                        }
+                        to={ { pathname: getURL(property) } }
+                        target={ !!property.url ? '_blank' : '' }
+                        title={ property.url
+                          ? property.url
+                          : property.property }>
+                        { property.property }
+                      </Link>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        title={ property.property }
+                        className={ classes.text }>
+                        { property.property }
+                      </Typography>
+                    ) }
+                  </Grid>
+                  { renderPropertyValues(property) }
                 </Grid>
-                {renderPropertyValues(property)}
-              </Grid>
-            ))}
+              )) }
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
@@ -413,22 +438,22 @@ const Data = ({ info }) => {
   }
 
   const renderPropertyValues = property => {
-    if ( property.mode === 'ajax' && property.ref in propertyData ) {
+    if (property.mode === 'ajax' && property.ref in propertyData) {
       property = propertyData[property.ref]
     }
     return (
-      <Grid item xs={9}>
-        {!!property.values && property.values.map((value, index) => (
-          <Grid container key={index} spacing={0}>
-            <Grid item xs={12}>
-              {value.units ? (
+      <Grid item xs={ 9 }>
+        { !!property.values && property.values.map((value, index) => (
+          <Grid container key={ index } spacing={ 0 }>
+            <Grid item xs={ 12 }>
+              { value.units ? (
                 <React.Fragment>
                   <Typography
                     variant="body2"
                     component="span"
-                    title={value.text}
-                    className={classes.text}>
-                    {value.text}
+                    title={ value.text }
+                    className={ classes.text }>
+                    { value.text }
                   </Typography>
                   <Link
                     className={
@@ -438,10 +463,10 @@ const Data = ({ info }) => {
                         externalLink: !!value.url,
                       })
                     }
-                    to={{ pathname: getURL(value) }}
-                    target={!!value.url ? '_blank' : ''}
-                    title={value.url ? value.url : value.text}>
-                    {value.units}
+                    to={ { pathname: getURL(value) } }
+                    target={ !!value.url ? '_blank' : '' }
+                    title={ value.url ? value.url : value.text }>
+                    { value.units }
                   </Link>
                 </React.Fragment>
               ) : value.url || value.ref ? (
@@ -454,28 +479,29 @@ const Data = ({ info }) => {
                       externalLink: !!value.url,
                     })
                   }
-                  to={{ pathname: getURL(value) }}
-                  target={!!value.url ? '_blank' : ''}
-                  title={value.url ? value.url : value.text}>
-                  {value.text}
+                  to={ { pathname: getURL(value) } }
+                  target={ !!value.url ? '_blank' : '' }
+                  title={ value.url ? value.url : value.text }>
+                  { value.text }
                 </Link>
               ) : (
                 <Typography
                   variant="body2"
-                  title={value.text}
-                  className={classes.text}>
-                  {value.text}
-                  {value.lang && (
-                    <span className={classes.lang}>
-                      [{value.lang}]
+                  title={ value.text }
+                  className={ classes.text }>
+                  { value.text }
+                  { value.lang && (
+                    <span className={ classes.lang }>
+                      [{ value.lang }]
                     </span>
-                  )}
+                  ) }
                 </Typography>
-              )}
-              {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
-                <Grid container spacing={0} key={index}>
-                  <Grid item xs={4}>
-                    {qualifier.url || qualifier.ref ? (
+              ) }
+              { !!value.qualifiers &&
+              value.qualifiers.map((qualifier, index) => (
+                <Grid container spacing={ 0 } key={ index }>
+                  <Grid item xs={ 4 }>
+                    { qualifier.url || qualifier.ref ? (
                       <Link
                         className={
                           classNames(classes.link, {
@@ -485,15 +511,17 @@ const Data = ({ info }) => {
                             externalLink: !!value.url,
                           })
                         }
-                        to={{ pathname: getURL(qualifier) }}
-                        target={!!qualifier.url ? '_blank' : ''}
-                        title={qualifier.url ? qualifier.url : qualifier.property}>
-                        {qualifier.property}
+                        to={ { pathname: getURL(qualifier) } }
+                        target={ !!qualifier.url ? '_blank' : '' }
+                        title={ qualifier.url
+                          ? qualifier.url
+                          : qualifier.property }>
+                        { qualifier.property }
                       </Link>
                     ) : (
                       <Typography
                         variant="body2"
-                        title={qualifier.text}
+                        title={ qualifier.text }
                         className={
                           classNames(classes.text, {
                             indent: true,
@@ -501,30 +529,31 @@ const Data = ({ info }) => {
                             property: true,
                           })
                         }>
-                        {qualifier.text}
-                        {qualifier.lang && (
-                          <span className={classes.lang}>
-                            [{qualifier.lang}]
+                        { qualifier.text }
+                        { qualifier.lang && (
+                          <span className={ classes.lang }>
+                            [{ qualifier.lang }]
                           </span>
-                        )}
+                        ) }
                       </Typography>
-                    )}
+                    ) }
                   </Grid>
-                  <Grid item xs={8}>
-                    {!!qualifier.values && qualifier.values.map((value, index) => (
-                      <Grid item key={index}>
-                        {value.units ? (
+                  <Grid item xs={ 8 }>
+                    { !!qualifier.values &&
+                    qualifier.values.map((value, index) => (
+                      <Grid item key={ index }>
+                        { value.units ? (
                           <React.Fragment>
                             <Typography
                               variant="body2"
                               component="span"
-                              title={value.text}
+                              title={ value.text }
                               className={
                                 classNames(classes.text, {
                                   smaller: true,
                                 })
                               }>
-                              {value.text}
+                              { value.text }
                             </Typography>
                             <Link
                               className={
@@ -535,10 +564,10 @@ const Data = ({ info }) => {
                                   smaller: true,
                                 })
                               }
-                              to={{ pathname: getURL(value) }}
-                              target={!!value.url ? '_blank' : ''}
-                              title={value.url ? value.url : value.units}>
-                              {value.units}
+                              to={ { pathname: getURL(value) } }
+                              target={ !!value.url ? '_blank' : '' }
+                              title={ value.url ? value.url : value.units }>
+                              { value.units }
                             </Link>
                           </React.Fragment>
                         ) : value.url || value.ref ? (
@@ -552,74 +581,77 @@ const Data = ({ info }) => {
                                 externalLink: !!value.url,
                               })
                             }
-                            to={{ pathname: getURL(value) }}
-                            target={!!value.url ? '_blank' : ''}
-                            title={value.url ? value.url : value.text}>
-                            {value.text}
+                            to={ { pathname: getURL(value) } }
+                            target={ !!value.url ? '_blank' : '' }
+                            title={ value.url ? value.url : value.text }>
+                            { value.text }
                           </Link>
                         ) : (
                           <Typography
                             variant="body2"
-                            title={value.text}
+                            title={ value.text }
                             className={
                               classNames(classes.text, {
                                 smaller: true,
                               })
                             }>
-                            {value.text}
-                            {value.lang && (
-                              <span className={classes.lang}>
-                                [{value.lang}]
+                            { convertProportionToPercentage(property.ref,
+                              qualifier.ref, value.text) }
+                            { value.lang && (
+                              <span className={ classes.lang }>
+                                [{ value.lang }]
                               </span>
-                            )}
+                            ) }
                           </Typography>
-                        )}
+                        ) }
                       </Grid>
-                    ))}
+                    )) }
                   </Grid>
                 </Grid>
-              ))}
+              )) }
             </Grid>
           </Grid>
-        ))}
-        {property.mode === 'ajax' && property.numPages > 1 && (
-          <Grid container spacing={0} className={classes.pagination}>
-            <Grid item xs={12} sm={12} md={12} lg={6} xl={4}>
+        )) }
+        { property.mode === 'ajax' && property.numPages > 1 && (
+          <Grid container spacing={ 0 } className={ classes.pagination }>
+            <Grid item xs={ 12 } sm={ 12 } md={ 12 } lg={ 6 } xl={ 4 }>
               <Pagination size="small"
-                count={property.numPages}
-                onChange={(event, page) =>
-                  handleOnPageChange(property, page)} />
+                          count={ property.numPages }
+                          onChange={ (event, page) =>
+                            handleOnPageChange(property, page) }/>
             </Grid>
-            <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
+            <Grid item xs={ 12 } sm={ 12 } md={ 12 } lg={ 6 } xl={ 8 }>
               <span className="smaller">
-                {formatNumber(property.count)} values
+                { formatNumber(property.count) } values
               </span>
             </Grid>
           </Grid>
-        )}
+        ) }
       </Grid>
     )
   }
 
   const renderRelatedItems = () => {
-    if ( !relatedProperties.length ) { return }
+    if (!relatedProperties.length) { return }
     return (
-      <Grid item xs={12}>
+      <Grid item xs={ 12 }>
         <ExpansionPanel
-          square={true}
-          defaultExpanded={false}
-          TransitionProps={{ timeout: 0 }}
-          onChange={(event, expanded) => handleOnRelatedItemsExpand(expanded)}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" className={classes.heading}>
+          square={ true }
+          defaultExpanded={ false }
+          TransitionProps={ { timeout: 0 } }
+          onChange={ (event, expanded) => handleOnRelatedItemsExpand(
+            expanded) }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }>
+            <Typography variant="h6" className={ classes.heading }>
               From Related Items
             </Typography>
           </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            {relatedProperties && relatedProperties.map((property, index) => (
-              <Grid container key={index} className={classes.row} spacing={0}>
-                <Grid item xs={3}>
-                  {property.url || property.ref ? (
+          <ExpansionPanelDetails className={ classes.paper }>
+            { relatedProperties && relatedProperties.map((property, index) => (
+              <Grid container key={ index } className={ classes.row }
+                    spacing={ 0 }>
+                <Grid item xs={ 3 }>
+                  { property.url || property.ref ? (
                     <Link
                       className={
                         classNames(classes.link, {
@@ -627,171 +659,191 @@ const Data = ({ info }) => {
                           externalLink: !!property.url,
                         })
                       }
-                      to={{ pathname: getURL(property) }}
-                      target={!!property.url ? '_blank' : ''}
-                      title={property.url ? property.url : property.property}>
-                      {property.property}
+                      to={ { pathname: getURL(property) } }
+                      target={ !!property.url ? '_blank' : '' }
+                      title={ property.url ? property.url : property.property }>
+                      { property.property }
                     </Link>
                   ) : (
                     <Typography
                       variant="body2"
-                      title={property.property}
-                      className={classes.text}>
-                      {property.property}
+                      title={ property.property }
+                      className={ classes.text }>
+                      { property.property }
                     </Typography>
-                  )}
+                  ) }
                 </Grid>
-                <Grid item xs={1}>
-                  <ArrowRightAltIcon className={classes.arrow} />
+                <Grid item xs={ 1 }>
+                  <ArrowRightAltIcon className={ classes.arrow }/>
                 </Grid>
-                <Grid item xs={8}>
-                  <Grid item xs={12}>
-                    {!!relatedPropertyValues[property.ref] && relatedPropertyValues[property.ref].values.map((value, index) => (
-                      <Grid container key={index} spacing={0}>
-                        <Grid item xs={12}>
-                          <Link
-                            className={
-                              classNames(classes.link, {
-                                indent: false,
-                                property: !!value.ref && value.ref[0] === 'P',
-                                item: !!value.ref && value.ref[0] === 'Q',
-                                externalLink: !!value.url,
-                              })
-                            }
-                            to={{ pathname: getURL(value) }}
-                            target={!!value.url ? '_blank' : ''}
-                            title={value.url ? value.url : value.text}>
-                            {value.text}
-                          </Link>
-                          {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
-                            <Grid container spacing={0} key={index}>
-                              <Grid item xs={4}>
-                                {qualifier.url || qualifier.ref ? (
-                                  <Link
-                                    className={
-                                      classNames(classes.link, {
-                                        indent: true,
-                                        smaller: true,
-                                        property: true,
-                                        externalLink: !!value.url,
-                                      })
-                                    }
-                                    to={{ pathname: getURL(qualifier) }}
-                                    target={!!qualifier.url ? '_blank' : ''}
-                                    title={qualifier.url ? qualifier.url : qualifier.property}>
-                                    {qualifier.property}
-                                  </Link>
-                                ) : (
-                                  <Typography
-                                    variant="body2"
-                                    title={qualifier.text}
-                                    className={
-                                      classNames(classes.text, {
-                                        indent: true,
-                                        smaller: true,
-                                        property: true,
-                                      })
-                                    }>
-                                    {qualifier.text}
-                                    {qualifier.lang && (
-                                      <span className={classes.lang}>
-                                        [{qualifier.lang}]
+                <Grid item xs={ 8 }>
+                  <Grid item xs={ 12 }>
+                    { !!relatedPropertyValues[property.ref] &&
+                    relatedPropertyValues[property.ref].values.map(
+                      (value, index) => (
+                        <Grid container key={ index } spacing={ 0 }>
+                          <Grid item xs={ 12 }>
+                            <Link
+                              className={
+                                classNames(classes.link, {
+                                  indent: false,
+                                  property: !!value.ref && value.ref[0] === 'P',
+                                  item: !!value.ref && value.ref[0] === 'Q',
+                                  externalLink: !!value.url,
+                                })
+                              }
+                              to={ { pathname: getURL(value) } }
+                              target={ !!value.url ? '_blank' : '' }
+                              title={ value.url ? value.url : value.text }>
+                              { value.text }
+                            </Link>
+                            { !!value.qualifiers &&
+                            value.qualifiers.map((qualifier, index) => (
+                              <Grid container spacing={ 0 } key={ index }>
+                                <Grid item xs={ 4 }>
+                                  { qualifier.url || qualifier.ref ? (
+                                    <Link
+                                      className={
+                                        classNames(classes.link, {
+                                          indent: true,
+                                          smaller: true,
+                                          property: true,
+                                          externalLink: !!value.url,
+                                        })
+                                      }
+                                      to={ { pathname: getURL(qualifier) } }
+                                      target={ !!qualifier.url ? '_blank' : '' }
+                                      title={ qualifier.url
+                                        ? qualifier.url
+                                        : qualifier.property }>
+                                      { qualifier.property }
+                                    </Link>
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      title={ qualifier.text }
+                                      className={
+                                        classNames(classes.text, {
+                                          indent: true,
+                                          smaller: true,
+                                          property: true,
+                                        })
+                                      }>
+                                      { qualifier.text }
+                                      { qualifier.lang && (
+                                        <span className={ classes.lang }>
+                                        [{ qualifier.lang }]
                                       </span>
-                                    )}
-                                  </Typography>
-                                )}
-                              </Grid>
-                              <Grid item xs={8}>
-                                {!!qualifier.values && qualifier.values.map((value, index) => (
-                                  <Grid item key={index}>
-                                    {value.units ? (
-                                      <React.Fragment>
+                                      ) }
+                                    </Typography>
+                                  ) }
+                                </Grid>
+                                <Grid item xs={ 8 }>
+                                  { !!qualifier.values &&
+                                  qualifier.values.map((value, index) => (
+                                    <Grid item key={ index }>
+                                      { value.units ? (
+                                        <React.Fragment>
+                                          <Typography
+                                            variant="body2"
+                                            component="span"
+                                            title={ value.text }
+                                            className={
+                                              classNames(classes.text, {
+                                                smaller: true,
+                                              })
+                                            }>
+                                            { value.text }
+                                          </Typography>
+                                          <Link
+                                            className={
+                                              classNames(classes.link, {
+                                                property: !!value.ref &&
+                                                  value.ref[0] === 'P',
+                                                item: !!value.ref &&
+                                                  value.ref[0] === 'Q',
+                                                externalLink: !!value.url,
+                                                smaller: true,
+                                              })
+                                            }
+                                            to={ { pathname: getURL(value) } }
+                                            target={ !!value.url
+                                              ? '_blank'
+                                              : '' }
+                                            title={ value.url
+                                              ? value.url
+                                              : value.units }>
+                                            { value.units }
+                                          </Link>
+                                        </React.Fragment>
+                                      ) : value.url || value.ref ? (
+                                        <Link
+                                          className={
+                                            classNames(classes.link, {
+                                              indent: false,
+                                              smaller: true,
+                                              property: !!value.ref &&
+                                                value.ref[0] === 'P',
+                                              item: !!value.ref &&
+                                                value.ref[0] === 'Q',
+                                              externalLink: !!value.url,
+                                            })
+                                          }
+                                          to={ { pathname: getURL(value) } }
+                                          target={ !!value.url ? '_blank' : '' }
+                                          title={ value.url
+                                            ? value.url
+                                            : value.text }>
+                                          { value.text }
+                                        </Link>
+                                      ) : (
                                         <Typography
                                           variant="body2"
-                                          component="span"
-                                          title={value.text}
+                                          title={ value.text }
                                           className={
                                             classNames(classes.text, {
                                               smaller: true,
                                             })
                                           }>
-                                          {value.text}
-                                        </Typography>
-                                        <Link
-                                          className={
-                                            classNames(classes.link, {
-                                              property: !!value.ref && value.ref[0] === 'P',
-                                              item: !!value.ref && value.ref[0] === 'Q',
-                                              externalLink: !!value.url,
-                                              smaller: true,
-                                            })
-                                          }
-                                          to={{ pathname: getURL(value) }}
-                                          target={!!value.url ? '_blank' : ''}
-                                          title={value.url ? value.url : value.units}>
-                                          {value.units}
-                                        </Link>
-                                      </React.Fragment>
-                                    ) : value.url || value.ref ? (
-                                      <Link
-                                        className={
-                                          classNames(classes.link, {
-                                            indent: false,
-                                            smaller: true,
-                                            property: !!value.ref && value.ref[0] === 'P',
-                                            item: !!value.ref && value.ref[0] === 'Q',
-                                            externalLink: !!value.url,
-                                          })
-                                        }
-                                        to={{ pathname: getURL(value) }}
-                                        target={!!value.url ? '_blank' : ''}
-                                        title={value.url ? value.url : value.text}>
-                                        {value.text}
-                                      </Link>
-                                    ) : (
-                                      <Typography
-                                        variant="body2"
-                                        title={value.text}
-                                        className={
-                                          classNames(classes.text, {
-                                            smaller: true,
-                                          })
-                                        }>
-                                        {value.text}
-                                        {value.lang && (
-                                          <span className={classes.lang}>
-                                            [{value.lang}]
+                                          { value.text }
+                                          { value.lang && (
+                                            <span className={ classes.lang }>
+                                            [{ value.lang }]
                                           </span>
-                                        )}
-                                      </Typography>
-                                    )}
-                                  </Grid>
-                                ))}
+                                          ) }
+                                        </Typography>
+                                      ) }
+                                    </Grid>
+                                  )) }
+                                </Grid>
                               </Grid>
-                            </Grid>
-                          ))}
+                            )) }
+                          </Grid>
                         </Grid>
-                      </Grid>
-                    ))}
-                    {property.numPages > 1 && (
-                      <Grid container spacing={0} className={classes.pagination}>
-                        <Grid item xs={12} sm={12} md={12} lg={6} xl={4}>
+                      )) }
+                    { property.numPages > 1 && (
+                      <Grid container spacing={ 0 }
+                            className={ classes.pagination }>
+                        <Grid item xs={ 12 } sm={ 12 } md={ 12 } lg={ 6 }
+                              xl={ 4 }>
                           <Pagination size="small"
-                            count={property.numPages}
-                            onChange={(event, page) =>
-                              handleOnPageChangeRelatedValues(property, page)} />
+                                      count={ property.numPages }
+                                      onChange={ (event, page) =>
+                                        handleOnPageChangeRelatedValues(
+                                          property, page) }/>
                         </Grid>
-                        <Grid item xs={12} sm={12} md={12} lg={6} xl={8}>
+                        <Grid item xs={ 12 } sm={ 12 } md={ 12 } lg={ 6 }
+                              xl={ 8 }>
                           <span className="smaller">
-                            {formatNumber(property.count)} values
+                            { formatNumber(property.count) } values
                           </span>
                         </Grid>
                       </Grid>
-                    )}
+                    ) }
                   </Grid>
                 </Grid>
               </Grid>
-            ))}
+            )) }
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
@@ -799,35 +851,35 @@ const Data = ({ info }) => {
   }
 
   const renderGallery = () => {
-    if ( !!info && !info.hasGallery ) { return }
+    if (!!info && !info.hasGallery) { return }
     return (
-      <Grid item xs={12}>
+      <Grid item xs={ 12 }>
         <ExpansionPanel
-          square={true}
-          defaultExpanded={true}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" className={classes.heading}>
+          square={ true }
+          defaultExpanded={ true }
+          TransitionProps={ { timeout: 0 } }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }>
+            <Typography variant="h6" className={ classes.heading }>
               Gallery
             </Typography>
           </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
+          <ExpansionPanelDetails className={ classes.paper }>
             <ImageList
-              rowHeight={350}
-              cols={1.25} gap={15}
-              className={classes.imageList}>
-              {data.gallery && data.gallery.map((image, index) => (
-                <ImageListItem key={index}>
-                  <img src={image.url} alt={image.text} />
+              rowHeight={ 350 }
+              cols={ 1.25 } gap={ 15 }
+              className={ classes.imageList }>
+              { data.gallery && data.gallery.map((image, index) => (
+                <ImageListItem key={ index }>
+                  <img src={ image.url } alt={ image.text }/>
                   <ImageListItemBar
-                    title={image.text}
-                    classes={{
+                    title={ image.text }
+                    classes={ {
                       root: classes.imageTitleBar,
                       title: classes.imageTitle,
-                    }}
+                    } }
                   />
                 </ImageListItem>
-              ))}
+              )) }
             </ImageList>
           </ExpansionPanelDetails>
         </ExpansionPanel>
@@ -836,23 +888,23 @@ const Data = ({ info }) => {
   }
 
   const renderIdentifiers = () => {
-    if ( !!info && !info.hasIdentifiers ) { return }
+    if (!!info && !info.hasIdentifiers) { return }
     return (
-      <Grid item xs={12}>
+      <Grid item xs={ 12 }>
         <ExpansionPanel
-          square={true}
-          defaultExpanded={true}
-          TransitionProps={{ timeout: 0 }}>
-          <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="h6" className={classes.heading}>
+          square={ true }
+          defaultExpanded={ true }
+          TransitionProps={ { timeout: 0 } }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/> }>
+            <Typography variant="h6" className={ classes.heading }>
               Identifiers
             </Typography>
           </ExpansionPanelSummary>
-          <ExpansionPanelDetails className={classes.paper}>
-            {data.xrefs && data.xrefs.map((property, index) => (
-              <Grid container key={index} className={classes.row}>
-                <Grid item xs={6}>
-                  {property.url || property.ref ? (
+          <ExpansionPanelDetails className={ classes.paper }>
+            { data.xrefs && data.xrefs.map((property, index) => (
+              <Grid container key={ index } className={ classes.row }>
+                <Grid item xs={ 6 }>
+                  { property.url || property.ref ? (
                     <Link
                       className={
                         classNames(classes.link, {
@@ -861,29 +913,29 @@ const Data = ({ info }) => {
                           externalLink: !!property.url,
                         })
                       }
-                      to={{ pathname: getURL(property) }}
-                      target={!!property.url ? '_blank' : ''}
-                      title={property.url ? property.url : property.property}>
-                      {property.property}
+                      to={ { pathname: getURL(property) } }
+                      target={ !!property.url ? '_blank' : '' }
+                      title={ property.url ? property.url : property.property }>
+                      { property.property }
                     </Link>
                   ) : (
                     <Typography
                       variant="body2"
-                      title={property.property}
+                      title={ property.property }
                       className={
                         classNames(classes.text, {
                           smaller: true,
                         })
                       }>
-                      {property.property}
+                      { property.property }
                     </Typography>
-                  )}
+                  ) }
                 </Grid>
-                <Grid item xs={6}>
-                  {!!property.values && property.values.map((value, index) => (
-                    <Grid container key={index}>
-                      <Grid item xs={12}>
-                        {value.url || value.ref ? (
+                <Grid item xs={ 6 }>
+                  { !!property.values && property.values.map((value, index) => (
+                    <Grid container key={ index }>
+                      <Grid item xs={ 12 }>
+                        { value.url || value.ref ? (
                           <Link
                             className={
                               classNames(classes.link, {
@@ -891,32 +943,33 @@ const Data = ({ info }) => {
                                 externalLink: !!value.url,
                               })
                             }
-                            to={{ pathname: getURL(value) }}
-                            target={!!value.url ? '_blank' : ''}
-                            title={value.url ? value.url : value.text}>
-                            {value.text}
+                            to={ { pathname: getURL(value) } }
+                            target={ !!value.url ? '_blank' : '' }
+                            title={ value.url ? value.url : value.text }>
+                            { value.text }
                           </Link>
                         ) : (
                           <Typography
                             variant="body2"
-                            title={value.text}
+                            title={ value.text }
                             className={
                               classNames(classes.text, {
                                 smaller: true,
                               })
                             }>
-                            {value.text}
-                            {value.lang && (
-                              <span className={classes.lang}>
-                                [{value.lang}]
+                            { value.text }
+                            { value.lang && (
+                              <span className={ classes.lang }>
+                                [{ value.lang }]
                               </span>
-                            )}
+                            ) }
                           </Typography>
-                        )}
-                        {!!value.qualifiers && value.qualifiers.map((qualifier, index) => (
-                          <Grid container spacing={0} key={index}>
-                            <Grid item xs={6}>
-                              {qualifier.url || qualifier.ref ? (
+                        ) }
+                        { !!value.qualifiers &&
+                        value.qualifiers.map((qualifier, index) => (
+                          <Grid container spacing={ 0 } key={ index }>
+                            <Grid item xs={ 6 }>
+                              { qualifier.url || qualifier.ref ? (
                                 <Link
                                   className={
                                     classNames(classes.link, {
@@ -925,34 +978,37 @@ const Data = ({ info }) => {
                                       externalLink: !!value.url,
                                     })
                                   }
-                                  to={{ pathname: getURL(qualifier) }}
-                                  target={!!qualifier.url ? '_blank' : ''}
-                                  title={qualifier.url ? qualifier.url : qualifier.property}>
-                                  {qualifier.property}
+                                  to={ { pathname: getURL(qualifier) } }
+                                  target={ !!qualifier.url ? '_blank' : '' }
+                                  title={ qualifier.url
+                                    ? qualifier.url
+                                    : qualifier.property }>
+                                  { qualifier.property }
                                 </Link>
                               ) : (
                                 <Typography
                                   variant="body2"
-                                  title={qualifier.text}
+                                  title={ qualifier.text }
                                   className={
                                     classNames(classes.text, {
                                       indent: true,
                                       smaller: true,
                                     })
                                   }>
-                                  {qualifier.text}
-                                  {qualifier.lang && (
-                                    <span className={classes.lang}>
-                                      [{qualifier.lang}]
+                                  { qualifier.text }
+                                  { qualifier.lang && (
+                                    <span className={ classes.lang }>
+                                      [{ qualifier.lang }]
                                     </span>
-                                  )}
+                                  ) }
                                 </Typography>
-                              )}
+                              ) }
                             </Grid>
-                            <Grid item xs={6}>
-                              {!!qualifier.values && qualifier.values.map((value, index) => (
-                                <Grid container key={index}>
-                                  {value.url || value.ref ? (
+                            <Grid item xs={ 6 }>
+                              { !!qualifier.values &&
+                              qualifier.values.map((value, index) => (
+                                <Grid container key={ index }>
+                                  { value.url || value.ref ? (
                                     <Link
                                       className={
                                         classNames(classes.link, {
@@ -960,39 +1016,82 @@ const Data = ({ info }) => {
                                           externalLink: !!value.url,
                                         })
                                       }
-                                      to={{ pathname: getURL(value) }}
-                                      target={!!value.url ? '_blank' : ''}
-                                      title={value.url ? value.url : value.text}>
-                                      {value.text}
+                                      to={ { pathname: getURL(value) } }
+                                      target={ !!value.url ? '_blank' : '' }
+                                      title={ value.url
+                                        ? value.url
+                                        : value.text }>
+                                      { value.text }
                                     </Link>
                                   ) : (
                                     <Typography
                                       variant="body2"
-                                      title={value.text}
+                                      title={ value.text }
                                       className={
                                         classNames(classes.text, {
                                           smaller: true,
                                         })
                                       }>
-                                      {value.text}
-                                      {value.lang && (
-                                        <span className={classes.lang}>
-                                          [{value.lang}]
+                                      { value.text }
+                                      { value.lang && (
+                                        <span className={ classes.lang }>
+                                          [{ value.lang }]
                                         </span>
-                                      )}
+                                      ) }
                                     </Typography>
-                                  )}
+                                  ) }
                                 </Grid>
-                              ))}
+                              )) }
                             </Grid>
                           </Grid>
-                        ))}
+                        )) }
                       </Grid>
                     </Grid>
-                  ))}
+                  )) }
                 </Grid>
               </Grid>
-            ))}
+            )) }
+          </ExpansionPanelDetails>
+        </ExpansionPanel>
+      </Grid>
+    )
+  }
+
+  const renderSitelinks = () => {
+    if (!data.sitelinks ||
+      (!!data.sitelinks && data.sitelinks.length === 0)) { return }
+    return (
+      <Grid item xs={ 12 }>
+        <ExpansionPanel
+          square={ true }
+          defaultExpanded={ true }
+          expanded={showSiteLinks}
+          TransitionProps={ { timeout: 0 } }>
+          <ExpansionPanelSummary expandIcon={ <ExpandMoreIcon/>} onClick={ () => setShowSiteLinks(!showSiteLinks)}>
+            <Typography variant="h6" className={ classes.heading }>
+              Wikipedia
+              <span className={ classNames(classes.heading, { smaller: true }) }> ({ data.sitelinks.length } entries)</span>
+            </Typography>
+          </ExpansionPanelSummary>
+          <ExpansionPanelDetails className={ classes.paper }>
+            { data.sitelinks && data.sitelinks.map((wikiUrlDetails, index) => (
+              <Grid container key={ index } className={ classes.row }>
+                <Grid item xs={ 6 }>
+                  <span className={classes.wikiLang} >{ wikiUrlDetails.lang }
+                    <span className={ classNames(classes.wikiLang, {wikiLabel: true})}> { wikiUrlDetails.label }</span>
+                  </span>
+                </Grid>
+                <Grid item xs={ 6 }>
+                  <Link
+                  className={ classes.wikipediaLink }
+                  to={ { pathname: `${ wikiUrlDetails.url }` } }
+                  target="_blank"
+                >
+                  { wikiUrlDetails.text }
+                </Link>
+                </Grid>
+              </Grid>
+            )) }
           </ExpansionPanelDetails>
         </ExpansionPanel>
       </Grid>
@@ -1000,36 +1099,36 @@ const Data = ({ info }) => {
   }
 
   const renderClassGraph = () => {
-    if ( !classGraphViz ) { return }
+    if (!classGraphViz) { return }
     return (
       <ClassGraphViz
-        data={classGraphData}
-        loading={loadingClassGraphData}
-        hideClassGraphViz={hideClassGraphViz} />
+        data={ classGraphData }
+        loading={ loadingClassGraphData }
+        hideClassGraphViz={ hideClassGraphViz }/>
     )
   }
 
   return (
-    <Grid container spacing={1}>
-      {renderLoading()}
-      {renderClassGraph()}
-      <Grid item xs={8} style={{ 'opacity': loading ? '0.25' : '1' }}>
-        <Grid container spacing={1}>
-          {renderDescription()}
-          {renderProperties()}
-          {renderRelatedItems()}
-          {renderProfiledProperties()}
+    <Grid container spacing={ 1 }>
+      { renderLoading() }
+      { renderClassGraph() }
+      <Grid item xs={ 8 } style={ { 'opacity': loading ? '0.25' : '1' } }>
+        <Grid container spacing={ 1 }>
+          { renderDescription() }
+          { renderProperties() }
+          { renderRelatedItems() }
+          { renderProfiledProperties() }
         </Grid>
       </Grid>
-      <Grid item xs={4} style={{ 'opacity': loading ? '0.25' : '1' }}>
-        <Grid container spacing={1}>
-          {renderGallery()}
-          {renderIdentifiers()}
+      <Grid item xs={ 4 } style={ { 'opacity': loading ? '0.25' : '1' } }>
+        <Grid container spacing={ 1 }>
+          { renderGallery() }
+          { renderIdentifiers() }
+          { renderSitelinks() }
         </Grid>
       </Grid>
     </Grid>
   )
 }
-
 
 export default Data

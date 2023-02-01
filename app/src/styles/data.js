@@ -30,6 +30,9 @@ const useStyles = makeStyles(theme => ({
   heading: {
     color: '#333',
     fontWeight: 'bold',
+    '&.smaller': {
+      fontSize: '14px'
+    }
   },
   instance:{
     color: '#333'
@@ -101,6 +104,10 @@ const useStyles = makeStyles(theme => ({
       fontSize: '18px'
     }
   },
+  wikipediaLink: {
+    color: '#468499',
+    marginLeft: theme.spacing(0),
+  },
   text: {
     display: 'inline-block',
     paddingLeft: '3px',
@@ -121,6 +128,15 @@ const useStyles = makeStyles(theme => ({
   lang: {
     color: '#777',
     marginLeft: theme.spacing(1),
+  },
+    wikiLang: {
+      color: '#696969',
+      fontWeight: 'bolder',
+      '&.wikiLabel' : {
+        color: '#cccccc',
+        fontWeight: 'lighter'
+      }
+
   },
   row: {
     paddingTop: theme.spacing(0),

@@ -28,6 +28,8 @@ COPY kgtk_browser_app.py /src/
 COPY sync_properties_sort_metadata.json /src/
 COPY kgtk_browser_sorting_metadata.tsv /src/
 COPY kgtk_browser_sorting_metadata_supplementary.tsv /src/
+COPY wikidata_language_mapping.json /src/
+COPY formatter_url_templates.tsv.gz /src/
 COPY browser/backend/ /src/browser/backend/
 COPY app/ /src/app/
 
