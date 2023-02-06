@@ -87,6 +87,11 @@ def read_metadata_file(metadata_file):
 # Basic configuration section:
 
 VERSION = '0.1.0'
+if 'DEVELOPMENT' in os.environ and os.environ['DEVELOPMENT'] is not None:
+    DEVELOPMENT = os.environ['DEVELOPMENT']
+else:
+    DEVELOPMENT = False
+
 if 'KGTK_BROWSER_GRAPH_ID' in os.environ and os.environ['KGTK_BROWSER_GRAPH_ID'] is not None:
     GRAPH_ID = os.environ['KGTK_BROWSER_GRAPH_ID']
 else:

@@ -187,8 +187,8 @@ def get_info():
     return flask.jsonify(info), 200
 
 
-@app.route('/', methods=['GET'])
-@app.route('/<string:node>', methods=['GET'])
+@app.route('/browser', methods=['GET'])
+@app.route('/browser/<string:node>', methods=['GET'])
 def rb_get_kb(node=None):
     """This is the basic entrypoint for starting the KGTK browser.
        It sends the initial HTML file, "kb.html".
@@ -2612,9 +2612,17 @@ def parse_wikipedia_url(wiki_url: str) -> Tuple[str, str]:
 
 
 if __name__ == '__main__':
-    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 4))
-    logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
 
+    p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 4))
+
+    if 'DEVELOPMENT' in os.environ and os.environ['DEVELOPMENT']:
+        logger = logging.getLogger('werkzeug')
+        logger.setLevel(0)
+
+        app.run(host='0.0.0.0', port=3233, debug=True, use_reloader=True)
+
+    # send all error level logs to a separate file
+    logging.basicConfig(filename='performance_evaluation.log', level=logging.ERROR)
     logger = logging.getLogger('perf')
 
     app.run(host='0.0.0.0', port=3233, debug=False, use_reloader=False)
