@@ -2616,8 +2616,8 @@ if __name__ == '__main__':
     p = multiprocessing.Pool(int(multiprocessing.cpu_count() / 4))
 
     if 'DEVELOPMENT' in os.environ and os.environ['DEVELOPMENT']:
-        log = logging.getLogger('werkzeug')
-        log.setLevel(0)
+        logger = logging.getLogger('werkzeug')
+        logger.setLevel(0)
 
         app.run(host='0.0.0.0', port=3233, debug=True, use_reloader=True)
 
