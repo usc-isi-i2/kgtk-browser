@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - sqlite3
+  - sqlite
   - pip
   - pip:
     - attrs==21.2.0
