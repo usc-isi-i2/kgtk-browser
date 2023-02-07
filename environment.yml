@@ -24,7 +24,8 @@ dependencies:
     - dill==0.3.4
     - distributed==2021.11.2
     - distro==1.6.0
-    - en-core-web-sm==2.2.5
+    - https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.2.5/en_core_web_sm-2.2.5.tar.gz#en_core_web_sm
+    - en-core-web-sm-mirror==2.2.5
     - et-xmlfile==1.1.0
     - etk==2.2.8
     - faiss-cpu==1.7.3
